@@ -421,6 +421,7 @@ setTodayReportDate();
 
             alert('Laporan Harian Berhasil Terkirim!');
             this.reset();
+            setTodayReportDate();
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Laporan Harian`;
             document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
