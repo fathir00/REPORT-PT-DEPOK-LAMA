@@ -1724,6 +1724,26 @@
         renderRecentTable();
         renderDashboard();
         renderClientTable();
+        // Fungsi Jam Real-Time
+function updateRealtimeClock() {
+    const now = new Date();
+    const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateString = now.toLocaleDateString('id-ID', optionsDate);
+    
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const timeString = `${hours}:${minutes}:${seconds} WIB`;
+    
+    const dateElem = document.getElementById('realtimeDate');
+    const clockElem = document.getElementById('realtimeClock');
+    
+    if (dateElem) dateElem.innerText = dateString;
+    if (clockElem) clockElem.innerText = timeString;
+}
+
+updateRealtimeClock();
+setInterval(updateRealtimeClock, 1000);
     </script>
 </body>
 </html>
