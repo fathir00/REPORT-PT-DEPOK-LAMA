@@ -204,8 +204,22 @@
         // URL SCRIPT TERBARU ANDA
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDXSGjhRuTE9_hznksjxOVc-Hkdsih3jMZnwQIIMErugvL7P1lrDXkqOY-VIH59FvM/exec";
 
-        document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+        // Fungsi untuk set Tanggal Laporan ke hari ini secara real-time
+function setTodayReportDate() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    
+    const formattedDate = `${year}-${month}-${day}`;
+    const inputDateElem = document.getElementById('inputDate');
+    if (inputDateElem) {
+        inputDateElem.value = formattedDate;
+    }
+}
 
+// Jalankan saat halaman pertama kali dibuka
+setTodayReportDate();
         let cachedCloudData = [];
 
         function calculateSmartCoachCommission(points, conduct) {
