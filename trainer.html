@@ -438,6 +438,30 @@ setTodayReportDate();
         });
 
         syncTrainerData();
+        // FUNGSI JAM & DETIK REAL-TIME TRAINER
+function updateTrainerClock() {
+    const now = new Date();
+    
+    // Format Tanggal
+    const optionsDate = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
+    const dateStr = now.toLocaleDateString('id-ID', optionsDate);
+    
+    // Format Jam, Menit, Detik
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const timeStr = `${hours}:${minutes}:${seconds} WIB`;
+    
+    const dateElem = document.getElementById('realtimeDateTrainer');
+    const clockElem = document.getElementById('realtimeClockTrainer');
+    
+    if (dateElem) dateElem.innerText = dateStr;
+    if (clockElem) clockElem.innerText = timeStr;
+}
+
+// Jalankan dan perbarui setiap 1 detik
+updateTrainerClock();
+setInterval(updateTrainerClock, 1000);
     </script>
 </body>
 </html>
