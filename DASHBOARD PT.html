@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Monitoring - FTL Blue</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header Navigation with FTL Blue Logo -->
+    <header class="bg-black text-white shadow-xl sticky top-0 z-50 border-b-2 border-blue-600">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            
+            <div class="flex items-center space-x-3">
+                <div class="flex flex-col items-center justify-center bg-black px-3 py-1 rounded">
+                    <span class="text-3xl font-black italic tracking-tighter text-white leading-none drop-shadow-[0_1.2px_1.2px_rgba(255,255,255,0.8)]" style="-webkit-text-stroke: 1px white; color: transparent;">FTL</span>
+                    <div class="w-full bg-gradient-to-r from-blue-900 via-blue-700 to-sky-400 mt-0.5 px-2 py-0.5 text-center transform -skew-x-12 shadow">
+                        <span class="text-[10px] font-black tracking-[0.25em] text-white uppercase block leading-none transform skew-x-12">BLUE</span>
+                    </div>
+                </div>
+                <div class="h-8 w-px bg-gray-700 mx-1"></div>
+                <h1 class="text-lg font-extrabold tracking-wider text-gray-100">MANAGER MONITORING</h1>
+            </div>
+
+            <div class="flex items-center space-x-3 mt-2 sm:mt-0">
+                <button onclick="syncCloudToManager()" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-700 hover:bg-emerald-600 text-white flex items-center shadow">
+                    <i class="fa-solid fa-rotate mr-1.5"></i> <span id="syncBtnText">Sync Data Cloud</span>
+                </button>
+
+                <button onclick="requestNotificationPermission()" id="btn-alarm" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-gray-800 hover:bg-gray-700 text-yellow-400 border border-gray-700 flex items-center">
+                    <i class="fa-solid fa-bell mr-1.5"></i> <span id="alarmStatusText">Aktifkan Pengingat 18:00</span>
+                </button>
+
+                <nav class="flex space-x-1">
+                    <button onclick="switchTab('input')" id="btn-tab-input" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition hover:bg-gray-800 text-gray-300">
+                        <i class="fa-solid fa-pen-to-square mr-1 sm:mr-2"></i>Input Aktivitas
+                    </button>
+                    <button onclick="switchTab('client')" id="btn-tab-client" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition hover:bg-gray-800 text-gray-300">
+                        <i class="fa-solid fa-users mr-1 sm:mr-2"></i>Sesi Client
+                    </button>
+                    <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition bg-blue-600 text-white shadow-md">
+                        <i class="fa-solid fa-chart-line mr-1 sm:mr-2"></i>Dashboard
+                    </button>
+                    <button onclick="switchTab('analytics')" id="btn-tab-analytics" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition hover:bg-gray-800 text-gray-300">
+                        <i class="fa-solid fa-user-doctor mr-1 sm:mr-2"></i>Analisis & Coaching
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- TAB 1: INPUT HARIAN -->
+        <section id="tab-input" class="space-y-6 hidden">
+            <div class="bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white p-5 rounded-xl shadow-lg border-l-4 border-blue-600 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <span class="bg-blue-600 text-white font-black text-[10px] px-2.5 py-0.5 rounded uppercase">Metode 1: Pengiriman File Data Massal</span>
+                    <h3 class="text-base font-extrabold mt-1"><i class="fa-solid fa-file-import text-blue-400 mr-1.5"></i> Import File Spreadsheet Aktivitas Harian</h3>
+                    <p class="text-xs text-gray-400">Kirimkan banyak data laporan harian sekaligus menggunakan file .CSV tanpa input manual.</p>
+                </div>
+                <div>
+                    <input type="file" id="importActivityCSV" accept=".csv" class="hidden" onchange="importActivityFile(event)">
+                    <button onclick="document.getElementById('importActivityCSV').click()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition shadow flex items-center">
+                        <i class="fa-solid fa-upload mr-1.5"></i> Upload CSV Aktivitas
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-600 space-y-4">
+                <h2 class="text-xl font-bold flex items-center text-gray-800">
+                    <i class="fa-solid fa-plus-circle text-blue-600 mr-2"></i> Form Input Aktivitas Trainer
+                </h2>
+                
+                <form id="activityForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Trainer</label>
+                            <select id="inputTrainer" required class="w-full border-gray-300 rounded-lg p-2.5 bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                <option value="">-- Pilih Trainer --</option>
+                                <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
+                                <option value="Bima Aminulah">Bima Aminulah</option>
+                                <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
+                                <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
+                                <option value="Dedy Mawansyah">Dedy Mawansyah</option>
+                                <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
+                                <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
+                                <option value="Rindu Adji">Rindu Adji</option>
+                                <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
+                                <option value="Wahyu Setiawan">Wahyu Setiawan</option>
+                                <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                            <input type="date" id="inputDate" required class="w-full border-gray-300 rounded-lg p-2.5 bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Penjualan (Poin)</label>
+                            <input type="number" id="inputPoints" min="0" placeholder="Contoh: 150" required class="w-full border-gray-300 rounded-lg p-2.5 bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1"><i class="fa-solid fa-box-open text-blue-600 mr-1"></i> Unit Bundling</label>
+                            <input type="number" id="inputBundling" min="0" placeholder="Jumlah unit bundling" required class="w-full border-gray-300 rounded-lg p-2.5 bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-sm font-medium text-gray-700">Jumlah Melatih (Conduct / Sesi)</label>
+                                <span class="text-xs font-bold text-gray-500">Target: 5 Sesi/hari</span>
+                            </div>
+                            <input type="number" id="inputConduct" min="0" placeholder="Jumlah sesi" required oninput="validateConductAndRA()" class="w-full border-gray-300 rounded-lg p-2.5 bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <p id="conductWarning" class="text-xs text-amber-600 hidden mt-1 font-semibold">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Melatih < 5 sesi harian! Trainer Wajib mengisi minimal 1 RA hari ini.
+                            </p>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-sm font-medium text-gray-700">Jumlah RA Harian (Maks. 20)</label>
+                                <span id="raCounter" class="text-xs font-bold text-blue-600">0 / 20 RA</span>
+                            </div>
+                            <input type="number" id="inputRA" min="0" max="20" placeholder="Min. 1 (jika melatih < 5), Maks. 20" required oninput="validateConductAndRA()" class="w-full border-gray-300 rounded-lg p-2.5 bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <p id="raWarning" class="text-xs text-red-500 hidden mt-1 font-semibold">
+                                <i class="fa-solid fa-circle-exclamation"></i> <span id="raWarningText">Maksimal RA adalah 20!</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="border-t pt-4">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Checklist Tugas Operasional Harian:</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
+                            <label class="flex items-center space-x-2 p-3 bg-gray-50 border rounded-lg cursor-pointer hover:bg-blue-50">
+                                <input type="checkbox" id="taskMaint" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                                <span class="text-sm font-medium text-gray-700">Pengecekan Alat (Maintenance)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-3 bg-gray-50 border rounded-lg cursor-pointer hover:bg-blue-50">
+                                <input type="checkbox" id="taskFollowupGO" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                                <span class="text-sm font-medium text-gray-700">Follow-up GO</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-md">
+                        <i class="fa-solid fa-paper-plane mr-2"></i>Simpan Data Aktivitas
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-database text-blue-600 mr-2"></i>Pusat Data Terinput</h3>
+                        <p class="text-xs text-gray-500">Pantau dan analisa semua riwayat aktivitas trainer di bawah ini.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="btnDeleteSelectedActivity" onclick="deleteSelectedActivity()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-2 rounded-lg text-xs transition shadow hidden">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Hapus Data Terpilih (<span id="selectedActivityCount">0</span>)
+                        </button>
+                        <button onclick="exportToCSV()" class="bg-emerald-600 text-white font-bold px-3 py-2 rounded-lg text-xs hover:bg-emerald-700 transition shadow">
+                            <i class="fa-solid fa-file-excel mr-1"></i> Download Excel/CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-gray-50 p-3 rounded-lg border">
+                    <div>
+                        <input type="text" id="recentSearchInput" onkeyup="renderRecentTable()" placeholder="Cari Nama / Tanggal..." class="w-full border border-gray-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <select id="recentTrainerFilter" onchange="renderRecentTable()" class="w-full border border-gray-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="all">Semua Trainer</option>
+                            <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
+                            <option value="Bima Aminulah">Bima Aminulah</option>
+                            <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
+                            <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
+                            <option value="Dedy Mawansyah">Dedy Mawansyah</option>
+                            <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
+                            <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
+                            <option value="Rindu Adji">Rindu Adji</option>
+                            <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
+                            <option value="Wahyu Setiawan">Wahyu Setiawan</option>
+                            <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center justify-between text-xs font-bold text-gray-600 px-2">
+                        <span>Total Records: <strong id="recordCountText" class="text-blue-600">0</strong></span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-100 text-gray-700 border-b">
+                            <tr>
+                                <th class="p-3 text-center">
+                                    <input type="checkbox" id="selectAllActivity" onchange="toggleSelectAllActivity(this)" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
+                                </th>
+                                <th class="p-3">Tanggal</th>
+                                <th class="p-3">Trainer</th>
+                                <th class="p-3">Poin</th>
+                                <th class="p-3">Unit Bundling</th>
+                                <th class="p-3">Conduct</th>
+                                <th class="p-3">RA</th>
+                                <th class="p-3">Checklist Tugas</th>
+                                <th class="p-3 text-center">Aksi / Kirim WA</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentTableBody" class="divide-y">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB MONITORING SISA SESI CLIENT -->
+        <section id="tab-client" class="space-y-6 hidden">
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-black space-y-4">
+                <div class="flex flex-wrap justify-between items-center border-b pb-3">
+                    <div>
+                        <h2 class="text-xl font-bold flex items-center text-gray-800">
+                            <i class="fa-solid fa-file-excel text-emerald-600 mr-2"></i> Import File Database Client
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-1">Gunakan tombol di bawah untuk mengunggah file CSV berisi seluruh data client sekaligus.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="file" id="importClientCSV" accept=".csv" class="hidden" onchange="importClientFile(event)">
+                        <button onclick="document.getElementById('importClientCSV').click()" class="bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg text-xs hover:bg-emerald-700 transition flex items-center shadow">
+                            <i class="fa-solid fa-file-import mr-1.5"></i> Upload CSV File Client
+                        </button>
+                    </div>
+                </div>
+
+                <form id="clientForm" class="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Nama Client</label>
+                        <input type="text" id="clientName" placeholder="Contoh: Bpk. Hendra" required class="w-full border-gray-300 rounded-lg p-2 text-xs bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Trainer Pengampu</label>
+                        <select id="clientTrainer" required class="w-full border-gray-300 rounded-lg p-2 text-xs bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="">-- Pilih Trainer --</option>
+                            <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
+                            <option value="Bima Aminulah">Bima Aminulah</option>
+                            <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
+                            <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
+                            <option value="Dedy Mawansyah">Dedy Mawansyah</option>
+                            <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
+                            <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
+                            <option value="Rindu Adji">Rindu Adji</option>
+                            <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
+                            <option value="Wahyu Setiawan">Wahyu Setiawan</option>
+                            <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Jumlah Sesi Berjalan</label>
+                        <input type="number" id="clientSessions" min="1" placeholder="Contoh: 12" required class="w-full border-gray-300 rounded-lg p-2 text-xs bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-black text-white font-bold py-2 rounded-lg text-xs hover:bg-gray-800 transition shadow">
+                            <i class="fa-solid fa-save mr-1"></i> Simpan Single Client
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-id-card text-blue-600 mr-2"></i> Database Monitoring Sisa Sesi Client</h3>
+                        <p class="text-xs text-gray-500">Filter dan pantau sisa sesi client aktif berdasarkan nama trainer pengampu.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="btnDeleteSelectedClient" onclick="deleteSelectedClient()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow hidden">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Hapus Client Terpilih (<span id="selectedClientCount">0</span>)
+                        </button>
+                        <span id="clientLowCountBadge" class="bg-red-100 text-red-800 text-xs font-extrabold px-3 py-1 rounded-full border border-red-200">
+                            0 Client Sesi Low (≤ 3)
+                        </span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg border">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-500 uppercase mb-1">Cari Nama Client</label>
+                        <input type="text" id="searchClientInput" onkeyup="renderClientTable()" placeholder="Ketik nama client..." class="w-full border border-gray-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-gray-500 uppercase mb-1"><i class="fa-solid fa-filter mr-1 text-blue-600"></i> Filter Trainer Pengampu</label>
+                        <select id="filterClientTrainer" onchange="renderClientTable()" class="w-full border border-gray-300 rounded-lg p-2 text-xs font-bold bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="all">-- Semua Trainer Pengampu --</option>
+                            <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
+                            <option value="Bima Aminulah">Bima Aminulah</option>
+                            <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
+                            <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
+                            <option value="Dedy Mawansyah">Dedy Mawansyah</option>
+                            <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
+                            <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
+                            <option value="Rindu Adji">Rindu Adji</option>
+                            <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
+                            <option value="Wahyu Setiawan">Wahyu Setiawan</option>
+                            <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-100 text-gray-700 border-b">
+                            <tr>
+                                <th class="p-3 text-center">
+                                    <input type="checkbox" id="selectAllClient" onchange="toggleSelectAllClient(this)" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
+                                </th>
+                                <th class="p-3">Nama Client</th>
+                                <th class="p-3">Trainer Pengampu</th>
+                                <th class="p-3">Sisa Sesi Berjalan</th>
+                                <th class="p-3">Status Renewal</th>
+                                <th class="p-3 text-center">Kelola Sesi</th>
+                                <th class="p-3 text-center">Edit / Aksi Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientTableBody" class="divide-y">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- TAB 2: DASHBOARD MONITORING & TARGET -->
+        <section id="tab-dashboard" class="space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-600 space-y-4">
+                <div class="flex flex-wrap justify-between items-center border-b pb-3">
+                    <div>
+                        <h2 class="text-lg font-black text-gray-800 flex items-center">
+                            <i class="fa-solid fa-clipboard-check text-blue-600 text-xl mr-2"></i> STATUS AUDIT LAPORAN HARIAN TRAINER
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Pantau real-time trainer mana saja yang sudah atau belum menginput laporan hari ini (<strong id="dailyAuditDateText" class="text-blue-600"></strong>).</p>
+                    </div>
+                    <div class="flex items-center space-x-2 mt-2 sm:mt-0">
+                        <span id="badgeReportedCount" class="bg-emerald-100 text-emerald-800 text-xs font-black px-3 py-1 rounded-full border border-emerald-200">
+                            0/11 Sudah Lapor
+                        </span>
+                        <span id="badgeNotReportedCount" class="bg-red-100 text-red-800 text-xs font-black px-3 py-1 rounded-full border border-red-200">
+                            0/11 Belum Lapor
+                        </span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm">
+                        <thead class="bg-gray-100 text-gray-700 border-b">
+                            <tr>
+                                <th class="p-3">Nama Trainer</th>
+                                <th class="p-3">Status Laporan Hari Ini</th>
+                                <th class="p-3">Poin Hari Ini</th>
+                                <th class="p-3">Unit Bundling</th>
+                                <th class="p-3">Conduct Sesi</th>
+                                <th class="p-3">RA Done</th>
+                                <th class="p-3 text-center">Aksi / Follow-Up WA</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailyAuditTableBody" class="divide-y">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-yellow-500 space-y-6">
+                <div class="flex flex-wrap justify-between items-center border-b pb-3">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-800 flex items-center">
+                            <i class="fa-solid fa-trophy text-yellow-500 text-2xl mr-2"></i> APRESIASI BEST PERFORMANCE TRAINER BULAN INI
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Penghargaan untuk trainer dengan capaian poin terbanyak di periode bulan berjalan.</p>
+                    </div>
+                    <span class="bg-amber-100 text-amber-800 font-extrabold text-xs px-3 py-1 rounded-full border border-amber-300 flex items-center">
+                        <i class="fa-solid fa-crown text-yellow-600 mr-1"></i> Top Performers
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-end">
+                    <div class="lg:col-span-2 bg-gradient-to-b from-gray-900 to-black p-6 rounded-xl text-white shadow-inner flex justify-center items-end space-x-2 sm:space-x-4 min-h-[260px]">
+                        <div class="flex flex-col items-center w-1/3">
+                            <div class="text-center mb-2">
+                                <span class="bg-gray-700 text-gray-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Juara 2</span>
+                                <h4 id="podium2Name" class="font-extrabold text-xs sm:text-sm text-gray-200 mt-1 truncate max-w-[100px] sm:max-w-[140px]">-</h4>
+                                <p id="podium2Points" class="text-xs font-bold text-yellow-400">0 Poin</p>
+                            </div>
+                            <div class="w-full bg-gradient-to-t from-gray-700 to-gray-500 rounded-t-lg h-28 flex flex-col items-center justify-center border-t-2 border-gray-300 shadow-lg">
+                                <i class="fa-solid fa-medal text-2xl text-gray-300 mb-1"></i>
+                                <span class="font-black text-xl text-white">2</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-center w-1/3 -mt-6">
+                            <div class="text-center mb-2">
+                                <i class="fa-solid fa-crown text-yellow-400 text-xl animate-bounce"></i>
+                                <span class="bg-yellow-500 text-black text-[10px] font-black px-2 py-0.5 rounded-full uppercase block w-fit mx-auto">Juara 1</span>
+                                <h4 id="podium1Name" class="font-black text-sm sm:text-base text-yellow-300 mt-1 truncate max-w-[110px] sm:max-w-[150px]">-</h4>
+                                <p id="podium1Points" class="text-sm font-black text-yellow-400">0 Poin</p>
+                            </div>
+                            <div class="w-full bg-gradient-to-t from-yellow-600 via-yellow-500 to-yellow-400 rounded-t-lg h-36 flex flex-col items-center justify-center border-t-2 border-yellow-200 shadow-2xl">
+                                <i class="fa-solid fa-trophy text-3xl text-black mb-1"></i>
+                                <span class="font-black text-2xl text-black">1</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-center w-1/3">
+                            <div class="text-center mb-2">
+                                <span class="bg-amber-800 text-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Juara 3</span>
+                                <h4 id="podium3Name" class="font-extrabold text-xs sm:text-sm text-gray-200 mt-1 truncate max-w-[100px] sm:max-w-[140px]">-</h4>
+                                <p id="podium3Points" class="text-xs font-bold text-yellow-400">0 Poin</p>
+                            </div>
+                            <div class="w-full bg-gradient-to-t from-amber-900 to-amber-700 rounded-t-lg h-20 flex flex-col items-center justify-center border-t-2 border-amber-400 shadow-lg">
+                                <i class="fa-solid fa-award text-xl text-amber-300 mb-1"></i>
+                                <span class="font-black text-lg text-white">3</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
+                        <h3 class="font-bold text-sm text-gray-800 flex items-center">
+                            <i class="fa-solid fa-list-ol text-blue-600 mr-2"></i> Peringkat Capaian SOB & Bundling
+                        </h3>
+                        <div id="leaderboardList" class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-blue-600 space-y-3">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <h3 class="font-black text-gray-800 text-sm sm:text-base flex items-center">
+                            <i class="fa-solid fa-dumbbell text-blue-600 mr-2 text-lg"></i> Top Conduct Terbanyak (High Perform)
+                        </h3>
+                        <span class="bg-blue-100 text-blue-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">Terajin Melatih</span>
+                    </div>
+                    <div id="highConductList" class="space-y-2">
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-amber-500 space-y-3">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <h3 class="font-black text-gray-800 text-sm sm:text-base flex items-center">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2 text-lg"></i> Conduct Terendah (Low Perform)
+                        </h3>
+                        <span class="bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">Butuh Evaluasi</span>
+                    </div>
+                    <div id="lowConductList" class="space-y-2">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-black via-gray-900 to-black text-white p-6 rounded-xl shadow-lg border-l-4 border-blue-600 space-y-4">
+                <div class="flex flex-wrap justify-between items-start gap-4">
+                    <div>
+                        <span class="bg-blue-600 text-white font-extrabold text-xs px-3 py-1 rounded-full uppercase tracking-wider">Target Divisi Trainer</span>
+                        <h2 class="text-2xl font-black mt-1">TARGET BULANAN DIVISI: 34.500 POIN</h2>
+                        <p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-bullseye text-blue-400 mr-1"></i> Target SOB Individual: <strong>3.000 Poin / Trainer</strong> (11 Trainer)</p>
+                    </div>
+
+                    <div class="bg-gray-800/80 border border-gray-700 p-4 rounded-xl text-right min-w-[220px]">
+                        <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">TOTAL PENCAPAIAN POIN</p>
+                        <h3 id="targetPointsAchieved" class="text-3xl font-black text-yellow-400 mt-0.5">0 Poin</h3>
+                        <p id="targetPercentBadge" class="text-xs font-extrabold text-emerald-400 mt-1">0% dari Target 34.500 Poin</p>
+                    </div>
+                </div>
+
+                <div class="w-full bg-gray-800 rounded-full h-6 p-1 border border-gray-700 shadow-inner">
+                    <div id="targetProgressBar" class="bg-gradient-to-r from-blue-600 to-sky-400 h-4 rounded-full transition-all duration-500 flex items-center justify-end pr-2 text-[10px] font-black text-black" style="width: 0%">
+                        <span id="targetPercentText">0%</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-center border-t border-gray-800 pt-4">
+                    <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-800">
+                        <p class="text-xs text-gray-400 font-medium">Persentase Capaian</p>
+                        <p id="statPercent" class="text-xl font-extrabold text-yellow-400">0%</p>
+                    </div>
+                    <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-800">
+                        <p class="text-xs text-gray-400 font-medium">Sisa Kekurangan Divisi</p>
+                        <p id="statRemainingPoints" class="text-xl font-extrabold text-red-400">34.500 Poin</p>
+                    </div>
+                    <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-800">
+                        <p class="text-xs text-gray-400 font-medium">Sisa Target Divisi / Hari</p>
+                        <p id="statDailyNeeded" class="text-xl font-extrabold text-emerald-400">0 Poin/Hari</p>
+                    </div>
+                    <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-800">
+                        <p class="text-xs text-gray-400 font-medium">Rata-Rata Poin / Trainer</p>
+                        <p id="statAvgPerTrainer" class="text-xl font-extrabold text-white">0 Poin</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-md flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-filter text-blue-600"></i>
+                    <span class="font-bold text-gray-700">Filter Monitoring:</span>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <select id="filterPeriod" onchange="renderDashboard()" class="border border-gray-300 rounded-lg p-2 text-sm bg-gray-50">
+                        <option value="all">Semua Periode</option>
+                        <option value="daily">Harian (Hari Ini)</option>
+                        <option value="weekly">7 Hari Terakhir (Mingguan)</option>
+                        <option value="monthly">Bulan Ini (Bulanan)</option>
+                    </select>
+                    <select id="filterTrainer" onchange="renderDashboard()" class="border border-gray-300 rounded-lg p-2 text-sm bg-gray-50">
+                        <option value="all">Semua Trainer</option>
+                        <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
+                        <option value="Bima Aminulah">Bima Aminulah</option>
+                        <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
+                        <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
+                        <option value="Dedy Mawansyah">Dedy Mawansyah</option>
+                        <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
+                        <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
+                        <option value="Rindu Adji">Rindu Adji</option>
+                        <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
+                        <option value="Wahyu Setiawan">Wahyu Setiawan</option>
+                        <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow border-l-4 border-yellow-500">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Total Poin Terkumpul</p>
+                    <h3 id="cardTotalPoints" class="text-2xl font-extrabold text-gray-800 mt-1">0 Poin</h3>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow border-l-4 border-emerald-500">
+                    <p class="text-xs text-gray-500 font-bold uppercase"><i class="fa-solid fa-box-open text-emerald-600 mr-1"></i> Total Unit Bundling</p>
+                    <h3 id="cardTotalBundling" class="text-2xl font-extrabold text-emerald-600 mt-1">0 Unit</h3>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow border-l-4 border-blue-500">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Total Conduct (Sesi)</p>
+                    <h3 id="cardTotalConduct" class="text-2xl font-extrabold text-gray-800 mt-1">0 Sesi</h3>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow border-l-4 border-purple-500">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Rata-Rata RA Done</p>
+                    <h3 id="cardAvgRA" class="text-2xl font-extrabold text-gray-800 mt-1">0 / 20 RA</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-xl shadow">
+                    <h3 class="font-bold text-gray-700 mb-4">Tren Perolehan Poin & Conduct</h3>
+                    <canvas id="trendChart" class="w-full h-64"></canvas>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow">
+                    <h3 class="font-bold text-gray-700 mb-4">Pencapaian Poin vs Target SOB (3.000 Poin)</h3>
+                    <canvas id="trainerComparisonChart" class="w-full h-64"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: ANALISIS & COACHING -->
+        <section id="tab-analytics" class="space-y-6 hidden">
+            <div class="bg-white p-4 rounded-xl shadow-md flex flex-wrap gap-4 items-center justify-between border-l-4 border-black">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-calendar-week text-blue-600 text-lg"></i>
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-sm">Monitoring Pace Target SOB & Unit Bundling Mingguan</h4>
+                        <p class="text-xs text-gray-500">Urutan Matriks: <strong>Good Pace (Atas)</strong> &rarr; <strong>Under Performance (Bawah)</strong></p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label class="text-xs font-bold text-gray-600">Pilih Minggu Evaluasi:</label>
+                    <select id="selectWeeklyPeriod" onchange="renderAnalytics()" class="border border-gray-300 rounded-lg p-2 text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="1">Minggu 1 (Tgt Run-Rate: 600 Poin)</option>
+                        <option value="2">Minggu 2 (Tgt Run-Rate: 1.200 Poin)</option>
+                        <option value="3">Minggu 3 (Tgt Run-Rate: 1.800 Poin)</option>
+                        <option value="4">Minggu 4 (Tgt Run-Rate: 2.400 Poin)</option>
+                        <option value="5" selected>Minggu 5 / Bulanan (Target SOB: 3.000 Poin)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-xl shadow flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-arrow-down-wide-short text-blue-600 text-2xl"></i>
+                    <div>
+                        <h4 class="font-bold text-blue-900">Struktur Urutan Matriks Performance</h4>
+                        <p class="text-xs text-blue-700">Tabel disusun rapi mulai dari trainer berstatus **Good Pace** di atas, lalu diikuti trainer berstatus **Under Performance** di bagian bawah.</p>
+                    </div>
+                </div>
+                <span id="coachingBadgeCount" class="bg-red-600 text-white font-bold text-xs px-3 py-1.5 rounded-full">0 Trainer Under Performance</span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
+                        <i class="fa-solid fa-list-check text-blue-600 mr-2"></i> Matriks Run-Rate Target SOB & Bundling Trainer
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-100 text-gray-800 border-b">
+                                <tr>
+                                    <th class="p-3">Trainer</th>
+                                    <th class="p-3">Poin Saat Ini</th>
+                                    <th class="p-3">Unit Bundling</th>
+                                    <th class="p-3">Target Run-Rate</th>
+                                    <th class="p-3">Sisa Target Poin Harian</th>
+                                    <th class="p-3">Status Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analyticsTableBody" class="divide-y">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow space-y-4">
+                    <h3 class="text-lg font-bold text-gray-700 flex items-center">
+                        <i class="fa-solid fa-clipboard-list text-blue-600 mr-2"></i> Analisis SWOT & WA Reminder
+                    </h3>
+                    <div id="coachingList" class="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL EDIT DATA CLIENT -->
+    <div id="editClientModal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
+            <div class="bg-black text-white p-4 flex justify-between items-center border-b border-blue-600">
+                <h3 class="font-bold text-sm"><i class="fa-solid fa-user-pen text-blue-500 mr-2"></i> Edit Data Client</h3>
+                <button onclick="closeEditClientModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
+            </div>
+            
+            <form id="editClientForm" class="p-5 space-y-4">
+                <input type="hidden" id="editClientId">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Nama Client</label>
+                    <input type="text" id="editClientName" required class="w-full border-gray-300 rounded-lg p-2 text-xs bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Trainer Pengampu</label>
+                    <select id="editClientTrainer" required class="w-full border-gray-300 rounded-lg p-2 text-xs bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
+                        <option value="Bima Aminulah">Bima Aminulah</option>
+                        <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
+                        <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
+                        <option value="Dedy Mawansyah">Dedy Mawansyah</option>
+                        <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
+                        <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
+                        <option value="Rindu Adji">Rindu Adji</option>
+                        <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
+                        <option value="Wahyu Setiawan">Wahyu Setiawan</option>
+                        <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Jumlah Sesi Berjalan</label>
+                    <input type="number" id="editClientSessions" min="0" required class="w-full border-gray-300 rounded-lg p-2 text-xs bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div class="flex justify-end space-x-2 pt-2 border-t">
+                    <button type="button" onclick="closeEditClientModal()" class="bg-gray-200 text-gray-800 font-bold px-3 py-1.5 rounded-lg text-xs">Batal</button>
+                    <button type="submit" class="bg-blue-600 text-white font-bold px-4 py-1.5 rounded-lg text-xs hover:bg-blue-700">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // URL GOOGLE APPS SCRIPT TERBARU
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDXSGjhRuTE9_hznksjxOVc-Hkdsih3jMZnwQIIMErugvL7P1lrDXkqOY-VIH59FvM/exec";
+
+        const DIVISION_TARGET = 34500;
+        const INDIVIDUAL_SOB_TARGET = 3000;
+
+        const trainerList = [
+            "Arini Permata Pahwandi",
+            "Bima Aminulah",
+            "Caraka Vira Satriya",
+            "Davara Cahya Alamanda",
+            "Dedy Mawansyah",
+            "Mega Putri Lusiana Sirait",
+            "Muhammad Alwansyah Arsathama",
+            "Rindu Adji",
+            "Rosi Kurnia Ayu Indah Sari",
+            "Wahyu Setiawan",
+            "Yomi David Armada Siahaan"
+        ];
+
+        document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+
+        let trendChartInstance = null;
+        let trainerChartInstance = null;
+
+        let rawStorage = localStorage.getItem('trainerData');
+        let appData = [];
+        try { appData = JSON.parse(rawStorage) || []; } catch(e) { appData = []; }
+
+        let clientData = JSON.parse(localStorage.getItem('clientData')) || [
+            { id: 101, name: 'Bpk. Hendra', trainer: 'Arini Permata Pahwandi', sessions: 8 },
+            { id: 102, name: 'Ibu Siska', trainer: 'Bima Aminulah', sessions: 2 },
+            { id: 103, name: 'Mas Anton', trainer: 'Mega Putri Lusiana Sirait', sessions: 15 }
+        ];
+
+        // SINKRONISASI OTOMATIS KE GOOGLE SHEETS
+        async function syncCloudToManager() {
+            const syncBtnText = document.getElementById('syncBtnText');
+            if (syncBtnText) syncBtnText.innerText = "Syncing...";
+            
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                const cloudData = await res.json();
+                if (Array.isArray(cloudData)) {
+                    appData = cloudData;
+                    localStorage.setItem('trainerData', JSON.stringify(appData));
+                    renderRecentTable();
+                    renderDashboard();
+                    renderAnalytics();
+                }
+            } catch(e) {
+                console.error("Gagal menyedot data cloud:", e);
+            } finally {
+                if (syncBtnText) syncBtnText.innerText = "Sync Data Cloud";
+            }
+        }
+
+        function sendDailyWAReport(trainerName, date, points, bundling, conduct, ra) {
+            const isConductLow = conduct < 5;
+            const isRALow = isConductLow && ra < 1;
+
+            let warningNote = "";
+            if (isConductLow) {
+                warningNote += `\n\n⚠️ EVALUASI OPERASIONAL HARIAN:\n- Jumlah conduct melatih Anda hari ini (${conduct} sesi) di bawah standar minimal 5 sesi/hari.`;
+                if (isRALow) {
+                    warningNote += `\n- 🚨 PERINGATAN: Anda belum mengisi RA! Sesuai SOP FTL Gym, jika melatih < 5 sesi, Anda WAJIB melakukan minimal 1 RA hari ini.`;
+                }
+            }
+
+            const message = `*FTL BLUE GYM - REKAP LAPORAN HARIAN*\n` +
+                            `----------------------------------\n` +
+                            `Halo *${trainerName}*, berikut ringkasan catatan aktivitas Anda hari ini:\n\n` +
+                            `📅 *Tanggal:* ${date}\n` +
+                            `💰 *Penjualan (Poin):* ${points.toLocaleString()} Poin\n` +
+                            `📦 *Unit Bundling:* ${bundling} Unit\n` +
+                            `🏋️ *Conduct (Sesi):* ${conduct} Sesi\n` +
+                            `📋 *RA Done:* ${ra} / 20 RA` +
+                            warningNote + `\n\n` +
+                            `Tetap semangat dan tingkatkan performa besok! 🔥\n` +
+                            `_FTL Blue Manager Monitoring System_`;
+
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        function sendNudgeWAReminder(trainerName, date) {
+            const message = `*FTL BLUE GYM - PENGINGAT LAPORAN HARIAN*\n` +
+                            `------------------------------------------\n` +
+                            `Halo *${trainerName}*,\n\n` +
+                            `🚨 Sistem mendeteksi Anda *belum menginput laporan harian* untuk tanggal *${date}*.\n\n` +
+                            `Mohon segera menginput laporan aktivitas Anda (Penjualan Poin, Unit Bundling, Conduct Sesi, dan RA Done) hari ini.\n\n` +
+                            `Terima kasih dan tetap semangat! 🔥\n` +
+                            `_FTL Blue Manager Monitoring System_`;
+
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        function sendCoachingWAReminder(trainerName, currentPoints, totalBundling, conductTotal, avgRA, dailyPaceNeeded, week) {
+            const targetRunRate = Math.min(week * 600, INDIVIDUAL_SOB_TARGET);
+            const minWeeklyConduct = week * 20;
+
+            const isPointsBehind = currentPoints < targetRunRate;
+            const isConductLow = conductTotal < minWeeklyConduct;
+            const isRALow = avgRA < 5;
+
+            let evalPoints = "";
+            
+            if (isPointsBehind) {
+                const gap = targetRunRate - currentPoints;
+                evalPoints += `\n  ❌ Capaian Poin: ${currentPoints.toLocaleString()} / Target Run-Rate ${targetRunRate.toLocaleString()} Poin (Kurang ${gap.toLocaleString()} Poin)`;
+            } else {
+                evalPoints += `\n  ✅ Capaian Poin: ${currentPoints.toLocaleString()} Poin (On Track / Capai Target W${week})`;
+            }
+
+            evalPoints += `\n  📦 Total Unit Bundling: ${totalBundling} Unit`;
+
+            if (isConductLow) {
+                evalPoints += `\n  ❌ Conduct Sesi: Akumulasi ${conductTotal} Sesi (Di bawah standar min. ${minWeeklyConduct} sesi untuk W${week})`;
+            } else {
+                evalPoints += `\n  ✅ Conduct Sesi: Akumulasi ${conductTotal} Sesi (Aman & Konsisten)`;
+            }
+
+            if (isRALow) {
+                evalPoints += `\n  ❌ Aktivitas RA: Rata-rata ${avgRA}/hari (Di bawah standar min. 5 RA/hari)`;
+            } else {
+                evalPoints += `\n  ✅ Aktivitas RA: Rata-rata ${avgRA}/hari (Konsisten & Bagus)`;
+            }
+
+            const message = `*FTL BLUE GYM - EVALUASI & REMINDER PERFORMA MINGGU KE-${week}*\n` +
+                            `--------------------------------------------------\n` +
+                            `👤 *Nama Trainer:* ${trainerName}\n` +
+                            `📅 *Periode Evaluasi:* Minggu ke-${week}\n\n` +
+                            `📊 *RINGKASAN EVALUASI PERFORMA:*` + evalPoints + `\n\n` +
+                            `🎯 *TARGET & ACTION PLAN MINGGU KE-${week}:*\n` +
+                            `• *Kekurangan Target Poin:* +${parseInt(dailyPaceNeeded).toLocaleString()} Poin / Hari sampai akhir periode\n` +
+                            `• *Target Unit Bundling:* Tingkatkan penawaran bundling produk/layanan harian\n` +
+                            `• *SOP Melatih < 5 Sesi:* WAJIB mengisi minimal 1 s/d 20 RA per hari\n` +
+                            `• *Prioritas Prospek:* Follow-up client GO & Renewal client sesi Low (≤ 3 sesi)\n` +
+                            `• *Target Final SOB:* 3.000 Poin / Trainer (Bulan Ini)\n\n` +
+                            `--------------------------------------------------\n` +
+                            `_Mohon tingkatkan aktivitas harian Anda demi mencapai target SOB & Bundling. Tetap Semangat! 🔥_`;
+
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        function importClientFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const contents = e.target.result;
+                const lines = contents.split('\n');
+                let importedCount = 0;
+
+                lines.forEach((line, index) => {
+                    if (index === 0 || !line.trim()) return; 
+                    const cols = line.split(',');
+                    if (cols.length >= 3) {
+                        const clientName = cols[0].replace(/"/g, '').trim();
+                        const trainerName = cols[1].replace(/"/g, '').trim();
+                        const sessionVal = parseInt(cols[2].trim()) || 0;
+
+                        if (clientName && trainerName) {
+                            clientData.push({
+                                id: Date.now() + Math.random(),
+                                name: clientName,
+                                trainer: trainerName,
+                                sessions: sessionVal
+                            });
+                            importedCount++;
+                        }
+                    }
+                });
+
+                localStorage.setItem('clientData', JSON.stringify(clientData));
+                alert(`Berhasil mengimpor ${importedCount} data client ke database!`);
+                renderClientTable();
+            };
+            reader.readAsText(file);
+        }
+
+        function importActivityFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const contents = e.target.result;
+                const lines = contents.split('\n');
+                let importedCount = 0;
+
+                lines.forEach((line, index) => {
+                    if (index === 0 || !line.trim()) return; 
+                    const cols = line.split(',');
+                    if (cols.length >= 5) {
+                        const dateVal = cols[0].replace(/"/g, '').trim();
+                        const trainerVal = cols[1].replace(/"/g, '').trim();
+                        const pointsVal = parseFloat(cols[2].trim()) || 0;
+                        const bundlingVal = parseInt(cols[3].trim()) || 0;
+                        const conductVal = parseInt(cols[4].trim()) || 0;
+                        const raVal = parseInt(cols[5] ? cols[5].trim() : 0) || 0;
+
+                        if (trainerVal && dateVal) {
+                            appData.push({
+                                id: Date.now() + Math.random(),
+                                date: dateVal,
+                                trainer: trainerVal,
+                                points: pointsVal,
+                                bundling: bundlingVal,
+                                conduct: conductVal,
+                                ra: raVal,
+                                tasks: { maint: true, followupGO: true }
+                            });
+                            importedCount++;
+                        }
+                    }
+                });
+
+                localStorage.setItem('trainerData', JSON.stringify(appData));
+                alert(`Berhasil mengimpor ${importedCount} data aktivitas ke database!`);
+                renderRecentTable();
+                renderDashboard();
+            };
+            reader.readAsText(file);
+        }
+
+        document.getElementById('clientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newClient = {
+                id: Date.now(),
+                name: document.getElementById('clientName').value,
+                trainer: document.getElementById('clientTrainer').value,
+                sessions: parseInt(document.getElementById('clientSessions').value) || 0
+            };
+
+            clientData.push(newClient);
+            localStorage.setItem('clientData', JSON.stringify(clientData));
+            alert('Client Baru Berhasil Ditambahkan!');
+            this.reset();
+            renderClientTable();
+        });
+
+        function openEditClientModal(clientId) {
+            const client = clientData.find(c => c.id === clientId);
+            if(client) {
+                document.getElementById('editClientId').value = client.id;
+                document.getElementById('editClientName').value = client.name;
+                document.getElementById('editClientTrainer').value = client.trainer;
+                document.getElementById('editClientSessions').value = client.sessions;
+                document.getElementById('editClientModal').classList.remove('hidden');
+            }
+        }
+
+        function closeEditClientModal() {
+            document.getElementById('editClientModal').classList.add('hidden');
+        }
+
+        document.getElementById('editClientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const clientId = parseInt(document.getElementById('editClientId').value);
+            
+            clientData = clientData.map(c => {
+                if(c.id === clientId) {
+                    return {
+                        ...c,
+                        name: document.getElementById('editClientName').value,
+                        trainer: document.getElementById('editClientTrainer').value,
+                        sessions: parseInt(document.getElementById('editClientSessions').value) || 0
+                    };
+                }
+                return c;
+            });
+
+            localStorage.setItem('clientData', JSON.stringify(clientData));
+            closeEditClientModal();
+            renderClientTable();
+        });
+
+        function renderClientTable() {
+            const tbody = document.getElementById('clientTableBody');
+            tbody.innerHTML = '';
+
+            const searchVal = (document.getElementById('searchClientInput').value || '').toLowerCase();
+            const filterTrainer = document.getElementById('filterClientTrainer').value;
+
+            let lowSessionCount = 0;
+
+            let filtered = clientData.filter(item => {
+                const matchSearch = item.name.toLowerCase().includes(searchVal);
+                const matchTrainer = filterTrainer === 'all' || item.trainer === filterTrainer;
+                return matchSearch && matchTrainer;
+            });
+
+            const selectAllCb = document.getElementById('selectAllClient');
+            if(selectAllCb) selectAllCb.checked = false;
+            updateClientSelectionCount();
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-gray-500 italic">Belum ada data client terfilter.</td></tr>`;
+                document.getElementById('clientLowCountBadge').innerText = `0 Client Sesi Low (≤ 3)`;
+                return;
+            }
+
+            filtered.forEach(client => {
+                const isLow = client.sessions <= 3;
+                if(isLow) lowSessionCount++;
+
+                let statusBadge = isLow 
+                    ? `<span class="bg-red-100 text-red-800 text-xs px-2.5 py-1 rounded-full font-extrabold flex items-center w-fit"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Sesi Low (Wajib Renewal)</span>`
+                    : `<span class="bg-green-100 text-green-800 text-xs px-2.5 py-1 rounded-full font-bold flex items-center w-fit"><i class="fa-solid fa-check mr-1"></i> Sesi Aman</span>`;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 text-xs sm:text-sm">
+                        <td class="p-3 text-center">
+                            <input type="checkbox" value="${client.id}" onchange="updateClientSelectionCount()" class="client-checkbox w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
+                        </td>
+                        <td class="p-3 font-bold text-gray-800">${client.name}</td>
+                        <td class="p-3 font-semibold text-gray-600">${client.trainer}</td>
+                        <td class="p-3 font-black ${isLow ? 'text-red-600 text-base' : 'text-gray-800'}">${client.sessions} Sesi</td>
+                        <td class="p-3">${statusBadge}</td>
+                        <td class="p-3 text-center">
+                            <div class="inline-flex space-x-1">
+                                <button onclick="adjustSession(${client.id}, -1)" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-2 py-1 rounded text-xs">-1 Sesi</button>
+                                <button onclick="adjustSession(${client.id}, 1)" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-2 py-1 rounded text-xs">+1 Sesi</button>
+                            </div>
+                        </td>
+                        <td class="p-3 text-center">
+                            <div class="inline-flex space-x-1">
+                                <button onclick="openEditClientModal(${client.id})" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-2.5 py-1 rounded text-xs flex items-center">
+                                    <i class="fa-solid fa-pen-to-square mr-1"></i> Edit Data
+                                </button>
+                                <button onclick="deleteClient(${client.id})" class="text-gray-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('clientLowCountBadge').innerText = `${lowSessionCount} Client Sesi Low (≤ 3)`;
+        }
+
+        function toggleSelectAllClient(master) {
+            const checkboxes = document.querySelectorAll('.client-checkbox');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+            updateClientSelectionCount();
+        }
+
+        function updateClientSelectionCount() {
+            const selected = document.querySelectorAll('.client-checkbox:checked');
+            const btn = document.getElementById('btnDeleteSelectedClient');
+            const countSpan = document.getElementById('selectedClientCount');
+
+            if (selected.length > 0) {
+                countSpan.innerText = selected.length;
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
+
+        function deleteSelectedClient() {
+            const selectedCbs = document.querySelectorAll('.client-checkbox:checked');
+            const idsToDelete = Array.from(selectedCbs).map(cb => parseFloat(cb.value));
+
+            if (idsToDelete.length === 0) return;
+
+            if (confirm(`Apakah Anda yakin ingin menghapus ${idsToDelete.length} data client yang dipilih secara permanen?`)) {
+                clientData = clientData.filter(c => !idsToDelete.includes(c.id));
+                localStorage.setItem('clientData', JSON.stringify(clientData));
+                renderClientTable();
+            }
+        }
+
+        function adjustSession(clientId, change) {
+            clientData = clientData.map(c => {
+                if(c.id === clientId) {
+                    let newSess = Math.max(c.sessions + change, 0);
+                    return { ...c, sessions: newSess };
+                }
+                return c;
+            });
+            localStorage.setItem('clientData', JSON.stringify(clientData));
+            renderClientTable();
+        }
+
+        function deleteClient(clientId) {
+            if(confirm('Apakah Anda yakin ingin menghapus client ini dari database?')) {
+                clientData = clientData.filter(c => c.id !== clientId);
+                localStorage.setItem('clientData', JSON.stringify(clientData));
+                renderClientTable();
+            }
+        }
+
+        function validateConductAndRA() {
+            const conductInput = parseInt(document.getElementById('inputConduct').value) || 0;
+            const raInput = parseInt(document.getElementById('inputRA').value) || 0;
+            const conductWarning = document.getElementById('conductWarning');
+            const raWarning = document.getElementById('raWarning');
+            const raWarningText = document.getElementById('raWarningText');
+
+            if (conductInput < 5) {
+                conductWarning.classList.remove('hidden');
+                if (raInput < 1) {
+                    raWarning.classList.remove('hidden');
+                    raWarningText.innerText = "Karena melatih < 5 sesi, Trainer WAJIB mengisi minimal 1 RA!";
+                } else if (raInput > 20) {
+                    raWarning.classList.remove('hidden');
+                    raWarningText.innerText = "Maksimal RA harian adalah 20!";
+                } else {
+                    raWarning.classList.add('hidden');
+                }
+            } else {
+                conductWarning.classList.add('hidden');
+                if (raInput > 20) {
+                    raWarning.classList.remove('hidden');
+                    raWarningText.innerText = "Maksimal RA harian adalah 20!";
+                } else {
+                    raWarning.classList.add('hidden');
+                }
+            }
+
+            document.getElementById('raCounter').innerText = `${raInput} / 20 RA`;
+        }
+
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        document.getElementById('alarmStatusText').innerText = "Pengingat 18:00 WIB Aktif";
+                        alert("Pengingat Harian Aktif! Sistem akan memberikan notifikasi setiap pukul 18:00 WIB.");
+                    }
+                });
+            } else {
+                alert("Browser Anda tidak mendukung fitur Notifikasi.");
+            }
+        }
+
+        setInterval(() => {
+            const now = new Date();
+            if (now.getHours() === 18 && now.getMinutes() === 0 && now.getSeconds() === 0) {
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification("FTL BLUE - MONITORING REMINDER", {
+                        body: "Pukul 18:00 WIB! Waktunya mengecek dan menginput laporan aktivitas RA & Conduct Trainer hari ini.",
+                        icon: "https://cdn-icons-png.flaticon.com/512/3602/3602123.png"
+                    });
+                }
+            }
+        }, 1000);
+
+        function switchTab(tab) {
+            ['input', 'client', 'dashboard', 'analytics'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`btn-tab-${t}`).className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition hover:bg-gray-800 text-gray-300";
+            });
+
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`btn-tab-${tab}`).className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition bg-blue-600 text-white shadow-md";
+
+            if (tab === 'dashboard') renderDashboard();
+            if (tab === 'analytics') renderAnalytics();
+            if (tab === 'client') renderClientTable();
+        }
+
+        document.getElementById('activityForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const conductVal = parseInt(document.getElementById('inputConduct').value) || 0;
+            const raVal = parseInt(document.getElementById('inputRA').value) || 0;
+            const bundlingVal = parseInt(document.getElementById('inputBundling').value) || 0;
+
+            if (conductVal < 5 && raVal < 1) {
+                alert("PERINGATAN: Karena jumlah melatih kurang dari 5 sesi, Trainer wajib melakukan dan menginput minimal 1 RA!");
+                return;
+            }
+
+            if (raVal > 20) {
+                alert("PERINGATAN: Maksimal RA harian adalah 20!");
+                return;
+            }
+            
+            const newEntry = {
+                id: Date.now(),
+                trainer: document.getElementById('inputTrainer').value,
+                date: document.getElementById('inputDate').value,
+                points: parseFloat(document.getElementById('inputPoints').value) || 0,
+                bundling: bundlingVal,
+                conduct: conductVal,
+                ra: raVal,
+                tasks: {
+                    maint: document.getElementById('taskMaint').checked,
+                    followupGO: document.getElementById('taskFollowupGO').checked
+                }
+            };
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(newEntry)
+                });
+            } catch(err) {
+                console.error("Gagal sync cloud:", err);
+            }
+
+            appData.push(newEntry);
+            localStorage.setItem('trainerData', JSON.stringify(appData));
+            
+            alert('Data Aktivitas Berhasil Disimpan!');
+            this.reset();
+            document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('raCounter').innerText = "0 / 20 RA";
+            document.getElementById('conductWarning').classList.add('hidden');
+            renderRecentTable();
+            renderDashboard();
+        });
+
+        function renderRecentTable() {
+            const tbody = document.getElementById('recentTableBody');
+            tbody.innerHTML = '';
+            
+            const searchKeyword = (document.getElementById('recentSearchInput').value || '').toLowerCase();
+            const selectedTrainer = document.getElementById('recentTrainerFilter').value;
+
+            let filteredData = appData.filter(item => {
+                const itemTrainer = item.trainer || '';
+                const itemDate = item.date || '';
+                const matchSearch = itemTrainer.toLowerCase().includes(searchKeyword) || itemDate.includes(searchKeyword);
+                const matchTrainer = selectedTrainer === 'all' || itemTrainer === selectedTrainer;
+                return matchSearch && matchTrainer;
+            });
+
+            document.getElementById('recordCountText').innerText = filteredData.length;
+
+            const selectAllCb = document.getElementById('selectAllActivity');
+            if(selectAllCb) selectAllCb.checked = false;
+            updateActivitySelectionCount();
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center p-4 text-gray-500 italic">Tidak ada data ditemukan.</td></tr>`;
+                return;
+            }
+
+            [...filteredData].reverse().forEach(item => {
+                const tasks = item.tasks || {};
+                const taskCount = Object.values(tasks).filter(Boolean).length;
+                const points = parseFloat(item.points) || 0;
+                const bundling = parseInt(item.bundling) || 0;
+                const conduct = parseInt(item.conduct) || 0;
+                const ra = parseInt(item.ra) || 0;
+
+                let conductBadge = conduct < 5 
+                    ? `<span class="text-amber-600 font-bold">${conduct} Sesi (< 5)</span>` 
+                    : `${conduct} Sesi`;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 text-xs sm:text-sm">
+                        <td class="p-3 text-center">
+                            <input type="checkbox" value="${item.id}" onchange="updateActivitySelectionCount()" class="activity-checkbox w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
+                        </td>
+                        <td class="p-3 font-medium text-gray-600">${item.date}</td>
+                        <td class="p-3 font-bold text-gray-800">${item.trainer}</td>
+                        <td class="p-3 font-extrabold text-blue-600">${points.toLocaleString()} Poin</td>
+                        <td class="p-3 font-extrabold text-emerald-600">${bundling} Unit</td>
+                        <td class="p-3">${conductBadge}</td>
+                        <td class="p-3"><span class="bg-gray-100 text-gray-800 px-2 py-0.5 rounded font-semibold border">${ra}/20</span></td>
+                        <td class="p-3"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-semibold">${taskCount}/2 Selesai</span></td>
+                        <td class="p-3 text-center">
+                            <div class="inline-flex space-x-1">
+                                <button onclick="sendDailyWAReport('${item.trainer}', '${item.date}', ${points}, ${bundling}, ${conduct}, ${ra})" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2 py-1 rounded text-xs flex items-center shadow" title="Kirim Laporan ke WA Trainer">
+                                    <i class="fa-brands fa-whatsapp text-sm mr-1"></i> WA
+                                </button>
+                                <button onclick="deleteEntry(${item.id})" class="text-red-500 hover:text-red-700 p-1"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function toggleSelectAllActivity(master) {
+            const checkboxes = document.querySelectorAll('.activity-checkbox');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+            updateActivitySelectionCount();
+        }
+
+        function updateActivitySelectionCount() {
+            const selected = document.querySelectorAll('.activity-checkbox:checked');
+            const btn = document.getElementById('btnDeleteSelectedActivity');
+            const countSpan = document.getElementById('selectedActivityCount');
+
+            if (selected.length > 0) {
+                countSpan.innerText = selected.length;
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
+
+        // FUNGSI HAPUS TERSINKRON KE GOOGLE SHEETS CLOUD
+        async function deleteEntry(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus catatan data ini secara permanen dari Cloud & Database?')) {
+                appData = appData.filter(x => x.id !== id);
+                localStorage.setItem('trainerData', JSON.stringify(appData));
+                
+                renderRecentTable();
+                renderDashboard();
+
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: "delete", id: id })
+                    });
+                    alert('Data berhasil dihapus secara permanen dari Database Cloud!');
+                } catch(err) {
+                    console.error("Gagal menghapus data dari Cloud:", err);
+                }
+            }
+        }
+
+        async function deleteSelectedActivity() {
+            const selectedCbs = document.querySelectorAll('.activity-checkbox:checked');
+            const idsToDelete = Array.from(selectedCbs).map(cb => parseFloat(cb.value));
+
+            if (idsToDelete.length === 0) return;
+
+            if (confirm(`Apakah Anda yakin ingin menghapus ${idsToDelete.length} data aktivitas yang dipilih secara permanen dari Cloud?`)) {
+                appData = appData.filter(x => !idsToDelete.includes(x.id));
+                localStorage.setItem('trainerData', JSON.stringify(appData));
+                renderRecentTable();
+                renderDashboard();
+
+                for (let id of idsToDelete) {
+                    try {
+                        await fetch(GOOGLE_SCRIPT_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({ action: "delete", id: id })
+                        });
+                    } catch(e) {}
+                }
+                alert('Data terpilih berhasil dihapus secara permanen!');
+            }
+        }
+
+        function exportToCSV() {
+            if (appData.length === 0) {
+                alert('Belum ada data terinput untuk diunduh.');
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,ID,Tanggal,Trainer,Poin,Unit_Bundling,Conduct_Sesi,RA_Done,Maintenance,Followup_GO\n";
+
+            appData.forEach(row => {
+                const maint = row.tasks && row.tasks.maint ? true : false;
+                const followupGO = row.tasks && row.tasks.followupGO ? true : false;
+                csvContent += `${row.id},${row.date},"${row.trainer}",${row.points || 0},${row.bundling || 0},${row.conduct || 0},${row.ra || 0},${maint},${followupGO}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Data_Trainer_Monitoring_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function renderDailyAuditTable(todayStr) {
+            const tbody = document.getElementById('dailyAuditTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            document.getElementById('dailyAuditDateText').innerText = todayStr;
+
+            let reportedCount = 0;
+            let notReportedCount = 0;
+
+            trainerList.forEach(trainerName => {
+                const todayLog = appData.find(d => d.trainer === trainerName && d.date === todayStr);
+
+                if (todayLog) {
+                    reportedCount++;
+                    const pts = parseFloat(todayLog.points) || 0;
+                    const bundling = parseInt(todayLog.bundling) || 0;
+                    const conduct = parseInt(todayLog.conduct) || 0;
+                    const ra = parseInt(todayLog.ra) || 0;
+
+                    tbody.innerHTML += `
+                        <tr class="bg-emerald-50/40 hover:bg-emerald-50">
+                            <td class="p-3 font-bold text-gray-800">${trainerName}</td>
+                            <td class="p-3">
+                                <span class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-extrabold inline-flex items-center">
+                                    <i class="fa-solid fa-circle-check mr-1.5 text-emerald-600"></i> Sudah Lapor
+                                </span>
+                            </td>
+                            <td class="p-3 font-extrabold text-blue-600">${pts.toLocaleString()} Poin</td>
+                            <td class="p-3 font-extrabold text-emerald-600">${bundling} Unit</td>
+                            <td class="p-3 font-bold">${conduct} Sesi</td>
+                            <td class="p-3 font-bold">${ra}/20 RA</td>
+                            <td class="p-3 text-center">
+                                <button onclick="sendDailyWAReport('${trainerName}', '${todayStr}', ${pts}, ${bundling}, ${conduct}, ${ra})" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded text-xs inline-flex items-center shadow">
+                                    <i class="fa-brands fa-whatsapp text-sm mr-1"></i> Rekap WA
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    notReportedCount++;
+                    tbody.innerHTML += `
+                        <tr class="bg-red-50/40 hover:bg-red-50">
+                            <td class="p-3 font-bold text-gray-800">${trainerName}</td>
+                            <td class="p-3">
+                                <span class="bg-red-100 text-red-800 text-xs px-2.5 py-1 rounded-full font-extrabold inline-flex items-center">
+                                    <i class="fa-solid fa-circle-xmark mr-1.5 text-red-600"></i> Belum Lapor
+                                </span>
+                            </td>
+                            <td class="p-3 text-gray-400 font-semibold">-</td>
+                            <td class="p-3 text-gray-400 font-semibold">-</td>
+                            <td class="p-3 text-gray-400 font-semibold">-</td>
+                            <td class="p-3 text-gray-400 font-semibold">-</td>
+                            <td class="p-3 text-center">
+                                <button onclick="sendNudgeWAReminder('${trainerName}', '${todayStr}')" class="bg-amber-500 hover:bg-amber-600 text-black font-extrabold px-2.5 py-1 rounded text-xs inline-flex items-center shadow">
+                                    <i class="fa-brands fa-whatsapp text-sm mr-1"></i> Colek WA
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+
+            document.getElementById('badgeReportedCount').innerText = `${reportedCount}/11 Sudah Lapor`;
+            document.getElementById('badgeNotReportedCount').innerText = `${notReportedCount}/11 Belum Lapor`;
+        }
+
+        function renderDashboard() {
+            const selectedTrainer = document.getElementById('filterTrainer').value;
+            const selectedPeriod = document.getElementById('filterPeriod').value;
+
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+
+            renderDailyAuditTable(todayStr);
+            
+            let filtered = appData.filter(item => {
+                const matchTrainer = selectedTrainer === 'all' || item.trainer === selectedTrainer;
+                
+                let matchPeriod = true;
+                if (selectedPeriod === 'daily') {
+                    matchPeriod = item.date === todayStr;
+                } else if (selectedPeriod === 'weekly') {
+                    const itemDate = new Date(item.date);
+                    const diffTime = Math.abs(now - itemDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    matchPeriod = diffDays <= 7;
+                } else if (selectedPeriod === 'monthly') {
+                    const itemDate = new Date(item.date);
+                    matchPeriod = itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+                }
+
+                return matchTrainer && matchPeriod;
+            });
+
+            const overallPoints = appData.reduce((acc, curr) => {
+                const pts = parseFloat(curr.points);
+                return acc + (isNaN(pts) ? 0 : pts);
+            }, 0);
+
+            const percentage = Math.min(((overallPoints / DIVISION_TARGET) * 100), 100).toFixed(1);
+            const remaining = Math.max(DIVISION_TARGET - overallPoints, 0);
+            
+            const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const remainingDaysInMonth = Math.max((lastDayOfMonth - now.getDate()) + 1, 1);
+            
+            const dailyPointsNeeded = (remaining / remainingDaysInMonth).toFixed(0);
+            const avgPerTrainer = (overallPoints / trainerList.length).toFixed(0);
+
+            document.getElementById('targetPointsAchieved').innerText = `${overallPoints.toLocaleString()} Poin`;
+            document.getElementById('targetPercentBadge').innerText = `${percentage}% dari Target 34.500 Poin`;
+            document.getElementById('targetProgressBar').style.width = `${percentage}%`;
+            document.getElementById('targetPercentText').innerText = `${percentage}%`;
+            document.getElementById('statPercent').innerText = `${percentage}%`;
+            document.getElementById('statRemainingPoints').innerText = `${remaining.toLocaleString()} Poin`;
+            document.getElementById('statDailyNeeded').innerText = `${parseInt(dailyPointsNeeded).toLocaleString()} Poin/Hari`;
+            document.getElementById('statAvgPerTrainer').innerText = `${parseInt(avgPerTrainer).toLocaleString()} Poin`;
+
+            let rankedTrainersByPoints = trainerList.map(t => {
+                const tPoints = appData.filter(d => d.trainer === t).reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+                return { name: t, points: tPoints };
+            }).sort((a, b) => b.points - a.points);
+
+            document.getElementById('podium1Name').innerText = rankedTrainersByPoints[0] ? rankedTrainersByPoints[0].name.split(' ')[0] : '-';
+            document.getElementById('podium1Points').innerText = rankedTrainersByPoints[0] ? `${rankedTrainersByPoints[0].points.toLocaleString()} Poin` : '0 Poin';
+
+            document.getElementById('podium2Name').innerText = rankedTrainersByPoints[1] ? rankedTrainersByPoints[1].name.split(' ')[0] : '-';
+            document.getElementById('podium2Points').innerText = rankedTrainersByPoints[1] ? `${rankedTrainersByPoints[1].points.toLocaleString()} Poin` : '0 Poin';
+
+            document.getElementById('podium3Name').innerText = rankedTrainersByPoints[2] ? rankedTrainersByPoints[2].name.split(' ')[0] : '-';
+            document.getElementById('podium3Points').innerText = rankedTrainersByPoints[2] ? `${rankedTrainersByPoints[2].points.toLocaleString()} Poin` : '0 Poin';
+
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+            rankedTrainersByPoints.slice(0, 5).forEach((t, index) => {
+                const sobPct = ((t.points / INDIVIDUAL_SOB_TARGET) * 100).toFixed(0);
+                const tBundling = appData.filter(d => d.trainer === t.name).reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+                leaderboardList.innerHTML += `
+                    <div class="flex justify-between items-center p-2 bg-white rounded border shadow-sm text-xs">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-extrabold text-gray-500 w-4">${index + 1}.</span>
+                            <span class="font-bold text-gray-800 truncate max-w-[120px]">${t.name}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-black text-blue-600 block">${t.points.toLocaleString()} Poin (${tBundling} Bundling)</span>
+                            <span class="text-[10px] text-gray-400 font-semibold">${sobPct}% Target SOB</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            let rankedTrainersByConduct = trainerList.map(t => {
+                const tConduct = appData.filter(d => d.trainer === t).reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+                return { name: t, conduct: tConduct };
+            }).sort((a, b) => b.conduct - a.conduct);
+
+            const highConductList = document.getElementById('highConductList');
+            highConductList.innerHTML = '';
+            rankedTrainersByConduct.slice(0, 3).forEach((t, idx) => {
+                highConductList.innerHTML += `
+                    <div class="flex justify-between items-center p-2.5 bg-blue-50/60 rounded-lg border border-blue-100 text-xs">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="bg-blue-600 text-white font-black w-5 h-5 flex items-center justify-center rounded-full text-[10px]">${idx + 1}</span>
+                            <span class="font-bold text-gray-800">${t.name}</span>
+                        </div>
+                        <span class="font-black text-blue-700 text-sm">${t.conduct} Sesi</span>
+                    </div>
+                `;
+            });
+
+            const lowConductList = document.getElementById('lowConductList');
+            lowConductList.innerHTML = '';
+            [...rankedTrainersByConduct].reverse().slice(0, 3).forEach((t, idx) => {
+                lowConductList.innerHTML += `
+                    <div class="flex justify-between items-center p-2.5 bg-amber-50/60 rounded-lg border border-amber-100 text-xs">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="bg-amber-600 text-white font-black w-5 h-5 flex items-center justify-center rounded-full text-[10px]">${idx + 1}</span>
+                            <span class="font-bold text-gray-800">${t.name}</span>
+                        </div>
+                        <span class="font-black text-amber-700 text-sm">${t.conduct} Sesi</span>
+                    </div>
+                `;
+            });
+
+            const totalPoints = filtered.reduce((acc, curr) => acc + (parseFloat(curr.points) || 0), 0);
+            const totalBundling = filtered.reduce((acc, curr) => acc + (parseInt(curr.bundling) || 0), 0);
+            const totalConduct = filtered.reduce((acc, curr) => acc + (parseInt(curr.conduct) || 0), 0);
+            const totalRA = filtered.reduce((acc, curr) => acc + (parseInt(curr.ra) || 0), 0);
+            const avgRA = filtered.length ? (totalRA / filtered.length).toFixed(1) : 0;
+
+            document.getElementById('cardTotalPoints').innerText = `${totalPoints.toLocaleString()} Poin`;
+            document.getElementById('cardTotalBundling').innerText = `${totalBundling} Unit`;
+            document.getElementById('cardTotalConduct').innerText = `${totalConduct} Sesi`;
+            document.getElementById('cardAvgRA').innerText = `${avgRA} / 20 RA`;
+
+            renderCharts(filtered);
+        }
+
+        function renderCharts(data) {
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            const ctxTrainer = document.getElementById('trainerComparisonChart').getContext('2d');
+
+            if (trendChartInstance) trendChartInstance.destroy();
+            if (trainerChartInstance) trainerChartInstance.destroy();
+
+            const dates = [...new Set(data.map(d => d.date))].sort();
+            const pointsTrend = dates.map(date => data.filter(d => d.date === date).reduce((a, b) => a + (parseFloat(b.points) || 0), 0));
+            const conductTrend = dates.map(date => data.filter(d => d.date === date).reduce((a, b) => a + (parseInt(b.conduct) || 0), 0));
+
+            trendChartInstance = new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        { label: 'Poin Terkumpul', data: pointsTrend, borderColor: '#2563EB', backgroundColor: 'rgba(37, 99, 235, 0.1)', fill: true, yAxisID: 'y' },
+                        { label: 'Conduct (Sesi)', data: conductTrend, borderColor: '#0284C7', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { type: 'linear', position: 'left' },
+                        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+
+            const pointsByTrainer = trainerList.map(t => data.filter(d => d.trainer === t).reduce((a,b) => a + (parseFloat(b.points) || 0), 0));
+            const shortTrainerNames = trainerList.map(t => t.split(' ')[0]);
+
+            trainerChartInstance = new Chart(ctxTrainer, {
+                type: 'bar',
+                data: {
+                    labels: shortTrainerNames,
+                    datasets: [
+                        { label: 'Poin Capaian', data: pointsByTrainer, backgroundColor: '#2563EB' },
+                        { label: 'Target SOB (3.000)', data: trainerList.map(() => INDIVIDUAL_SOB_TARGET), backgroundColor: '#E5E7EB', type: 'line', borderColor: '#9CA3AF', borderDash: [5, 5] }
+                    ]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function renderAnalytics() {
+            const tbody = document.getElementById('analyticsTableBody');
+            const coachingList = document.getElementById('coachingList');
+            tbody.innerHTML = '';
+            coachingList.innerHTML = '';
+
+            const selectedWeek = parseInt(document.getElementById('selectWeeklyPeriod').value) || 5;
+            
+            const targetRunRate = Math.min(selectedWeek * 600, INDIVIDUAL_SOB_TARGET);
+            const minSafeRunRate = targetRunRate * 0.8; 
+
+            let underPerformanceCount = 0;
+
+            let trainerAnalyticsData = trainerList.map(trainer => {
+                const logs = appData.filter(d => d.trainer === trainer);
+                const totalPoints = logs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+                const totalBundling = logs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+                const totalRA = logs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
+                const avgRA = logs.length ? (totalRA / logs.length).toFixed(1) : 0;
+                const totalConduct = logs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+                
+                const remainingDays = Math.max((5 - selectedWeek) * 7 + 7, 1); 
+                const pointDeficit = Math.max(targetRunRate - totalPoints, 0);
+                const dailyPaceNeeded = (pointDeficit / remainingDays).toFixed(0);
+
+                const isUnderperforming = totalPoints < minSafeRunRate;
+                if(isUnderperforming) underPerformanceCount++;
+
+                return {
+                    trainer,
+                    totalPoints,
+                    totalBundling,
+                    avgRA,
+                    totalConduct,
+                    pointDeficit,
+                    dailyPaceNeeded,
+                    isUnderperforming
+                };
+            });
+
+            trainerAnalyticsData.sort((a, b) => {
+                if (a.isUnderperforming !== b.isUnderperforming) {
+                    return a.isUnderperforming ? 1 : -1;
+                }
+                if (!a.isUnderperforming && !b.isUnderperforming) {
+                    return b.totalPoints - a.totalPoints;
+                }
+                return b.pointDeficit - a.pointDeficit;
+            });
+
+            trainerAnalyticsData.forEach(item => {
+                const { trainer, totalPoints, totalBundling, avgRA, totalConduct, dailyPaceNeeded, isUnderperforming } = item;
+
+                let statusBadge = isUnderperforming 
+                    ? `<span class="bg-red-100 text-red-800 text-xs px-2.5 py-1 rounded-full font-extrabold flex items-center w-fit"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Under Performance (W${selectedWeek})</span>`
+                    : `<span class="bg-green-100 text-green-800 text-xs px-2.5 py-1 rounded-full font-extrabold flex items-center w-fit"><i class="fa-solid fa-circle-check mr-1"></i> Good Pace (W${selectedWeek})</span>`;
+
+                tbody.innerHTML += `
+                    <tr class="${isUnderperforming ? 'bg-red-50/40' : 'hover:bg-gray-50'}">
+                        <td class="p-3 font-bold">${trainer}</td>
+                        <td class="p-3 text-blue-600 font-extrabold">${totalPoints.toLocaleString()} Poin</td>
+                        <td class="p-3 font-extrabold text-emerald-600"><i class="fa-solid fa-box-open mr-1"></i>${totalBundling} Unit</td>
+                        <td class="p-3 font-semibold text-gray-700">${targetRunRate.toLocaleString()} Poin (W${selectedWeek})</td>
+                        <td class="p-3 font-bold ${dailyPaceNeeded > 0 ? 'text-amber-600' : 'text-emerald-600'}">${dailyPaceNeeded > 0 ? dailyPaceNeeded.toLocaleString() + ' Poin/Hari' : 'On Track'}</td>
+                        <td class="p-3">${statusBadge}</td>
+                    </tr>
+                `;
+
+                if (isUnderperforming) {
+                    let strength = totalBundling > 0 
+                        ? `Sudah menghasilkan ${totalBundling} Unit Bundling & ${avgRA >= 10 ? 'RA harian konsisten' : 'disiplin laporan'}`
+                        : (avgRA >= 10 ? `Aktivitas RA harian konsisten (Avg ${avgRA}/hari)` : "Disiplin menginput laporan harian");
+                    let weakness = `Baru mencapai ${totalPoints.toLocaleString()} dari target run-rate W${selectedWeek} (${targetRunRate.toLocaleString()} Poin)`;
+                    let opportunity = totalConduct < (selectedWeek * 20) 
+                        ? `Melatih < ${selectedWeek * 20} sesi, maksimalkan penawaran unit bundling & min 1 s/d 20 RA per hari` 
+                        : `Dibutuhkan target +${dailyPaceNeeded} Poin/hari & dorong penawaran bundling sampai akhir periode`;
+                    let threat = `Risiko tertinggal akumulasi SOB akhir bulan jika pace penjualan & unit bundling minggu ke-${selectedWeek} tidak ditingkatkan`;
+
+                    coachingList.innerHTML += `
+                        <div class="p-4 bg-red-50 border-l-4 border-red-600 rounded-r-lg shadow-sm space-y-3">
+                            <div class="flex justify-between items-center border-b border-red-200 pb-2">
+                                <h5 class="font-black text-red-900 text-base">${trainer}</h5>
+                                <button onclick="sendCoachingWAReminder('${trainer}', ${totalPoints}, ${totalBundling}, ${totalConduct}, ${avgRA}, ${dailyPaceNeeded}, ${selectedWeek})" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3 py-1 rounded-full text-xs shadow flex items-center">
+                                    <i class="fa-brands fa-whatsapp text-sm mr-1"></i> Kirim WA Reminder
+                                </button>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-1.5 text-xs pt-1">
+                                <div class="bg-white p-2 rounded border border-red-100">
+                                    <span class="font-bold text-emerald-700 block"><i class="fa-solid fa-shield-halved mr-1"></i> S (Strength):</span>
+                                    <p class="text-gray-700">${strength}</p>
+                                </div>
+                                <div class="bg-white p-2 rounded border border-red-100">
+                                    <span class="font-bold text-red-700 block"><i class="fa-solid fa-bug mr-1"></i> W (Weakness):</span>
+                                    <p class="text-gray-700">${weakness}</p>
+                                </div>
+                                <div class="bg-white p-2 rounded border border-red-100">
+                                    <span class="font-bold text-blue-700 block"><i class="fa-solid fa-lightbulb mr-1"></i> O (Opportunity / Target Harian):</span>
+                                    <p class="text-gray-700">${opportunity}</p>
+                                </div>
+                                <div class="bg-white p-2 rounded border border-red-100">
+                                    <span class="font-bold text-amber-700 block"><i class="fa-solid fa-triangle-exclamation mr-1"></i> T (Threat):</span>
+                                    <p class="text-gray-700">${threat}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (underPerformanceCount === 0) {
+                coachingList.innerHTML = `
+                    <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-center text-green-800 text-sm">
+                        <i class="fa-solid fa-circle-check text-2xl mb-1 text-green-600"></i>
+                        <p class="font-bold">Luar Biasa!</p>
+                        <p class="text-xs text-green-600 mt-1">Semua trainer berada dalam jalur aman (Good Pace) untuk Minggu ke-${selectedWeek}.</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('coachingBadgeCount').innerText = `${underPerformanceCount} Trainer Under Performance (W${selectedWeek})`;
+        }
+
+        // INITIAL LOAD & AUTO SYNC FROM GOOGLE SHEETS
+        syncCloudToManager();
+        renderRecentTable();
+        renderDashboard();
+        renderClientTable();
+    </script>
+</body>
+</html>

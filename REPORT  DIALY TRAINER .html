@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Trainer & Dashboard Performa - FTL Blue</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-100 text-gray-800 pb-10">
+
+    <!-- Header Trainer -->
+    <header class="bg-black text-white shadow-xl sticky top-0 z-50 border-b-2 border-blue-600">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="flex flex-col items-center justify-center bg-black px-2.5 py-1 rounded">
+                    <span class="text-2xl font-black italic tracking-tighter text-white leading-none" style="-webkit-text-stroke: 1px white; color: transparent;">FTL</span>
+                    <div class="w-full bg-gradient-to-r from-blue-900 via-blue-700 to-sky-400 mt-0.5 px-1 py-0.5 text-center transform -skew-x-12">
+                        <span class="text-[9px] font-black tracking-[0.2em] text-white uppercase block leading-none transform skew-x-12">BLUE</span>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-sm font-extrabold tracking-wider text-gray-100">PORTAL SMART COACH</h1>
+                    <p class="text-[10px] text-gray-400">Dashboard Performa & Form Laporan Harian</p>
+                </div>
+            </div>
+            <button onclick="syncTrainerData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow flex items-center">
+                <i class="fa-solid fa-rotate mr-1.5"></i> Refresh Data
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+
+        <!-- PILIH NAMA TRAINER -->
+        <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-blue-600 flex flex-wrap justify-between items-center gap-3">
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-wider mb-1"><i class="fa-solid fa-user-gear text-blue-600 mr-1"></i> Pilih Profil Trainer Anda:</label>
+                <select id="selectTrainerHeader" onchange="onTrainerChange(this.value)" class="border border-gray-300 rounded-lg p-2.5 text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none w-full sm:w-80">
+                    <option value="">-- Pilih Nama Trainer --</option>
+                    <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
+                    <option value="Bima Aminulah">Bima Aminulah</option>
+                    <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
+                    <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
+                    <option value="Dedy Mawansyah">Dedy Mawansyah</option>
+                    <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
+                    <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
+                    <option value="Rindu Adji">Rindu Adji</option>
+                    <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
+                    <option value="Wahyu Setiawan">Wahyu Setiawan</option>
+                    <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
+                </select>
+            </div>
+            <div id="statusSyncBadge" class="text-right text-[11px] text-gray-500 font-semibold">
+                <span class="inline-flex items-center text-emerald-600 font-bold"><i class="fa-solid fa-cloud-check mr-1"></i> Cloud Connected</span>
+            </div>
+        </div>
+
+        <!-- DASHBOARD TRAINER HALAMAN AWAL -->
+        <div id="summaryCard" class="bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white p-5 sm:p-6 rounded-xl shadow-xl border-l-4 border-blue-600 space-y-5">
+            <div class="flex flex-wrap justify-between items-center border-b border-gray-800 pb-3 gap-2">
+                <div>
+                    <span class="bg-blue-600 text-white text-[9px] font-black px-2.5 py-0.5 rounded uppercase">Dashboard Performa Berjalan</span>
+                    <h2 id="summaryTrainerName" class="text-lg sm:text-xl font-black mt-1 text-yellow-400">Silakan Pilih Nama Trainer di Atas</h2>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs text-gray-400 block"><i class="fa-solid fa-award text-yellow-400 mr-1"></i> Tier Komisi Aktif</span>
+                    <span id="summaryCurrentTierBadge" class="text-sm font-black text-sky-400">FC (Flat Rate)</span>
+                </div>
+            </div>
+
+            <!-- TOTAL ESTIMASI PENDAPATAN & TARGET BREAKDOWN -->
+            <div class="bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950 p-4 sm:p-5 rounded-xl border border-emerald-500/50 shadow-inner space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-3 border-b border-emerald-800/60 pb-3">
+                    <div>
+                        <p class="text-[10px] font-black text-emerald-300 uppercase tracking-wider"><i class="fa-solid fa-wallet mr-1"></i> Total Estimasi Pendapatan Berjalan</p>
+                        <h3 id="summaryTotalCommission" class="text-2xl sm:text-4xl font-black text-emerald-400 mt-0.5">Rp 0</h3>
+                    </div>
+                    <div class="bg-black/50 px-3.5 py-2 rounded-lg border border-emerald-500/30 text-right">
+                        <p class="text-[10px] text-gray-300 font-bold">Pace Target SOB Harian</p>
+                        <p id="summaryBracketNextGoal" class="text-xs font-black text-yellow-300 mt-0.5">Kejar > 700 Poin untuk buka Tier Fee!</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div class="bg-black/60 p-3 rounded-lg border border-emerald-500/30 flex justify-between items-center">
+                        <div>
+                            <span class="text-[10px] text-gray-300 font-bold block"><i class="fa-solid fa-coins text-yellow-400 mr-1"></i> Komisi Poin Sales</span>
+                            <span id="summaryPointCommDetail" class="text-[11px] text-emerald-300 font-semibold">0 Poin × Rp 1.000</span>
+                        </div>
+                        <span id="summaryPointCommAmount" class="font-black text-yellow-400 text-sm sm:text-base">Rp 0</span>
+                    </div>
+
+                    <div class="bg-black/60 p-3 rounded-lg border border-emerald-500/30 flex justify-between items-center">
+                        <div>
+                            <span class="text-[10px] text-gray-300 font-bold block"><i class="fa-solid fa-dumbbell text-sky-400 mr-1"></i> Komisi Sesi Conduct</span>
+                            <span id="summaryFeeBracketInfo" class="text-[11px] text-emerald-300 font-semibold">Tier: FC (Rp 0/Sesi)</span>
+                        </div>
+                        <span id="summaryConductCommAmount" class="font-black text-sky-400 text-sm sm:text-base">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- METRIKS PERFORMA -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div class="bg-gray-800/90 p-3 rounded-lg border border-gray-700">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase">Total Poin SOB</p>
+                    <p id="summaryTotalPoints" class="text-lg font-black text-yellow-400 mt-0.5">0 Poin</p>
+                </div>
+                <div class="bg-gray-800/90 p-3 rounded-lg border border-gray-700">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase"><i class="fa-solid fa-box-open text-emerald-400 mr-1"></i> Unit Bundling</p>
+                    <p id="summaryTotalBundling" class="text-lg font-black text-emerald-400 mt-0.5">0 Unit</p>
+                </div>
+                <div class="bg-gray-800/90 p-3 rounded-lg border border-gray-700">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase">Total Conduct</p>
+                    <p id="summaryTotalConduct" class="text-lg font-black text-sky-400 mt-0.5">0 Sesi</p>
+                </div>
+                <div class="bg-gray-800/90 p-3 rounded-lg border border-gray-700">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase">Rata-Rata RA</p>
+                    <p id="summaryAvgRA" class="text-lg font-black text-purple-300 mt-0.5">0 / 20 RA</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM INPUT LAPORAN -->
+        <div class="bg-white p-5 sm:p-6 rounded-xl shadow-md border-t-4 border-blue-600 space-y-4">
+            <h2 class="text-base sm:text-lg font-bold flex items-center text-gray-800">
+                <i class="fa-solid fa-pen-to-square text-blue-600 mr-2"></i> Form Input Laporan Harian Trainer
+            </h2>
+            
+            <form id="trainerActivityForm" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Nama Trainer</label>
+                        <input type="text" id="inputTrainerDisplay" readonly placeholder="Pilih nama trainer di atas..." class="w-full border-gray-300 rounded-lg p-2.5 text-xs bg-gray-100 font-bold text-gray-700 border focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Tanggal Laporan</label>
+                        <input type="date" id="inputDate" required class="w-full border-gray-300 rounded-lg p-2.5 text-xs bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Penjualan (Poin)</label>
+                        <input type="number" id="inputPoints" min="0" placeholder="Contoh: 150" required class="w-full border-gray-300 rounded-lg p-2.5 text-xs bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1"><i class="fa-solid fa-box-open text-blue-600 mr-1"></i> Unit Bundling</label>
+                        <input type="number" id="inputBundling" min="0" placeholder="Jumlah unit bundling" required class="w-full border-gray-300 rounded-lg p-2.5 text-xs bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-bold text-gray-700">Jumlah Melatih (Conduct)</label>
+                            <span class="text-[10px] font-bold text-gray-500">Target: 5 Sesi/hari</span>
+                        </div>
+                        <input type="number" id="inputConduct" min="0" placeholder="Jumlah sesi" required oninput="validateForm()" class="w-full border-gray-300 rounded-lg p-2.5 text-xs bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <p id="conductWarning" class="text-[11px] text-amber-600 hidden mt-1 font-semibold">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Melatih < 5 sesi harian! Wajib mengisi minimal 1 RA hari ini.
+                        </p>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-bold text-gray-700">Jumlah RA Done (Maks. 20)</label>
+                            <span id="raCounter" class="text-[10px] font-bold text-blue-600">0 / 20 RA</span>
+                        </div>
+                        <input type="number" id="inputRA" min="0" max="20" placeholder="Min. 1 (jika melatih < 5)" required oninput="validateForm()" class="w-full border-gray-300 rounded-lg p-2.5 text-xs bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <p id="raWarning" class="text-[11px] text-red-500 hidden mt-1 font-semibold">
+                            <i class="fa-solid fa-circle-exclamation"></i> <span id="raWarningText">Maksimal RA adalah 20!</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="border-t pt-3">
+                    <label class="block text-xs font-bold text-gray-700 mb-2">Checklist Tugas Operasional Harian:</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label class="flex items-center space-x-2 p-2.5 bg-gray-50 border rounded-lg cursor-pointer hover:bg-blue-50 text-xs font-medium">
+                            <input type="checkbox" id="taskMaint" class="w-4 h-4 text-blue-600 rounded">
+                            <span>Pengecekan Alat (Maintenance)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 p-2.5 bg-gray-50 border rounded-lg cursor-pointer hover:bg-blue-50 text-xs font-medium">
+                            <input type="checkbox" id="taskFollowupGO" class="w-4 h-4 text-blue-600 rounded">
+                            <span>Follow-up GO</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow text-xs flex items-center justify-center">
+                    <i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Laporan Harian
+                </button>
+            </form>
+        </div>
+
+    </main>
+
+    <script>
+        // URL SCRIPT TERBARU ANDA
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDXSGjhRuTE9_hznksjxOVc-Hkdsih3jMZnwQIIMErugvL7P1lrDXkqOY-VIH59FvM/exec";
+
+        document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+
+        let cachedCloudData = [];
+
+        function calculateSmartCoachCommission(points, conduct) {
+            let feePerSession = 0;
+            let code = "FC";
+
+            if (points < 700) {
+                code = "FC";
+                feePerSession = 0;
+            } else if (points <= 1599) {
+                if (conduct < 70) { code = "NC0"; feePerSession = 0; }
+                else if (conduct <= 110) { code = "NC1"; feePerSession = 20000; }
+                else { code = "NC2"; feePerSession = 25000; }
+            } else if (points <= 1999) {
+                if (conduct < 70) { code = "VC0"; feePerSession = 0; }
+                else if (conduct <= 110) { code = "VC1"; feePerSession = 30000; }
+                else { code = "VC2"; feePerSession = 35000; }
+            } else if (points <= 2699) {
+                if (conduct < 70) { code = "WC0"; feePerSession = 0; }
+                else if (conduct <= 110) { code = "WC1"; feePerSession = 45000; }
+                else { code = "WC2"; feePerSession = 75000; }
+            } else if (points <= 3499) {
+                if (conduct < 100) { code = "XC0"; feePerSession = 77500; }
+                else { code = "XC1"; feePerSession = 87500; }
+            } else if (points <= 4699) {
+                if (conduct < 100) { code = "YC0"; feePerSession = 90000; }
+                else { code = "YC1"; feePerSession = 92000; }
+            } else {
+                code = "ZC";
+                feePerSession = 94500;
+            }
+
+            const conductCommission = conduct * feePerSession;
+            const pointCommission = points * 1000;
+            const totalCommission = conductCommission + pointCommission;
+
+            return { code, feePerSession, conductCommission, pointCommission, totalCommission };
+        }
+
+        async function syncTrainerData() {
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                cachedCloudData = await res.json();
+                const currentSelected = document.getElementById('selectTrainerHeader').value;
+                if(currentSelected) {
+                    renderTrainerDashboard(currentSelected);
+                }
+            } catch(e) {
+                console.error("Gagal menyinkronkan data cloud:", e);
+            }
+        }
+
+        function onTrainerChange(selectedTrainer) {
+            document.getElementById('inputTrainerDisplay').value = selectedTrainer;
+            if (selectedTrainer) {
+                renderTrainerDashboard(selectedTrainer);
+            } else {
+                resetDashboardDisplay();
+            }
+        }
+
+        function resetDashboardDisplay() {
+            document.getElementById('summaryTrainerName').innerText = "Silakan Pilih Nama Trainer di Atas";
+            document.getElementById('summaryCurrentTierBadge').innerText = "FC (Flat Rate)";
+            document.getElementById('summaryTotalPoints').innerText = `0 Poin`;
+            document.getElementById('summaryTotalBundling').innerText = `0 Unit`;
+            document.getElementById('summaryTotalConduct').innerText = `0 Sesi`;
+            document.getElementById('summaryAvgRA').innerText = `0 / 20 RA`;
+            document.getElementById('summaryTotalCommission').innerText = `Rp 0`;
+            document.getElementById('summaryPointCommDetail').innerText = `0 Poin × Rp 1.000`;
+            document.getElementById('summaryPointCommAmount').innerText = `Rp 0`;
+            document.getElementById('summaryFeeBracketInfo').innerText = `Tier: FC (Rp 0/Sesi)`;
+            document.getElementById('summaryConductCommAmount').innerText = `Rp 0`;
+            document.getElementById('summaryBracketNextGoal').innerText = `Kejar > 700 Poin untuk buka Tier Fee!`;
+        }
+
+        function renderTrainerDashboard(selectedTrainer) {
+            const trainerLogs = cachedCloudData.filter(d => d.trainer === selectedTrainer);
+
+            const totalPoints = trainerLogs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+            const totalBundling = trainerLogs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+            const totalConduct = trainerLogs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+            const totalRA = trainerLogs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
+            const avgRA = trainerLogs.length ? (totalRA / trainerLogs.length).toFixed(1) : 0;
+
+            const comm = calculateSmartCoachCommission(totalPoints, totalConduct);
+
+            let nextGoalText = "";
+            if (totalPoints < 700) {
+                nextGoalText = `Kejar +${(700 - totalPoints).toLocaleString()} Poin lagi untuk capai Tier NC1!`;
+            } else if (totalPoints < 1600) {
+                nextGoalText = `Kejar +${(1600 - totalPoints).toLocaleString()} Poin untuk Tier VC (Fee s/d Rp 35rb)`;
+            } else if (totalPoints < 2000) {
+                nextGoalText = `Kejar +${(2000 - totalPoints).toLocaleString()} Poin untuk Tier WC (Fee s/d Rp 75rb)`;
+            } else if (totalPoints < 2700) {
+                nextGoalText = `Kejar +${(2700 - totalPoints).toLocaleString()} Poin untuk Tier XC (Fee s/d Rp 87.5rb)`;
+            } else if (totalPoints < 3500) {
+                nextGoalText = `Kejar +${(3500 - totalPoints).toLocaleString()} Poin untuk Tier YC (Fee s/d Rp 92rb)`;
+            } else if (totalPoints < 4700) {
+                nextGoalText = `Kejar +${(4700 - totalPoints).toLocaleString()} Poin untuk Tier Maksimal ZC!`;
+            } else {
+                nextGoalText = "Selamat! Anda di Tier Tertinggi (ZC)! 🔥";
+            }
+
+            document.getElementById('summaryTrainerName').innerText = selectedTrainer;
+            document.getElementById('summaryCurrentTierBadge').innerText = `${comm.code} (Rp ${comm.feePerSession.toLocaleString('id-ID')}/Sesi)`;
+            document.getElementById('summaryTotalPoints').innerText = `${totalPoints.toLocaleString()} Poin`;
+            document.getElementById('summaryTotalBundling').innerText = `${totalBundling} Unit`;
+            document.getElementById('summaryTotalConduct').innerText = `${totalConduct} Sesi`;
+            document.getElementById('summaryAvgRA').innerText = `${avgRA} / 20 RA`;
+
+            document.getElementById('summaryTotalCommission').innerText = `Rp ${comm.totalCommission.toLocaleString('id-ID')}`;
+            document.getElementById('summaryPointCommDetail').innerText = `${totalPoints.toLocaleString()} Poin × Rp 1.000`;
+            document.getElementById('summaryPointCommAmount').innerText = `Rp ${comm.pointCommission.toLocaleString('id-ID')}`;
+            document.getElementById('summaryFeeBracketInfo').innerText = `Tier: ${comm.code} (Rp ${comm.feePerSession.toLocaleString('id-ID')}/Sesi)`;
+            document.getElementById('summaryConductCommAmount').innerText = `Rp ${comm.conductCommission.toLocaleString('id-ID')}`;
+            document.getElementById('summaryBracketNextGoal').innerText = nextGoalText;
+        }
+
+        function validateForm() {
+            const conductInput = parseInt(document.getElementById('inputConduct').value) || 0;
+            const raInput = parseInt(document.getElementById('inputRA').value) || 0;
+            const conductWarning = document.getElementById('conductWarning');
+            const raWarning = document.getElementById('raWarning');
+            const raWarningText = document.getElementById('raWarningText');
+
+            if (conductInput < 5) {
+                conductWarning.classList.remove('hidden');
+                if (raInput < 1) {
+                    raWarning.classList.remove('hidden');
+                    raWarningText.innerText = "Melatih < 5 sesi, Anda WAJIB mengisi minimal 1 RA!";
+                } else if (raInput > 20) {
+                    raWarning.classList.remove('hidden');
+                    raWarningText.innerText = "Maksimal RA harian adalah 20!";
+                } else {
+                    raWarning.classList.add('hidden');
+                }
+            } else {
+                conductWarning.classList.add('hidden');
+                if (raInput > 20) {
+                    raWarning.classList.remove('hidden');
+                    raWarningText.innerText = "Maksimal RA harian adalah 20!";
+                } else {
+                    raWarning.classList.add('hidden');
+                }
+            }
+
+            document.getElementById('raCounter').innerText = `${raInput} / 20 RA`;
+        }
+
+        document.getElementById('trainerActivityForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const selectedTrainer = document.getElementById('selectTrainerHeader').value;
+            if (!selectedTrainer) {
+                alert("Harap pilih nama trainer Anda pada dropdown di bagian paling atas terlebih dahulu!");
+                return;
+            }
+
+            const conductVal = parseInt(document.getElementById('inputConduct').value) || 0;
+            const raVal = parseInt(document.getElementById('inputRA').value) || 0;
+
+            if (conductVal < 5 && raVal < 1) {
+                alert("PERINGATAN: Karena jumlah melatih kurang dari 5 sesi, Anda wajib menginput minimal 1 RA!");
+                return;
+            }
+
+            const btnSubmit = document.getElementById('btnSubmit');
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Mengirim Laporan...`;
+
+            const newEntry = {
+                id: Date.now(),
+                trainer: selectedTrainer,
+                date: document.getElementById('inputDate').value,
+                points: parseFloat(document.getElementById('inputPoints').value) || 0,
+                bundling: parseInt(document.getElementById('inputBundling').value) || 0,
+                conduct: conductVal,
+                ra: raVal,
+                tasks: {
+                    maint: document.getElementById('taskMaint').checked,
+                    followupGO: document.getElementById('taskFollowupGO').checked
+                }
+            };
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(newEntry)
+                });
+            } catch(err) {
+                console.error("Gagal sync cloud:", err);
+            }
+
+            alert('Laporan Harian Berhasil Terkirim!');
+            this.reset();
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Laporan Harian`;
+            document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('inputTrainerDisplay').value = selectedTrainer;
+            document.getElementById('raCounter').innerText = "0 / 20 RA";
+            document.getElementById('conductWarning').classList.add('hidden');
+            
+            await syncTrainerData();
+        });
+
+        syncTrainerData();
+    </script>
+</body>
+</html>
