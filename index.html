@@ -16,7 +16,7 @@
 
     <!-- Header Navigation with FTL Blue Logo -->
     <header class="bg-black text-white shadow-xl sticky top-0 z-50 border-b-2 border-blue-600">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
             
             <div class="flex items-center space-x-3">
                 <div class="flex flex-col items-center justify-center bg-black px-3 py-1 rounded">
@@ -29,7 +29,14 @@
                 <h1 class="text-lg font-extrabold tracking-wider text-gray-100">MANAGER MONITORING</h1>
             </div>
 
-            <div class="flex items-center space-x-3 mt-2 sm:mt-0">
+            <!-- Jam Realtime & Tombol Aksi Header -->
+            <div class="flex flex-wrap items-center space-x-2 sm:space-x-3 mt-2 sm:mt-0">
+                <!-- Tampilan Waktu Real-Time -->
+                <div class="text-right text-xs text-gray-300 font-semibold bg-gray-900/80 px-3 py-1.5 rounded-lg border border-gray-700">
+                    <div id="realtimeDate" class="text-[10px] text-gray-400">Loading tanggal...</div>
+                    <div id="realtimeClock" class="text-xs sm:text-sm font-black text-yellow-400 font-mono tracking-wider">00:00:00 WIB</div>
+                </div>
+
                 <button onclick="syncCloudToManager()" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-700 hover:bg-emerald-600 text-white flex items-center shadow">
                     <i class="fa-solid fa-rotate mr-1.5"></i> <span id="syncBtnText">Sync Data Cloud</span>
                 </button>
@@ -55,11 +62,7 @@
             </div>
         </div>
     </header>
-<!-- Tampilan Waktu Real-Time -->
-<div class="text-right text-xs text-gray-300 font-semibold bg-gray-900/80 px-3 py-1.5 rounded-lg border border-gray-700">
-    <div id="realtimeDate" class="text-[10px] text-gray-400">Loading tanggal...</div>
-    <div id="realtimeClock" class="text-sm font-black text-yellow-400 font-mono tracking-wider">00:00:00 WIB</div>
-</div>
+
     <main class="max-w-7xl mx-auto px-4 py-6">
 
         <!-- TAB 1: INPUT HARIAN -->
@@ -698,6 +701,52 @@
             "Wahyu Setiawan",
             "Yomi David Armada Siahaan"
         ];
+
+        // LOGIKA PERHITUNGAN KOMISI SMART COACH TERBARU
+        function calculateCommission(points, conduct) {
+            let feePerSession = 0;
+            let code = "FB";
+
+            if (points < 500) {
+                code = "FB";
+                feePerSession = 0;
+            } else if (points <= 1399) {
+                if (conduct < 70) { code = "NB0"; feePerSession = 0; }
+                else if (conduct <= 99) { code = "NB1"; feePerSession = 20000; }
+                else if (conduct <= 124) { code = "NB2"; feePerSession = 25000; }
+                else if (conduct <= 149) { code = "NB3"; feePerSession = 30000; }
+                else { code = "NB4"; feePerSession = 35000; }
+            } else if (points <= 1699) {
+                if (conduct < 70) { code = "VB0"; feePerSession = 0; }
+                else if (conduct <= 99) { code = "VB1"; feePerSession = 30000; }
+                else if (conduct <= 124) { code = "VB2"; feePerSession = 40000; }
+                else if (conduct <= 149) { code = "VB3"; feePerSession = 50000; }
+                else { code = "VB4"; feePerSession = 55000; }
+            } else if (points <= 2699) {
+                if (conduct < 70) { code = "WB0"; feePerSession = 0; }
+                else if (conduct <= 99) { code = "WB1"; feePerSession = 40000; }
+                else if (conduct <= 124) { code = "WB2"; feePerSession = 50000; }
+                else if (conduct <= 145) { code = "WB3"; feePerSession = 60000; }
+                else { code = "WB4"; feePerSession = 80000; }
+            } else if (points <= 3199) {
+                if (conduct < 70) { code = "XB1"; feePerSession = 20000; }
+                else if (conduct <= 124) { code = "XB2"; feePerSession = 50000; }
+                else if (conduct <= 145) { code = "XB3"; feePerSession = 65000; }
+                else { code = "XB4"; feePerSession = 85000; }
+            } else if (points <= 3559) {
+                if (conduct < 70) { code = "YB1"; feePerSession = 30000; }
+                else if (conduct <= 124) { code = "YB2"; feePerSession = 55000; }
+                else if (conduct <= 145) { code = "YB3"; feePerSession = 70000; }
+                else { code = "YB4"; feePerSession = 87500; }
+            } else {
+                if (conduct < 70) { code = "ZB1"; feePerSession = 35000; }
+                else if (conduct <= 124) { code = "ZB2"; feePerSession = 55000; }
+                else if (conduct <= 145) { code = "ZB3"; feePerSession = 75000; }
+                else { code = "ZB4"; feePerSession = 90000; }
+            }
+
+            return { feePerSession, code };
+        }
 
         document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
 
@@ -1724,26 +1773,27 @@
         renderRecentTable();
         renderDashboard();
         renderClientTable();
-        // Fungsi Jam Real-Time
-function updateRealtimeClock() {
-    const now = new Date();
-    const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const dateString = now.toLocaleDateString('id-ID', optionsDate);
-    
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const timeString = `${hours}:${minutes}:${seconds} WIB`;
-    
-    const dateElem = document.getElementById('realtimeDate');
-    const clockElem = document.getElementById('realtimeClock');
-    
-    if (dateElem) dateElem.innerText = dateString;
-    if (clockElem) clockElem.innerText = timeString;
-}
 
-updateRealtimeClock();
-setInterval(updateRealtimeClock, 1000);
+        // Fungsi Jam Real-Time
+        function updateRealtimeClock() {
+            const now = new Date();
+            const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateString = now.toLocaleDateString('id-ID', optionsDate);
+            
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timeString = `${hours}:${minutes}:${seconds} WIB`;
+            
+            const dateElem = document.getElementById('realtimeDate');
+            const clockElem = document.getElementById('realtimeClock');
+            
+            if (dateElem) dateElem.innerText = dateString;
+            if (clockElem) clockElem.innerText = timeString;
+        }
+
+        updateRealtimeClock();
+        setInterval(updateRealtimeClock, 1000);
     </script>
 </body>
 </html>
