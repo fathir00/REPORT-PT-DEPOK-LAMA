@@ -437,7 +437,7 @@
 
                     <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
                         <h3 class="font-bold text-sm text-gray-800 flex items-center">
-                            <i class="fa-solid fa-list-ol text-blue-600 mr-2"></i> Peringkat Capaian SOB & Bundling
+                            <i class="fa-solid fa-list-ol text-blue-600 mr-2"></i> Peringkat Capaian SOB & Estimasi Komisi
                         </h3>
                         <div id="leaderboardList" class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                         </div>
@@ -615,8 +615,7 @@
                                     <th class="p-3">Trainer</th>
                                     <th class="p-3">Poin Saat Ini</th>
                                     <th class="p-3">Unit Bundling</th>
-                                    <th class="p-3">Target Run-Rate</th>
-                                    <th class="p-3">Sisa Target Poin Harian</th>
+                                    <th class="p-3">Est. Komisi Berjalan</th>
                                     <th class="p-3">Status Performance</th>
                                 </tr>
                             </thead>
@@ -682,7 +681,6 @@
 
     <!-- JavaScript Logic -->
     <script>
-        // URL GOOGLE APPS SCRIPT TERBARU
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDXSGjhRuTE9_hznksjxOVc-Hkdsih3jMZnwQIIMErugvL7P1lrDXkqOY-VIH59FvM/exec";
 
         const DIVISION_TARGET = 34500;
@@ -702,7 +700,7 @@
             "Yomi David Armada Siahaan"
         ];
 
-        // LOGIKA PERHITUNGAN KOMISI SMART COACH TERBARU
+        // LOGIKA PERHITUNGAN KOMISI SMART COACH TERBARU LENGKAP
         function calculateCommission(points, conduct) {
             let feePerSession = 0;
             let code = "FB";
@@ -745,7 +743,11 @@
                 else { code = "ZB4"; feePerSession = 90000; }
             }
 
-            return { feePerSession, code };
+            const pointCommission = points * 1000;
+            const conductCommission = conduct * feePerSession;
+            const totalCommission = pointCommission + conductCommission;
+
+            return { feePerSession, code, pointCommission, conductCommission, totalCommission };
         }
 
         document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
@@ -763,7 +765,6 @@
             { id: 103, name: 'Mas Anton', trainer: 'Mega Putri Lusiana Sirait', sessions: 15 }
         ];
 
-        // SINKRONISASI OTOMATIS KE GOOGLE SHEETS
         async function syncCloudToManager() {
             const syncBtnText = document.getElementById('syncBtnText');
             if (syncBtnText) syncBtnText.innerText = "Syncing...";
@@ -1293,7 +1294,7 @@
                         </td>
                         <td class="p-3 font-medium text-gray-600">${item.date}</td>
                         <td class="p-3 font-bold text-gray-800">${item.trainer}</td>
-                        <td class="p-3 font-extrabold text-blue-600">${points.toLocaleString()} Poin</td>
+                        <td class="p-3 font-extrabold text-blue-600">${points.toLocaleString('id-ID')} Poin</td>
                         <td class="p-3 font-extrabold text-emerald-600">${bundling} Unit</td>
                         <td class="p-3">${conductBadge}</td>
                         <td class="p-3"><span class="bg-gray-100 text-gray-800 px-2 py-0.5 rounded font-semibold border">${ra}/20</span></td>
@@ -1330,7 +1331,6 @@
             }
         }
 
-        // FUNGSI HAPUS TERSINKRON KE GOOGLE SHEETS CLOUD
         async function deleteEntry(id) {
             if (confirm('Apakah Anda yakin ingin menghapus catatan data ini secara permanen dari Cloud & Database?')) {
                 appData = appData.filter(x => x.id !== id);
@@ -1430,7 +1430,7 @@
                                     <i class="fa-solid fa-circle-check mr-1.5 text-emerald-600"></i> Sudah Lapor
                                 </span>
                             </td>
-                            <td class="p-3 font-extrabold text-blue-600">${pts.toLocaleString()} Poin</td>
+                            <td class="p-3 font-extrabold text-blue-600">${pts.toLocaleString('id-ID')} Poin</td>
                             <td class="p-3 font-extrabold text-emerald-600">${bundling} Unit</td>
                             <td class="p-3 font-bold">${conduct} Sesi</td>
                             <td class="p-3 font-bold">${ra}/20 RA</td>
@@ -1511,28 +1511,31 @@
             const dailyPointsNeeded = (remaining / remainingDaysInMonth).toFixed(0);
             const avgPerTrainer = (overallPoints / trainerList.length).toFixed(0);
 
-            document.getElementById('targetPointsAchieved').innerText = `${overallPoints.toLocaleString()} Poin`;
+            document.getElementById('targetPointsAchieved').innerText = `${overallPoints.toLocaleString('id-ID')} Poin`;
             document.getElementById('targetPercentBadge').innerText = `${percentage}% dari Target 34.500 Poin`;
             document.getElementById('targetProgressBar').style.width = `${percentage}%`;
             document.getElementById('targetPercentText').innerText = `${percentage}%`;
             document.getElementById('statPercent').innerText = `${percentage}%`;
-            document.getElementById('statRemainingPoints').innerText = `${remaining.toLocaleString()} Poin`;
-            document.getElementById('statDailyNeeded').innerText = `${parseInt(dailyPointsNeeded).toLocaleString()} Poin/Hari`;
-            document.getElementById('statAvgPerTrainer').innerText = `${parseInt(avgPerTrainer).toLocaleString()} Poin`;
+            document.getElementById('statRemainingPoints').innerText = `${remaining.toLocaleString('id-ID')} Poin`;
+            document.getElementById('statDailyNeeded').innerText = `${parseInt(dailyPointsNeeded).toLocaleString('id-ID')} Poin/Hari`;
+            document.getElementById('statAvgPerTrainer').innerText = `${parseInt(avgPerTrainer).toLocaleString('id-ID')} Poin`;
 
             let rankedTrainersByPoints = trainerList.map(t => {
-                const tPoints = appData.filter(d => d.trainer === t).reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
-                return { name: t, points: tPoints };
+                const logs = appData.filter(d => d.trainer === t);
+                const tPoints = logs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+                const tConduct = logs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+                const comm = calculateCommission(tPoints, tConduct);
+                return { name: t, points: tPoints, conduct: tConduct, totalCommission: comm.totalCommission };
             }).sort((a, b) => b.points - a.points);
 
             document.getElementById('podium1Name').innerText = rankedTrainersByPoints[0] ? rankedTrainersByPoints[0].name.split(' ')[0] : '-';
-            document.getElementById('podium1Points').innerText = rankedTrainersByPoints[0] ? `${rankedTrainersByPoints[0].points.toLocaleString()} Poin` : '0 Poin';
+            document.getElementById('podium1Points').innerText = rankedTrainersByPoints[0] ? `${rankedTrainersByPoints[0].points.toLocaleString('id-ID')} Poin` : '0 Poin';
 
             document.getElementById('podium2Name').innerText = rankedTrainersByPoints[1] ? rankedTrainersByPoints[1].name.split(' ')[0] : '-';
-            document.getElementById('podium2Points').innerText = rankedTrainersByPoints[1] ? `${rankedTrainersByPoints[1].points.toLocaleString()} Poin` : '0 Poin';
+            document.getElementById('podium2Points').innerText = rankedTrainersByPoints[1] ? `${rankedTrainersByPoints[1].points.toLocaleString('id-ID')} Poin` : '0 Poin';
 
             document.getElementById('podium3Name').innerText = rankedTrainersByPoints[2] ? rankedTrainersByPoints[2].name.split(' ')[0] : '-';
-            document.getElementById('podium3Points').innerText = rankedTrainersByPoints[2] ? `${rankedTrainersByPoints[2].points.toLocaleString()} Poin` : '0 Poin';
+            document.getElementById('podium3Points').innerText = rankedTrainersByPoints[2] ? `${rankedTrainersByPoints[2].points.toLocaleString('id-ID')} Poin` : '0 Poin';
 
             const leaderboardList = document.getElementById('leaderboardList');
             leaderboardList.innerHTML = '';
@@ -1546,8 +1549,8 @@
                             <span class="font-bold text-gray-800 truncate max-w-[120px]">${t.name}</span>
                         </div>
                         <div class="text-right">
-                            <span class="font-black text-blue-600 block">${t.points.toLocaleString()} Poin (${tBundling} Bundling)</span>
-                            <span class="text-[10px] text-gray-400 font-semibold">${sobPct}% Target SOB</span>
+                            <span class="font-black text-blue-600 block">${t.points.toLocaleString('id-ID')} Poin (Rp ${t.totalCommission.toLocaleString('id-ID')})</span>
+                            <span class="text-[10px] text-gray-400 font-semibold">${sobPct}% Target SOB | ${tBundling} Bundling</span>
                         </div>
                     </div>
                 `;
@@ -1592,7 +1595,7 @@
             const totalRA = filtered.reduce((acc, curr) => acc + (parseInt(curr.ra) || 0), 0);
             const avgRA = filtered.length ? (totalRA / filtered.length).toFixed(1) : 0;
 
-            document.getElementById('cardTotalPoints').innerText = `${totalPoints.toLocaleString()} Poin`;
+            document.getElementById('cardTotalPoints').innerText = `${totalPoints.toLocaleString('id-ID')} Poin`;
             document.getElementById('cardTotalBundling').innerText = `${totalBundling} Unit`;
             document.getElementById('cardTotalConduct').innerText = `${totalConduct} Sesi`;
             document.getElementById('cardAvgRA').innerText = `${avgRA} / 20 RA`;
@@ -1666,6 +1669,8 @@
                 const avgRA = logs.length ? (totalRA / logs.length).toFixed(1) : 0;
                 const totalConduct = logs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
                 
+                const comm = calculateCommission(totalPoints, totalConduct);
+
                 const remainingDays = Math.max((5 - selectedWeek) * 7 + 7, 1); 
                 const pointDeficit = Math.max(targetRunRate - totalPoints, 0);
                 const dailyPaceNeeded = (pointDeficit / remainingDays).toFixed(0);
@@ -1681,7 +1686,9 @@
                     totalConduct,
                     pointDeficit,
                     dailyPaceNeeded,
-                    isUnderperforming
+                    isUnderperforming,
+                    totalCommission: comm.totalCommission,
+                    tierCode: comm.code
                 };
             });
 
@@ -1696,7 +1703,7 @@
             });
 
             trainerAnalyticsData.forEach(item => {
-                const { trainer, totalPoints, totalBundling, avgRA, totalConduct, dailyPaceNeeded, isUnderperforming } = item;
+                const { trainer, totalPoints, totalBundling, avgRA, totalConduct, dailyPaceNeeded, isUnderperforming, totalCommission, tierCode } = item;
 
                 let statusBadge = isUnderperforming 
                     ? `<span class="bg-red-100 text-red-800 text-xs px-2.5 py-1 rounded-full font-extrabold flex items-center w-fit"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Under Performance (W${selectedWeek})</span>`
@@ -1705,10 +1712,9 @@
                 tbody.innerHTML += `
                     <tr class="${isUnderperforming ? 'bg-red-50/40' : 'hover:bg-gray-50'}">
                         <td class="p-3 font-bold">${trainer}</td>
-                        <td class="p-3 text-blue-600 font-extrabold">${totalPoints.toLocaleString()} Poin</td>
+                        <td class="p-3 text-blue-600 font-extrabold">${totalPoints.toLocaleString('id-ID')} Poin</td>
                         <td class="p-3 font-extrabold text-emerald-600"><i class="fa-solid fa-box-open mr-1"></i>${totalBundling} Unit</td>
-                        <td class="p-3 font-semibold text-gray-700">${targetRunRate.toLocaleString()} Poin (W${selectedWeek})</td>
-                        <td class="p-3 font-bold ${dailyPaceNeeded > 0 ? 'text-amber-600' : 'text-emerald-600'}">${dailyPaceNeeded > 0 ? dailyPaceNeeded.toLocaleString() + ' Poin/Hari' : 'On Track'}</td>
+                        <td class="p-3 font-bold text-gray-800">Rp ${totalCommission.toLocaleString('id-ID')} <span class="text-[10px] text-gray-500">(${tierCode})</span></td>
                         <td class="p-3">${statusBadge}</td>
                     </tr>
                 `;
@@ -1717,7 +1723,7 @@
                     let strength = totalBundling > 0 
                         ? `Sudah menghasilkan ${totalBundling} Unit Bundling & ${avgRA >= 10 ? 'RA harian konsisten' : 'disiplin laporan'}`
                         : (avgRA >= 10 ? `Aktivitas RA harian konsisten (Avg ${avgRA}/hari)` : "Disiplin menginput laporan harian");
-                    let weakness = `Baru mencapai ${totalPoints.toLocaleString()} dari target run-rate W${selectedWeek} (${targetRunRate.toLocaleString()} Poin)`;
+                    let weakness = `Baru mencapai ${totalPoints.toLocaleString('id-ID')} dari target run-rate W${selectedWeek} (${targetRunRate.toLocaleString('id-ID')} Poin)`;
                     let opportunity = totalConduct < (selectedWeek * 20) 
                         ? `Melatih < ${selectedWeek * 20} sesi, maksimalkan penawaran unit bundling & min 1 s/d 20 RA per hari` 
                         : `Dibutuhkan target +${dailyPaceNeeded} Poin/hari & dorong penawaran bundling sampai akhir periode`;
@@ -1768,13 +1774,11 @@
             document.getElementById('coachingBadgeCount').innerText = `${underPerformanceCount} Trainer Under Performance (W${selectedWeek})`;
         }
 
-        // INITIAL LOAD & AUTO SYNC FROM GOOGLE SHEETS
         syncCloudToManager();
         renderRecentTable();
         renderDashboard();
         renderClientTable();
 
-        // Fungsi Jam Real-Time
         function updateRealtimeClock() {
             const now = new Date();
             const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
