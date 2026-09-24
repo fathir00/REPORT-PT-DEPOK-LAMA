@@ -27,11 +27,13 @@
                     <p class="text-[10px] text-gray-400">Dashboard Performa & Form Laporan Harian</p>
                 </div>
             </div>
+            
             <!-- KOTAK JAM REAL-TIME -->
-<div class="text-right bg-gray-900/80 px-3 py-1.5 rounded-lg border border-gray-700/60 shadow-inner mr-2 inline-block">
-    <div id="realtimeDateTrainer" class="text-[10px] text-gray-400 font-medium">Loading tanggal...</div>
-    <div id="realtimeClockTrainer" class="text-xs sm:text-sm font-black text-yellow-400 font-mono tracking-wider">00:00:00 WIB</div>
-</div>
+            <div class="text-right bg-gray-900/80 px-3 py-1.5 rounded-lg border border-gray-700/60 shadow-inner mr-2 inline-block">
+                <div id="realtimeDateTrainer" class="text-[10px] text-gray-400 font-medium">Loading tanggal...</div>
+                <div id="realtimeClockTrainer" class="text-xs sm:text-sm font-black text-yellow-400 font-mono tracking-wider">00:00:00 WIB</div>
+            </div>
+            
             <button onclick="syncTrainerData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow flex items-center">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Refresh Data
             </button>
@@ -86,7 +88,7 @@
                     </div>
                     <div class="bg-black/50 px-3.5 py-2 rounded-lg border border-emerald-500/30 text-right">
                         <p class="text-[10px] text-gray-300 font-bold">Pace Target SOB Harian</p>
-                        <p id="summaryBracketNextGoal" class="text-xs font-black text-yellow-300 mt-0.5">Kejar > 700 Poin untuk buka Tier Fee!</p>
+                        <p id="summaryBracketNextGoal" class="text-xs font-black text-yellow-300 mt-0.5">Kejar > 500 Poin untuk buka Tier Fee!</p>
                     </div>
                 </div>
 
@@ -206,84 +208,72 @@
     </main>
 
     <script>
-        // URL SCRIPT TERBARU ANDA
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDXSGjhRuTE9_hznksjxOVc-Hkdsih3jMZnwQIIMErugvL7P1lrDXkqOY-VIH59FvM/exec";
 
-        // Fungsi untuk set Tanggal Laporan ke hari ini secara real-time
-function setTodayReportDate() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    
-    const formattedDate = `${year}-${month}-${day}`;
-    const inputDateElem = document.getElementById('inputDate');
-    if (inputDateElem) {
-        inputDateElem.value = formattedDate;
-    }
-}
+        function setTodayReportDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            
+            const formattedDate = `${year}-${month}-${day}`;
+            const inputDateElem = document.getElementById('inputDate');
+            if (inputDateElem) {
+                inputDateElem.value = formattedDate;
+            }
+        }
 
-// Jalankan saat halaman pertama kali dibuka
-setTodayReportDate();
+        setTodayReportDate();
         let cachedCloudData = [];
 
         function calculateSmartCoachCommission(points, conduct) {
-    let feePerSession = 0;
-    let code = "FB";
+            let feePerSession = 0;
+            let code = "FB";
 
-    // 1. Tier FB (Target < 500 Poin)
-    if (points < 500) {
-        code = "FB";
-        feePerSession = 0;
-    } 
-    // 2. Tier N (Target 500 - 1399 Poin)
-    else if (points <= 1399) {
-        if (conduct < 70) { code = "NB0"; feePerSession = 0; }
-        else if (conduct <= 99) { code = "NB1"; feePerSession = 20000; }
-        else if (conduct <= 124) { code = "NB2"; feePerSession = 25000; }
-        else if (conduct <= 149) { code = "NB3"; feePerSession = 30000; }
-        else { code = "NB4"; feePerSession = 35000; }
-    } 
-    // 3. Tier V (Target 1400 - 1699 Poin)
-    else if (points <= 1699) {
-        if (conduct < 70) { code = "VB0"; feePerSession = 0; }
-        else if (conduct <= 99) { code = "VB1"; feePerSession = 30000; }
-        else if (conduct <= 124) { code = "VB2"; feePerSession = 40000; }
-        else if (conduct <= 149) { code = "VB3"; feePerSession = 50000; }
-        else { code = "VB4"; feePerSession = 55000; }
-    } 
-    // 4. Tier W (Target 1700 - 2699 Poin)
-    else if (points <= 2699) {
-        if (conduct < 70) { code = "WB0"; feePerSession = 0; }
-        else if (conduct <= 99) { code = "WB1"; feePerSession = 40000; }
-        else if (conduct <= 124) { code = "WB2"; feePerSession = 50000; }
-        else if (conduct <= 145) { code = "WB3"; feePerSession = 60000; }
-        else { code = "WB4"; feePerSession = 80000; }
-    } 
-    // 5. Tier X (Target 2700 - 3199 Poin)
-    else if (points <= 3199) {
-        if (conduct < 70) { code = "XB1"; feePerSession = 20000; }
-        else if (conduct <= 124) { code = "XB2"; feePerSession = 50000; }
-        else if (conduct <= 145) { code = "XB3"; feePerSession = 65000; }
-        else { code = "XB4"; feePerSession = 85000; }
-    } 
-    // 6. Tier Y (Target 3200 - 3559 Poin)
-    else if (points <= 3559) {
-        if (conduct < 70) { code = "YB1"; feePerSession = 30000; }
-        else if (conduct <= 124) { code = "YB2"; feePerSession = 55000; }
-        else if (conduct <= 145) { code = "YB3"; feePerSession = 70000; }
-        else { code = "YB4"; feePerSession = 87500; }
-    } 
-    // 7. Tier Z (Target >= 3560 Poin)
-    else {
-        if (conduct < 70) { code = "ZB1"; feePerSession = 35000; }
-        else if (conduct <= 124) { code = "ZB2"; feePerSession = 55000; }
-        else if (conduct <= 145) { code = "ZB3"; feePerSession = 75000; }
-        else { code = "ZB4"; feePerSession = 90000; }
-    }
+            if (points < 500) {
+                code = "FB";
+                feePerSession = 0;
+            } else if (points <= 1399) {
+                if (conduct < 70) { code = "NB0"; feePerSession = 0; }
+                else if (conduct <= 99) { code = "NB1"; feePerSession = 20000; }
+                else if (conduct <= 124) { code = "NB2"; feePerSession = 25000; }
+                else if (conduct <= 149) { code = "NB3"; feePerSession = 30000; }
+                else { code = "NB4"; feePerSession = 35000; }
+            } else if (points <= 1699) {
+                if (conduct < 70) { code = "VB0"; feePerSession = 0; }
+                else if (conduct <= 99) { code = "VB1"; feePerSession = 30000; }
+                else if (conduct <= 124) { code = "VB2"; feePerSession = 40000; }
+                else if (conduct <= 149) { code = "VB3"; feePerSession = 50000; }
+                else { code = "VB4"; feePerSession = 55000; }
+            } else if (points <= 2699) {
+                if (conduct < 70) { code = "WB0"; feePerSession = 0; }
+                else if (conduct <= 99) { code = "WB1"; feePerSession = 40000; }
+                else if (conduct <= 124) { code = "WB2"; feePerSession = 50000; }
+                else if (conduct <= 145) { code = "WB3"; feePerSession = 60000; }
+                else { code = "WB4"; feePerSession = 80000; }
+            } else if (points <= 3199) {
+                if (conduct < 70) { code = "XB1"; feePerSession = 20000; }
+                else if (conduct <= 124) { code = "XB2"; feePerSession = 50000; }
+                else if (conduct <= 145) { code = "XB3"; feePerSession = 65000; }
+                else { code = "XB4"; feePerSession = 85000; }
+            } else if (points <= 3559) {
+                if (conduct < 70) { code = "YB1"; feePerSession = 30000; }
+                else if (conduct <= 124) { code = "YB2"; feePerSession = 55000; }
+                else if (conduct <= 145) { code = "YB3"; feePerSession = 70000; }
+                else { code = "YB4"; feePerSession = 87500; }
+            } else {
+                if (conduct < 70) { code = "ZB1"; feePerSession = 35000; }
+                else if (conduct <= 124) { code = "ZB2"; feePerSession = 55000; }
+                else if (conduct <= 145) { code = "ZB3"; feePerSession = 75000; }
+                else { code = "ZB4"; feePerSession = 90000; }
+            }
 
-    return { feePerSession, code };
-}
+            const pointCommission = points * 1000;
+            const conductCommission = conduct * feePerSession;
+            const totalCommission = pointCommission + conductCommission;
+
+            return { feePerSession, code, pointCommission, conductCommission, totalCommission };
+        }
 
         async function syncTrainerData() {
             try {
@@ -322,7 +312,7 @@ setTodayReportDate();
             document.getElementById('summaryPointCommAmount').innerText = `Rp 0`;
             document.getElementById('summaryFeeBracketInfo').innerText = `Tier: FC (Rp 0/Sesi)`;
             document.getElementById('summaryConductCommAmount').innerText = `Rp 0`;
-            document.getElementById('summaryBracketNextGoal').innerText = `Kejar > 700 Poin untuk buka Tier Fee!`;
+            document.getElementById('summaryBracketNextGoal').innerText = `Kejar > 500 Poin untuk buka Tier Fee!`;
         }
 
         function renderTrainerDashboard(selectedTrainer) {
@@ -337,31 +327,31 @@ setTodayReportDate();
             const comm = calculateSmartCoachCommission(totalPoints, totalConduct);
 
             let nextGoalText = "";
-            if (totalPoints < 700) {
-                nextGoalText = `Kejar +${(700 - totalPoints).toLocaleString()} Poin lagi untuk capai Tier NC1!`;
-            } else if (totalPoints < 1600) {
-                nextGoalText = `Kejar +${(1600 - totalPoints).toLocaleString()} Poin untuk Tier VC (Fee s/d Rp 35rb)`;
-            } else if (totalPoints < 2000) {
-                nextGoalText = `Kejar +${(2000 - totalPoints).toLocaleString()} Poin untuk Tier WC (Fee s/d Rp 75rb)`;
+            if (totalPoints < 500) {
+                nextGoalText = `Kejar +${(500 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk capai Tier N!`;
+            } else if (totalPoints < 1400) {
+                nextGoalText = `Kejar +${(1400 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier V!`;
+            } else if (totalPoints < 1700) {
+                nextGoalText = `Kejar +${(1700 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier W!`;
             } else if (totalPoints < 2700) {
-                nextGoalText = `Kejar +${(2700 - totalPoints).toLocaleString()} Poin untuk Tier XC (Fee s/d Rp 87.5rb)`;
-            } else if (totalPoints < 3500) {
-                nextGoalText = `Kejar +${(3500 - totalPoints).toLocaleString()} Poin untuk Tier YC (Fee s/d Rp 92rb)`;
-            } else if (totalPoints < 4700) {
-                nextGoalText = `Kejar +${(4700 - totalPoints).toLocaleString()} Poin untuk Tier Maksimal ZC!`;
+                nextGoalText = `Kejar +${(2700 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier X!`;
+            } else if (totalPoints < 3200) {
+                nextGoalText = `Kejar +${(3200 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier Y!`;
+            } else if (totalPoints < 3560) {
+                nextGoalText = `Kejar +${(3560 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier Maksimal Z!`;
             } else {
-                nextGoalText = "Selamat! Anda di Tier Tertinggi (ZC)! 🔥";
+                nextGoalText = "Selamat! Anda di Tier Tertinggi (Tier Z)! 🔥";
             }
 
             document.getElementById('summaryTrainerName').innerText = selectedTrainer;
             document.getElementById('summaryCurrentTierBadge').innerText = `${comm.code} (Rp ${comm.feePerSession.toLocaleString('id-ID')}/Sesi)`;
-            document.getElementById('summaryTotalPoints').innerText = `${totalPoints.toLocaleString()} Poin`;
+            document.getElementById('summaryTotalPoints').innerText = `${totalPoints.toLocaleString('id-ID')} Poin`;
             document.getElementById('summaryTotalBundling').innerText = `${totalBundling} Unit`;
             document.getElementById('summaryTotalConduct').innerText = `${totalConduct} Sesi`;
             document.getElementById('summaryAvgRA').innerText = `${avgRA} / 20 RA`;
 
             document.getElementById('summaryTotalCommission').innerText = `Rp ${comm.totalCommission.toLocaleString('id-ID')}`;
-            document.getElementById('summaryPointCommDetail').innerText = `${totalPoints.toLocaleString()} Poin × Rp 1.000`;
+            document.getElementById('summaryPointCommDetail').innerText = `${totalPoints.toLocaleString('id-ID')} Poin × Rp 1.000`;
             document.getElementById('summaryPointCommAmount').innerText = `Rp ${comm.pointCommission.toLocaleString('id-ID')}`;
             document.getElementById('summaryFeeBracketInfo').innerText = `Tier: ${comm.code} (Rp ${comm.feePerSession.toLocaleString('id-ID')}/Sesi)`;
             document.getElementById('summaryConductCommAmount').innerText = `Rp ${comm.conductCommission.toLocaleString('id-ID')}`;
@@ -450,7 +440,6 @@ setTodayReportDate();
             setTodayReportDate();
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Laporan Harian`;
-            document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('inputTrainerDisplay').value = selectedTrainer;
             document.getElementById('raCounter').innerText = "0 / 20 RA";
             document.getElementById('conductWarning').classList.add('hidden');
@@ -459,30 +448,26 @@ setTodayReportDate();
         });
 
         syncTrainerData();
-        // FUNGSI JAM & DETIK REAL-TIME TRAINER
-function updateTrainerClock() {
-    const now = new Date();
-    
-    // Format Tanggal
-    const optionsDate = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
-    const dateStr = now.toLocaleDateString('id-ID', optionsDate);
-    
-    // Format Jam, Menit, Detik
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const timeStr = `${hours}:${minutes}:${seconds} WIB`;
-    
-    const dateElem = document.getElementById('realtimeDateTrainer');
-    const clockElem = document.getElementById('realtimeClockTrainer');
-    
-    if (dateElem) dateElem.innerText = dateStr;
-    if (clockElem) clockElem.innerText = timeStr;
-}
 
-// Jalankan dan perbarui setiap 1 detik
-updateTrainerClock();
-setInterval(updateTrainerClock, 1000);
+        function updateTrainerClock() {
+            const now = new Date();
+            const optionsDate = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
+            const dateStr = now.toLocaleDateString('id-ID', optionsDate);
+            
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timeStr = `${hours}:${minutes}:${seconds} WIB`;
+            
+            const dateElem = document.getElementById('realtimeDateTrainer');
+            const clockElem = document.getElementById('realtimeClockTrainer');
+            
+            if (dateElem) dateElem.innerText = dateStr;
+            if (clockElem) clockElem.innerText = timeStr;
+        }
+
+        updateTrainerClock();
+        setInterval(updateTrainerClock, 1000);
     </script>
 </body>
 </html>
