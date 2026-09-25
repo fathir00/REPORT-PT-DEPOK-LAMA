@@ -29,15 +29,11 @@
             </div>
             
             <!-- KOTAK JAM REAL-TIME -->
-            <div class="w-full bg-gradient-to-r from-blue-900 via-blue-700 to-sky-400 mt-0.5 px-1 py-0.5 text-center transform -skew-x-12">
-                        <span class="text-[9px] font-black tracking-[0.2em] text-white uppercase block leading-none transform skew-x-12">BLUE</span>
-                    </div>
-                </div>
-                <div>
-                    <h1 class="text-sm font-extrabold tracking-wider text-gray-100">PORTAL SMART COACH</h1>
-                    <p class="text-[10px] text-gray-400">Dashboard Performa & Form Laporan Harian</p>
-                </div>
+            <div class="text-right bg-gray-900/80 px-3 py-1.5 rounded-lg border border-gray-700/60 shadow-inner mr-2 inline-block">
+                <div id="realtimeDateTrainer" class="text-[10px] text-gray-400 font-medium">Loading tanggal...</div>
+                <div id="realtimeClockTrainer" class="text-xs sm:text-sm font-black text-yellow-400 font-mono tracking-wider">00:00:00 WIB</div>
             </div>
+            
             <button onclick="syncTrainerData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow flex items-center">
                 <i class="fa-solid fa-rotate mr-1.5"></i> Refresh Data
             </button>
