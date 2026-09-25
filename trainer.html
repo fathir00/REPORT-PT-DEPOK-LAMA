@@ -390,59 +390,60 @@
         }
 
         document.getElementById('trainerActivityForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+    e.preventDefault();
 
-            const selectedTrainer = document.getElementById('selectTrainerHeader').value;
-            if (!selectedTrainer) {
-                alert("Harap pilih nama trainer Anda pada dropdown di bagian paling atas terlebih dahulu!");
-                return;
-            }
+    const selectedTrainer = document.getElementById('selectTrainerHeader').value;
+    if (!selectedTrainer) {
+        alert("Harap pilih nama trainer Anda pada dropdown di bagian paling atas terlebih dahulu!");
+        return;
+    }
 
-            const conductVal = parseInt(document.getElementById('inputConduct').value) || 0;
-            const raVal = parseInt(document.getElementById('inputRA').value) || 0;
+    const conductVal = parseInt(document.getElementById('inputConduct').value) || 0;
+    const raVal = parseInt(document.getElementById('inputRA').value) || 0;
 
-            if (conductVal < 5 && raVal < 1) {
-                alert("PERINGATAN: Karena jumlah melatih kurang dari 5 sesi, Anda wajib menginput minimal 1 RA!");
-                return;
-            }
+    if (conductVal < 5 && raVal < 1) {
+        alert("PERINGATAN: Karena jumlah melatih kurang dari 5 sesi, Anda wajib menginput minimal 1 RA!");
+        return;
+    }
 
-            const btnSubmit = document.getElementById('btnSubmit');
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Mengirim Laporan...`;
+    const newEntry = {
+        id: Date.now(),
+        trainer: selectedTrainer,
+        date: document.getElementById('inputDate').value,
+        points: parseFloat(document.getElementById('inputPoints').value) || 0,
+        bundling: parseInt(document.getElementById('inputBundling').value) || 0,
+        conduct: conductVal,
+        ra: raVal,
+        tasks: {
+            maint: document.getElementById('taskMaint').checked,
+            followupGO: document.getElementById('taskFollowupGO').checked
+        }
+    };
 
-            const newEntry = {
-                id: Date.now(),
-                trainer: selectedTrainer,
-                date: document.getElementById('inputDate').value,
-                points: parseFloat(document.getElementById('inputPoints').value) || 0,
-                bundling: parseInt(document.getElementById('inputBundling').value) || 0,
-                conduct: conductVal,
-                ra: raVal,
-                tasks: {
-                    maint: document.getElementById('taskMaint').checked,
-                    followupGO: document.getElementById('taskFollowupGO').checked
-                }
-            };
+    // 1. UPDATE DATA LOKAL SECARA INSTAN (Selesai dalam hitungan milidetik)
+    cachedCloudData.push(newEntry);
+    renderTrainerDashboard(selectedTrainer);
 
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(newEntry)
-                });
-            } catch(err) {
-                console.error("Gagal sync cloud:", err);
-            }
+    // 2. RESET FORM & BERI NOTIFIKASI LANGSUNG
+    this.reset();
+    setTodayReportDate();
+    document.getElementById('inputTrainerDisplay').value = selectedTrainer;
+    document.getElementById('raCounter').innerText = "0 / 20 RA";
+    document.getElementById('conductWarning').classList.add('hidden');
+    alert('Laporan Harian Berhasil Terkirim!');
 
-            alert('Laporan Harian Berhasil Terkirim!');
-            this.reset();
-            setTodayReportDate();
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane mr-1.5"></i> Kirim Laporan Harian`;
-            document.getElementById('inputTrainerDisplay').value = selectedTrainer;
-            document.getElementById('raCounter').innerText = "0 / 20 RA";
-            document.getElementById('conductWarning').classList.add('hidden');
+    // 3. KIRIM DATA KE GOOGLE SHEETS DI BACKGROUND (Tanpa memblokir layar/loading)
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(newEntry)
+        });
+    } catch(err) {
+        console.error("Gagal sync cloud di background:", err);
+    }
+});
             
             await syncTrainerData();
         });
