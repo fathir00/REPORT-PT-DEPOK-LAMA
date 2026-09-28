@@ -473,8 +473,12 @@
                 <div class="flex flex-wrap justify-between items-start gap-4">
                     <div>
                         <span class="bg-blue-600 text-white font-extrabold text-xs px-3 py-1 rounded-full uppercase tracking-wider">Target Divisi Trainer</span>
-                        <h2 class="text-2xl font-black mt-1">TARGET BULANAN DIVISI: 34.500 POIN</h2>
-                        <p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-bullseye text-blue-400 mr-1"></i> Target SOB Individual: <strong>3.000 Poin / Trainer</strong> (11 Trainer)</p>
+                        <button onclick="openTargetModal()" class="ml-2 bg-gray-800 hover:bg-gray-700 text-yellow-400 border border-gray-600 text-xs font-bold px-3 py-1 rounded-full transition">
+                            <i class="fa-solid fa-gear mr-1"></i> Atur Target
+                        </button>
+                        <h2 id="labelDivTarget" class="text-2xl font-black mt-1">TARGET BULANAN DIVISI: 34.500 POIN</h2>
+                        <p id="labelIndTarget" class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-bullseye text-blue-400 mr-1"></i> Target SOB Individual: <strong>3.000 Poin / Trainer</strong> (11 Trainer)</p>
+                        <p id="labelTargetPeriod" class="text-[11px] text-gray-500 mt-1"></p>
                     </div>
 
                     <div class="bg-gray-800/80 border border-gray-700 p-4 rounded-xl text-right min-w-[220px]">
@@ -564,7 +568,7 @@
                     <canvas id="trendChart" class="w-full h-64"></canvas>
                 </div>
                 <div class="bg-white p-5 rounded-xl shadow">
-                    <h3 class="font-bold text-gray-700 mb-4">Pencapaian Poin vs Target SOB (3.000 Poin)</h3>
+                    <h3 id="chartTargetTitle" class="font-bold text-gray-700 mb-4">Pencapaian Poin vs Target SOB (3.000 Poin)</h3>
                     <canvas id="trainerComparisonChart" class="w-full h-64"></canvas>
                 </div>
             </div>
@@ -679,12 +683,48 @@
         </div>
     </div>
 
+    <!-- MODAL ATUR TARGET -->
+    <div id="targetModal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
+            <div class="bg-black text-white p-4 flex justify-between items-center border-b border-blue-600">
+                <h3 class="font-bold text-sm"><i class="fa-solid fa-bullseye text-blue-500 mr-2"></i> Atur Target Poin</h3>
+                <button onclick="closeTargetModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Target Bulanan Divisi (Poin)</label>
+                    <input type="number" id="inputDivisionalTarget" min="1" class="w-full border-gray-300 rounded-lg p-2 text-sm bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Target SOB Individual (Poin / Trainer)</label>
+                    <input type="number" id="inputIndividualTarget" min="1" class="w-full border-gray-300 rounded-lg p-2 text-sm bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <p class="text-[11px] text-gray-500 bg-gray-50 border rounded-lg p-2">
+                    <i class="fa-solid fa-circle-info text-blue-500 mr-1"></i>
+                    Target run-rate mingguan otomatis = Target SOB Individual &divide; 5. Target tersimpan di browser/perangkat ini.
+                </p>
+                <div class="flex justify-between items-center pt-2 border-t">
+                    <button type="button" onclick="resetTargetSettings()" class="text-xs font-bold text-gray-500 hover:text-red-600">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Reset ke Default
+                    </button>
+                    <div class="flex space-x-2">
+                        <button type="button" onclick="closeTargetModal()" class="bg-gray-200 text-gray-800 font-bold px-3 py-1.5 rounded-lg text-xs">Batal</button>
+                        <button type="button" onclick="saveTargetSettings()" class="bg-blue-600 text-white font-bold px-4 py-1.5 rounded-lg text-xs hover:bg-blue-700">Simpan Target</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript Logic -->
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrwmr3XKTHwmMh0UfIxma9xGhEYc0TL1bQx9w7wb2bJTHUMRM_1JIqFSLC5oR8Y8fL/exec";
 
-        const DIVISION_TARGET = 34500;
-        const INDIVIDUAL_SOB_TARGET = 3000;
+        // ===== TARGET (bisa diubah manual lewat tombol "Atur Target", disimpan di localStorage) =====
+        const DEFAULT_DIVISION_TARGET = 34500;
+        const DEFAULT_INDIVIDUAL_TARGET = 3000;
+        let DIVISION_TARGET = parseFloat(localStorage.getItem('FTL_TARGET_DIVISION')) || DEFAULT_DIVISION_TARGET;
+        let INDIVIDUAL_SOB_TARGET = parseFloat(localStorage.getItem('FTL_TARGET_INDIVIDUAL')) || DEFAULT_INDIVIDUAL_TARGET;
 
         const trainerList = [
             "Arini Permata Pahwandi",
@@ -765,6 +805,73 @@
             { id: 103, name: 'Mas Anton', trainer: 'Mega Putri Lusiana Sirait', sessions: 15 }
         ];
 
+        // Data khusus bulan berjalan (dipakai untuk pencapaian target bulanan)
+        function getMonthData() {
+            const prefix = new Date().toISOString().slice(0, 7); // contoh: "2026-09"
+            return appData.filter(d => (d.date || '').startsWith(prefix));
+        }
+
+        // ===== PENGATURAN TARGET =====
+        function openTargetModal() {
+            document.getElementById('inputDivisionalTarget').value = DIVISION_TARGET;
+            document.getElementById('inputIndividualTarget').value = INDIVIDUAL_SOB_TARGET;
+            document.getElementById('targetModal').classList.remove('hidden');
+        }
+
+        function closeTargetModal() {
+            document.getElementById('targetModal').classList.add('hidden');
+        }
+
+        function saveTargetSettings() {
+            const newDiv = parseFloat(document.getElementById('inputDivisionalTarget').value);
+            const newInd = parseFloat(document.getElementById('inputIndividualTarget').value);
+
+            if (!newDiv || newDiv <= 0 || !newInd || newInd <= 0) {
+                alert('Target harus berupa angka lebih dari 0!');
+                return;
+            }
+
+            DIVISION_TARGET = newDiv;
+            INDIVIDUAL_SOB_TARGET = newInd;
+            localStorage.setItem('FTL_TARGET_DIVISION', newDiv);
+            localStorage.setItem('FTL_TARGET_INDIVIDUAL', newInd);
+
+            closeTargetModal();
+            renderDashboard();
+            renderAnalytics();
+            alert('Target berhasil diperbarui!');
+        }
+
+        function resetTargetSettings() {
+            if (!confirm('Kembalikan target ke nilai default (' + DEFAULT_DIVISION_TARGET.toLocaleString('id-ID') + ' & ' + DEFAULT_INDIVIDUAL_TARGET.toLocaleString('id-ID') + ')?')) return;
+            DIVISION_TARGET = DEFAULT_DIVISION_TARGET;
+            INDIVIDUAL_SOB_TARGET = DEFAULT_INDIVIDUAL_TARGET;
+            localStorage.removeItem('FTL_TARGET_DIVISION');
+            localStorage.removeItem('FTL_TARGET_INDIVIDUAL');
+            closeTargetModal();
+            renderDashboard();
+            renderAnalytics();
+        }
+
+        function updateTargetLabels() {
+            const fmt = n => n.toLocaleString('id-ID');
+            const weekly = INDIVIDUAL_SOB_TARGET / 5;
+            const monthName = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
+            document.getElementById('labelDivTarget').innerText = `TARGET BULANAN DIVISI: ${fmt(DIVISION_TARGET)} POIN`;
+            document.getElementById('labelIndTarget').innerHTML =
+                `<i class="fa-solid fa-bullseye text-blue-400 mr-1"></i> Target SOB Individual: <strong>${fmt(INDIVIDUAL_SOB_TARGET)} Poin / Trainer</strong> (${trainerList.length} Trainer)`;
+            document.getElementById('labelTargetPeriod').innerText = `Periode berjalan: ${monthName} (pencapaian dihitung dari data bulan ini)`;
+            document.getElementById('chartTargetTitle').innerText = `Pencapaian Poin vs Target SOB (${fmt(INDIVIDUAL_SOB_TARGET)} Poin)`;
+
+            document.querySelectorAll('#selectWeeklyPeriod option').forEach(opt => {
+                const w = parseInt(opt.value);
+                opt.textContent = w < 5
+                    ? `Minggu ${w} (Tgt Run-Rate: ${fmt(weekly * w)} Poin)`
+                    : `Minggu 5 / Bulanan (Target SOB: ${fmt(INDIVIDUAL_SOB_TARGET)} Poin)`;
+            });
+        }
+
         async function syncCloudToManager() {
             const syncBtnText = document.getElementById('syncBtnText');
             if (syncBtnText) syncBtnText.innerText = "Syncing...";
@@ -829,7 +936,7 @@
         }
 
         function sendCoachingWAReminder(trainerName, currentPoints, totalBundling, conductTotal, avgRA, dailyPaceNeeded, week) {
-            const targetRunRate = Math.min(week * 600, INDIVIDUAL_SOB_TARGET);
+            const targetRunRate = Math.min(week * (INDIVIDUAL_SOB_TARGET / 5), INDIVIDUAL_SOB_TARGET);
             const minWeeklyConduct = week * 20;
 
             const isPointsBehind = currentPoints < targetRunRate;
@@ -869,7 +976,7 @@
                             `• *Target Unit Bundling:* Tingkatkan penawaran bundling produk/layanan harian\n` +
                             `• *SOP Melatih < 5 Sesi:* WAJIB mengisi minimal 1 s/d 20 RA per hari\n` +
                             `• *Prioritas Prospek:* Follow-up client GO & Renewal client sesi Low (≤ 3 sesi)\n` +
-                            `• *Target Final SOB:* 3.000 Poin / Trainer (Bulan Ini)\n\n` +
+                            `• *Target Final SOB:* ${INDIVIDUAL_SOB_TARGET.toLocaleString('id-ID')} Poin / Trainer (Bulan Ini)\n\n` +
                             `--------------------------------------------------\n` +
                             `_Mohon tingkatkan aktivitas harian Anda demi mencapai target SOB & Bundling. Tetap Semangat! 🔥_`;
 
@@ -1476,7 +1583,10 @@
             const now = new Date();
             const todayStr = now.toISOString().split('T')[0];
 
+            updateTargetLabels();
             renderDailyAuditTable(todayStr);
+
+            const monthData = getMonthData();
             
             let filtered = appData.filter(item => {
                 const matchTrainer = selectedTrainer === 'all' || item.trainer === selectedTrainer;
@@ -1497,7 +1607,8 @@
                 return matchTrainer && matchPeriod;
             });
 
-            const overallPoints = appData.reduce((acc, curr) => {
+            // Pencapaian divisi = total poin BULAN INI (agar target bulanan bisa diganti tiap bulan)
+            const overallPoints = monthData.reduce((acc, curr) => {
                 const pts = parseFloat(curr.points);
                 return acc + (isNaN(pts) ? 0 : pts);
             }, 0);
@@ -1512,7 +1623,7 @@
             const avgPerTrainer = (overallPoints / trainerList.length).toFixed(0);
 
             document.getElementById('targetPointsAchieved').innerText = `${overallPoints.toLocaleString('id-ID')} Poin`;
-            document.getElementById('targetPercentBadge').innerText = `${percentage}% dari Target 34.500 Poin`;
+            document.getElementById('targetPercentBadge').innerText = `${percentage}% dari Target ${DIVISION_TARGET.toLocaleString('id-ID')} Poin`;
             document.getElementById('targetProgressBar').style.width = `${percentage}%`;
             document.getElementById('targetPercentText').innerText = `${percentage}%`;
             document.getElementById('statPercent').innerText = `${percentage}%`;
@@ -1521,7 +1632,7 @@
             document.getElementById('statAvgPerTrainer').innerText = `${parseInt(avgPerTrainer).toLocaleString('id-ID')} Poin`;
 
             let rankedTrainersByPoints = trainerList.map(t => {
-                const logs = appData.filter(d => d.trainer === t);
+                const logs = monthData.filter(d => d.trainer === t);
                 const tPoints = logs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
                 const tConduct = logs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
                 const comm = calculateCommission(tPoints, tConduct);
@@ -1541,7 +1652,7 @@
             leaderboardList.innerHTML = '';
             rankedTrainersByPoints.slice(0, 5).forEach((t, index) => {
                 const sobPct = ((t.points / INDIVIDUAL_SOB_TARGET) * 100).toFixed(0);
-                const tBundling = appData.filter(d => d.trainer === t.name).reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+                const tBundling = monthData.filter(d => d.trainer === t.name).reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
                 leaderboardList.innerHTML += `
                     <div class="flex justify-between items-center p-2 bg-white rounded border shadow-sm text-xs">
                         <div class="flex items-center space-x-2">
@@ -1557,7 +1668,7 @@
             });
 
             let rankedTrainersByConduct = trainerList.map(t => {
-                const tConduct = appData.filter(d => d.trainer === t).reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+                const tConduct = monthData.filter(d => d.trainer === t).reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
                 return { name: t, conduct: tConduct };
             }).sort((a, b) => b.conduct - a.conduct);
 
@@ -1641,7 +1752,7 @@
                     labels: shortTrainerNames,
                     datasets: [
                         { label: 'Poin Capaian', data: pointsByTrainer, backgroundColor: '#2563EB' },
-                        { label: 'Target SOB (3.000)', data: trainerList.map(() => INDIVIDUAL_SOB_TARGET), backgroundColor: '#E5E7EB', type: 'line', borderColor: '#9CA3AF', borderDash: [5, 5] }
+                        { label: `Target SOB (${INDIVIDUAL_SOB_TARGET.toLocaleString('id-ID')})`, data: trainerList.map(() => INDIVIDUAL_SOB_TARGET), backgroundColor: '#E5E7EB', type: 'line', borderColor: '#9CA3AF', borderDash: [5, 5] }
                     ]
                 },
                 options: { responsive: true }
@@ -1654,15 +1765,18 @@
             tbody.innerHTML = '';
             coachingList.innerHTML = '';
 
+            updateTargetLabels();
+
             const selectedWeek = parseInt(document.getElementById('selectWeeklyPeriod').value) || 5;
             
-            const targetRunRate = Math.min(selectedWeek * 600, INDIVIDUAL_SOB_TARGET);
+            const targetRunRate = Math.min(selectedWeek * (INDIVIDUAL_SOB_TARGET / 5), INDIVIDUAL_SOB_TARGET);
             const minSafeRunRate = targetRunRate * 0.8; 
 
+            const monthData = getMonthData();
             let underPerformanceCount = 0;
 
             let trainerAnalyticsData = trainerList.map(trainer => {
-                const logs = appData.filter(d => d.trainer === trainer);
+                const logs = monthData.filter(d => d.trainer === trainer);
                 const totalPoints = logs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
                 const totalBundling = logs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
                 const totalRA = logs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
