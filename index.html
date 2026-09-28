@@ -469,51 +469,26 @@
                 </div>
             </div>
 
-           // SIMPAN DAN BACA TARGET DARI LOCALSTORAGE
-let currentDivisionalTarget = parseFloat(localStorage.getItem('FTL_TARGET_DIVISION')) || 34500;
-let currentIndividualTarget = parseFloat(localStorage.getItem('FTL_TARGET_INDIVIDUAL')) || 3000;
+            <div class="bg-gradient-to-r from-black via-gray-900 to-black text-white p-6 rounded-xl shadow-lg border-l-4 border-blue-600 space-y-4">
+                <div class="flex flex-wrap justify-between items-start gap-4">
+                    <div>
+                        <span class="bg-blue-600 text-white font-extrabold text-xs px-3 py-1 rounded-full uppercase tracking-wider">Target Divisi Trainer</span>
+                        <h2 class="text-2xl font-black mt-1">TARGET BULANAN DIVISI: 34.500 POIN</h2>
+                        <p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-bullseye text-blue-400 mr-1"></i> Target SOB Individual: <strong>3.000 Poin / Trainer</strong> (11 Trainer)</p>
+                    </div>
 
-function openTargetModal() {
-    document.getElementById('inputDivisionalTarget').value = currentDivisionalTarget;
-    document.getElementById('inputIndividualTarget').value = currentIndividualTarget;
-    document.getElementById('targetModal').classList.remove('hidden');
-}
+                    <div class="bg-gray-800/80 border border-gray-700 p-4 rounded-xl text-right min-w-[220px]">
+                        <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">TOTAL PENCAPAIAN POIN</p>
+                        <h3 id="targetPointsAchieved" class="text-3xl font-black text-yellow-400 mt-0.5">0 Poin</h3>
+                        <p id="targetPercentBadge" class="text-xs font-extrabold text-emerald-400 mt-1">0% dari Target 34.500 Poin</p>
+                    </div>
+                </div>
 
-function closeTargetModal() {
-    document.getElementById('targetModal').classList.add('hidden');
-}
-
-function saveTargetSettings() {
-    const newDivTarget = parseFloat(document.getElementById('inputDivisionalTarget').value) || currentDivisionalTarget;
-    const newIndTarget = parseFloat(document.getElementById('inputIndividualTarget').value) || currentIndividualTarget;
-
-    currentDivisionalTarget = newDivTarget;
-    currentIndividualTarget = newIndTarget;
-
-    localStorage.setItem('FTL_TARGET_DIVISION', newDivTarget);
-    localStorage.setItem('FTL_TARGET_INDIVIDUAL', newIndTarget);
-
-    closeTargetModal();
-    updateTargetUI(24700); // Ganti angka 24700 dengan variabel total pencapaian poin riil Anda
-}
-
-function updateTargetUI(totalAchieved) {
-    const percentage = ((totalAchieved / currentDivisionalTarget) * 100).toFixed(1);
-    const remaining = currentDivisionalTarget - totalAchieved;
-
-    document.getElementById('displayDivisionalTarget').innerText = currentDivisionalTarget.toLocaleString('id-ID');
-    document.getElementById('displayIndividualTargetText').innerHTML = `** Target SOB Individual: ${currentIndividualTarget.toLocaleString('id-ID')} Poin / Trainer`;
-    
-    document.getElementById('displayTotalAchieved').innerText = `${totalAchieved.toLocaleString('id-ID')} Poin`;
-    document.getElementById('displayAchievedPercentage').innerText = `\({percentage}% dari Target\){currentDivisionalTarget.toLocaleString('id-ID')} Poin`;
-
-    const progressBar = document.getElementById('targetProgressBar');
-    progressBar.style.width = `${Math.min(percentage, 100)}%`;
-    progressBar.innerText = `${percentage}%`;
-}
-
-// Inisialisasi saat pertama kali halaman dimuat
-updateTargetUI(24700);
+                <div class="w-full bg-gray-800 rounded-full h-6 p-1 border border-gray-700 shadow-inner">
+                    <div id="targetProgressBar" class="bg-gradient-to-r from-blue-600 to-sky-400 h-4 rounded-full transition-all duration-500 flex items-center justify-end pr-2 text-[10px] font-black text-black" style="width: 0%">
+                        <span id="targetPercentText">0%</span>
+                    </div>
+                </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-center border-t border-gray-800 pt-4">
                     <div class="bg-gray-900/80 p-3 rounded-lg border border-gray-800">
