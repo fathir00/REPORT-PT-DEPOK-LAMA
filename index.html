@@ -946,57 +946,89 @@
             return new Date(parts[0], parts[1] - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
         }
 
-        // Isi semua dropdown bulan: bulan yang punya data + bulan berjalan + bulan terpilih
-        function populateMonthSelects() {
-            const keys = new Set(
-                appData.map(d => String(d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
-            );
-            keys.add(currentMonthKey());
-            keys.add(selectedMonth);
+       // Parsing tanggal: mendukung YYYY-MM-DD, ISO (...T...), dan DD/MM/YYYY
+function parseAppDate(dateStr) {
+    if (!dateStr) return null;
+    const str = String(dateStr).trim();
+    let year, month, day;
 
-            const sorted = Array.from(keys).sort().reverse(); // terbaru di atas
-            const optionsHTML = sorted.map(k => `<option value="${k}">${formatMonthLabel(k)}</option>`).join('');
+    if (str.includes('-')) {
+        const parts = str.split('T')[0].split('-');
+        if (parts.length < 2) return null;
+        year = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10);
+        day = parseInt(parts[2] || 1, 10);
+    } else if (str.includes('/')) {
+        const parts = str.split('/');
+        if (parts.length < 3) return null;
+        day = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10);
+        year = parseInt(parts[2], 10);
+    } else {
+        return null;
+    }
+    // Ubah tanggal format apa pun (ISO / DD/MM/YYYY) menjadi "YYYY-MM-DD"
+function normalizeDateStr(dateStr) {
+    const p = parseAppDate(dateStr);
+    if (!p || isNaN(p.day)) return '';
+    return `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
+}
 
-            document.querySelectorAll('.month-select').forEach(sel => {
-                sel.innerHTML = optionsHTML;
-                sel.value = selectedMonth;
-            });
-        }
+    if (isNaN(year) || isNaN(month) || month < 1 || month > 12) return null;
+    return { key: `${year}-${String(month).padStart(2, '0')}`, year, month, day };
+}
 
-        function onMonthChange(value) {
-            if (!/^\d{4}-\d{2}$/.test(value)) return;
-            selectedMonth = value;
-            renderDashboard();
-            renderAnalytics();
-        }
+// Isi semua dropdown bulan secara dinamis dari data yang ada
+function populateMonthSelects() {
+    const keys = new Set();
 
-        function shiftMonth(delta) {
-            const parts = selectedMonth.split('-').map(Number);
-            const d = new Date(parts[0], parts[1] - 1 + delta, 1);
-            const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-            onMonthChange(key);
-        }
+    if (Array.isArray(appData)) {
+        appData.forEach(d => {
+            const parsed = parseAppDate(d.date);
+            if (parsed) keys.add(parsed.key);
+        });
+    }
 
-        function goToCurrentMonth() {
-            onMonthChange(currentMonthKey());
-        }
+    keys.add(currentMonthKey());
+    keys.add(selectedMonth); // bulan terpilih tetap ada walau belum punya data
 
-        // Data khusus bulan terpilih (dipakai untuk pencapaian target bulanan)
-        function getMonthData() {
-            const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
-            return appData.filter(d => {
-                if (!d.date) return false;
+    const sorted = Array.from(keys).sort().reverse(); // terbaru di atas
+    const optionsHTML = sorted
+        .map(k => `<option value="${k}">${formatMonthLabel(k)}</option>`)
+        .join('');
 
-                // Memisah string "YYYY-MM-DD" langsung tanpa konversi Date UTC
-                const parts = String(d.date).split('T')[0].split('-');
-                if (parts.length < 2) return false;
+    document.querySelectorAll('.month-select').forEach(sel => {
+        sel.innerHTML = optionsHTML;
+        sel.value = selectedMonth;
+    });
+}
 
-                const itemYear = parseInt(parts[0], 10);
-                const itemMonth = parseInt(parts[1], 10);
+function onMonthChange(value) {
+    if (!/^\d{4}-\d{2}$/.test(value)) return;
+    selectedMonth = value;
+    renderDashboard();
+    renderAnalytics();
+}
 
-                return itemYear === selYear && itemMonth === selMonthNum;
-            });
-        }
+function shiftMonth(delta) {
+    const parts = selectedMonth.split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1 + delta, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    onMonthChange(key);
+}
+
+function goToCurrentMonth() {
+    onMonthChange(currentMonthKey());
+}
+
+// Data khusus bulan terpilih (tanpa argumen = pakai selectedMonth)
+function getMonthData(monthKey) {
+    const target = monthKey || selectedMonth;
+    return appData.filter(d => {
+        const parsed = parseAppDate(d.date);
+        return parsed && parsed.key === target;
+    });
+}
 
         // ===== PENGATURAN TARGET =====
         function openTargetModal() {
@@ -1724,7 +1756,7 @@
             let notReportedCount = 0;
 
             trainerList.forEach(trainerName => {
-                const todayLog = appData.find(d => d.trainer === trainerName && String(d.date || '').split('T')[0] === todayStr);
+               const todayLog = appData.find(d => d.trainer === trainerName && normalizeDateStr(d.date) === todayStr);
 
                 if (todayLog) {
                     reportedCount++;
@@ -1801,30 +1833,22 @@
                 const matchTrainer = selectedTrainer === 'all' || item.trainer === selectedTrainer;
 
                 let matchPeriod = true;
-                if (selectedPeriod === 'daily') {
-                    matchPeriod = String(item.date || '').split('T')[0] === todayStr;
+                 if (selectedPeriod === 'daily') {
+                    matchPeriod = normalizeDateStr(item.date) === todayStr;
                 } else if (selectedPeriod === 'weekly') {
-                    if (!item.date) {
+                    const p = parseAppDate(item.date);
+                    if (!p || isNaN(p.day)) {
                         matchPeriod = false;
                     } else {
                         // Bandingkan berdasarkan tanggal lokal (tanpa jam) agar akurat
-                        const p = String(item.date).split('T')[0].split('-').map(Number);
-                        const itemDate = new Date(p[0], (p[1] || 1) - 1, p[2] || 1);
+                        const itemDate = new Date(p.year, p.month - 1, p.day);
                         const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                         const diffDays = Math.round((today0 - itemDate) / (1000 * 60 * 60 * 24));
                         matchPeriod = diffDays >= 0 && diffDays < 7;
                     }
                 } else if (selectedPeriod === 'monthly') {
-                    if (!item.date) {
-                        matchPeriod = false;
-                    } else {
-                        // Ekstrak bagian tahun dan bulan langsung dari string "YYYY-MM-DD"
-                        const parts = String(item.date).split('T')[0].split('-');
-                        const itemYear = parseInt(parts[0], 10);
-                        const itemMonth = parseInt(parts[1], 10);
-
-                        matchPeriod = (itemYear === selYear && itemMonth === selMonthNum);
-                    }
+                    const parsed = parseAppDate(item.date);
+                    matchPeriod = !!parsed && parsed.key === selectedMonth;
                 }
 
                 return matchTrainer && matchPeriod;
@@ -1998,7 +2022,7 @@
         let lastEvaluationExport = [];
 
         function getMonthStats(key) {
-            const logs = appData.filter(d => String(d.date || '').startsWith(key));
+            const logs = getMonthData(key);
             const points = logs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
             const bundling = logs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
             const conduct = logs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
@@ -2054,7 +2078,7 @@
 
             const range = parseInt(document.getElementById('evalRange').value) || 6;
             const keySet = new Set(
-                appData.map(d => String(d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
+                appData.map(d => { const p = parseAppDate(d.date); return p ? p.key : null; }).filter(Boolean)
             );
             keySet.add(currentMonthKey());
 
