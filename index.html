@@ -967,9 +967,13 @@
 
         // Data khusus bulan terpilih (dipakai untuk pencapaian target bulanan)
         function getMonthData() {
-            return appData.filter(d => (d.date || '').startsWith(selectedMonth));
-        }
-
+    const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
+    return appData.filter(d => {
+        if (!d.date) return false;
+        const dateObj = new Date(d.date);
+        return dateObj.getFullYear() === selYear && (dateObj.getMonth() + 1) === selMonthNum;
+    });
+}
         // ===== PENGATURAN TARGET =====
         function openTargetModal() {
             document.getElementById('inputDivisionalTarget').value = DIVISION_TARGET;
@@ -1752,26 +1756,36 @@
             updateTargetLabels();
             renderDailyAuditTable(todayStr);
 
-            const monthData = getMonthData();
+            const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
             
             let filtered = appData.filter(item => {
-                const matchTrainer = selectedTrainer === 'all' || item.trainer === selectedTrainer;
-                
-                let matchPeriod = true;
-                if (selectedPeriod === 'daily') {
-                    matchPeriod = item.date === todayStr;
-                } else if (selectedPeriod === 'weekly') {
-                    const itemDate = new Date(item.date);
-                    const diffTime = Math.abs(now - itemDate);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    matchPeriod = diffDays <= 7;
-                } else if (selectedPeriod === 'monthly') {
-                    // Mengikuti bulan yang dipilih di dropdown pemilih bulan
-                    matchPeriod = (item.date || '').startsWith(selectedMonth);
-                }
+    const matchTrainer = selectedTrainer === 'all' || item.trainer === selectedTrainer;
+    
+    let matchPeriod = true;
+    if (selectedPeriod === 'daily') {
+        matchPeriod = item.date === todayStr;
+    } else if (selectedPeriod === 'weekly') {
+        const itemDate = new Date(item.date);
+        const diffTime = Math.abs(now - itemDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        matchPeriod = diffDays <= 7;
+    } else if (selectedPeriod === 'monthly') {
+        if (!item.date) {
+            matchPeriod = false;
+        } else {
+            // Parsing string tanggal item ke objek Date resmi
+            const d = new Date(item.date);
+            // d.getMonth() bernilai 0-11, sehingga perlu ditambah 1
+            const itemYear = d.getFullYear();
+            const itemMonth = d.getMonth() + 1;
 
-                return matchTrainer && matchPeriod;
-            });
+            // Bandingkan secara numerik presisi
+            matchPeriod = (itemYear === selYear && itemMonth === selMonthNum);
+        }
+    }
+
+    return matchTrainer && matchPeriod;
+});
 
             // Pencapaian divisi = total poin pada BULAN TERPILIH (agar target bulanan bisa dibandingkan tiap bulan)
             const overallPoints = monthData.reduce((acc, curr) => {
