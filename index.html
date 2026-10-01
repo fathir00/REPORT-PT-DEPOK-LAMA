@@ -345,6 +345,33 @@
 
         <!-- TAB 2: DASHBOARD MONITORING & TARGET -->
         <section id="tab-dashboard" class="space-y-6">
+
+            <!-- ===== PEMILIH BULAN (BARU) ===== -->
+            <div class="bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white p-4 rounded-xl shadow-lg border-l-4 border-blue-600 flex flex-wrap justify-between items-center gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-600 w-10 h-10 rounded-lg flex items-center justify-center shadow">
+                        <i class="fa-solid fa-calendar-days text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-sm">Periode Bulan Dashboard</h3>
+                        <p class="text-[11px] text-gray-400">Pilih bulan untuk melihat target, podium, peringkat, dan analisis dari bulan tersebut.</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="shiftMonth(-1)" title="Bulan sebelumnya" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-200 w-9 h-9 rounded-lg transition">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <select id="filterMonth" onchange="onMonthChange(this.value)" class="month-select bg-gray-900 text-yellow-400 border border-gray-600 rounded-lg px-3 py-2 text-sm font-extrabold focus:ring-2 focus:ring-blue-500 focus:outline-none min-w-[170px]">
+                    </select>
+                    <button type="button" onclick="shiftMonth(1)" title="Bulan berikutnya" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-200 w-9 h-9 rounded-lg transition">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                    <button type="button" onclick="goToCurrentMonth()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-lg text-xs transition shadow">
+                        Bulan Ini
+                    </button>
+                </div>
+            </div>
+
             <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-600 space-y-4">
                 <div class="flex flex-wrap justify-between items-center border-b pb-3">
                     <div>
@@ -386,9 +413,9 @@
                 <div class="flex flex-wrap justify-between items-center border-b pb-3">
                     <div>
                         <h2 class="text-xl font-black text-gray-800 flex items-center">
-                            <i class="fa-solid fa-trophy text-yellow-500 text-2xl mr-2"></i> APRESIASI BEST PERFORMANCE TRAINER BULAN INI
+                            <i class="fa-solid fa-trophy text-yellow-500 text-2xl mr-2"></i> APRESIASI BEST PERFORMANCE TRAINER&nbsp;<span id="podiumMonthLabel">BULAN INI</span>
                         </h2>
-                        <p class="text-xs text-gray-500 mt-0.5">Penghargaan untuk trainer dengan capaian poin terbanyak di periode bulan berjalan.</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Penghargaan untuk trainer dengan capaian poin terbanyak di periode bulan terpilih.</p>
                     </div>
                     <span class="bg-amber-100 text-amber-800 font-extrabold text-xs px-3 py-1 rounded-full border border-amber-300 flex items-center">
                         <i class="fa-solid fa-crown text-yellow-600 mr-1"></i> Top Performers
@@ -524,7 +551,7 @@
                         <option value="all">Semua Periode</option>
                         <option value="daily">Harian (Hari Ini)</option>
                         <option value="weekly">7 Hari Terakhir (Mingguan)</option>
-                        <option value="monthly">Bulan Ini (Bulanan)</option>
+                        <option value="monthly" selected>Bulanan (Sesuai Bulan Terpilih)</option>
                     </select>
                     <select id="filterTrainer" onchange="renderDashboard()" class="border border-gray-300 rounded-lg p-2 text-sm bg-gray-50">
                         <option value="all">Semua Trainer</option>
@@ -572,6 +599,83 @@
                     <canvas id="trainerComparisonChart" class="w-full h-64"></canvas>
                 </div>
             </div>
+
+            <!-- ===== EVALUASI PENCAPAIAN BULAN SEBELUMNYA (BARU) ===== -->
+            <div id="monthlyEvaluationSection" class="bg-white p-6 rounded-xl shadow-md border-t-4 border-black space-y-6">
+                <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-3">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-800 flex items-center">
+                            <i class="fa-solid fa-clock-rotate-left text-blue-600 mr-2"></i> EVALUASI PENCAPAIAN BULAN SEBELUMNYA
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Bandingkan hasil divisi dan tiap trainer antarbulan untuk kebutuhan evaluasi.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <label class="text-xs font-bold text-gray-600">Tampilkan:</label>
+                        <select id="evalRange" onchange="renderMonthlyEvaluation()" class="border border-gray-300 rounded-lg p-2 text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="3">3 bulan terakhir</option>
+                            <option value="6" selected>6 bulan terakhir</option>
+                            <option value="12">12 bulan terakhir</option>
+                        </select>
+                        <button type="button" onclick="exportEvaluationCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-lg text-xs transition shadow">
+                            <i class="fa-solid fa-file-excel mr-1"></i> Download Rekap CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-gray-700 text-sm mb-3">Total Poin Divisi per Bulan vs Target Divisi</h3>
+                    <div class="relative h-64">
+                        <canvas id="monthlyTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-gray-700 text-sm mb-3"><i class="fa-solid fa-table-list text-blue-600 mr-1"></i> Ringkasan Divisi per Bulan</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm">
+                            <thead class="bg-gray-100 text-gray-700 border-b">
+                                <tr>
+                                    <th class="p-3">Bulan</th>
+                                    <th class="p-3">Total Poin</th>
+                                    <th class="p-3">% Target Divisi</th>
+                                    <th class="p-3">vs Bulan Lalu</th>
+                                    <th class="p-3">Unit Bundling</th>
+                                    <th class="p-3">Total Conduct</th>
+                                    <th class="p-3">Rata-Rata RA</th>
+                                    <th class="p-3">Capai Target SOB</th>
+                                    <th class="p-3">Trainer Terbaik</th>
+                                    <th class="p-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="evalSummaryBody" class="divide-y">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-gray-700 text-sm mb-1"><i class="fa-solid fa-users-viewfinder text-blue-600 mr-1"></i> Poin per Trainer per Bulan</h3>
+                    <p class="text-[11px] text-gray-500 mb-3">
+                        Warna sel:
+                        <span class="inline-block bg-emerald-100 text-emerald-800 font-bold px-1.5 rounded">hijau</span> capai target SOB,
+                        <span class="inline-block bg-amber-100 text-amber-800 font-bold px-1.5 rounded">kuning</span> 80% atau lebih,
+                        <span class="inline-block bg-red-100 text-red-800 font-bold px-1.5 rounded">merah</span> di bawah 80%.
+                    </p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm">
+                            <thead id="evalMatrixHead" class="bg-gray-100 text-gray-700 border-b">
+                            </thead>
+                            <tbody id="evalMatrixBody" class="divide-y">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <p class="text-[11px] text-gray-500 bg-gray-50 border rounded-lg p-2">
+                    <i class="fa-solid fa-circle-info text-blue-500 mr-1"></i>
+                    Persentase dan warna dihitung dari target yang aktif saat ini (target divisi dan SOB di tombol "Atur Target"). Bulan berjalan masih berlangsung, jadi angkanya belum final.
+                </p>
+            </div>
         </section>
 
         <!-- TAB 3: ANALISIS & COACHING -->
@@ -584,15 +688,22 @@
                         <p class="text-xs text-gray-500">Urutan Matriks: <strong>Good Pace (Atas)</strong> &rarr; <strong>Under Performance (Bawah)</strong></p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <label class="text-xs font-bold text-gray-600">Pilih Minggu Evaluasi:</label>
-                    <select id="selectWeeklyPeriod" onchange="renderAnalytics()" class="border border-gray-300 rounded-lg p-2 text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <option value="1">Minggu 1 (Tgt Run-Rate: 600 Poin)</option>
-                        <option value="2">Minggu 2 (Tgt Run-Rate: 1.200 Poin)</option>
-                        <option value="3">Minggu 3 (Tgt Run-Rate: 1.800 Poin)</option>
-                        <option value="4">Minggu 4 (Tgt Run-Rate: 2.400 Poin)</option>
-                        <option value="5" selected>Minggu 5 / Bulanan (Target SOB: 3.000 Poin)</option>
-                    </select>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs font-bold text-gray-600">Pilih Bulan:</label>
+                        <select id="analyticsMonth" onchange="onMonthChange(this.value)" class="month-select border border-gray-300 rounded-lg p-2 text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs font-bold text-gray-600">Pilih Minggu Evaluasi:</label>
+                        <select id="selectWeeklyPeriod" onchange="renderAnalytics()" class="border border-gray-300 rounded-lg p-2 text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="1">Minggu 1 (Tgt Run-Rate: 600 Poin)</option>
+                            <option value="2">Minggu 2 (Tgt Run-Rate: 1.200 Poin)</option>
+                            <option value="3">Minggu 3 (Tgt Run-Rate: 1.800 Poin)</option>
+                            <option value="4">Minggu 4 (Tgt Run-Rate: 2.400 Poin)</option>
+                            <option value="5" selected>Minggu 5 / Bulanan (Target SOB: 3.000 Poin)</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -805,10 +916,58 @@
             { id: 103, name: 'Mas Anton', trainer: 'Mega Putri Lusiana Sirait', sessions: 15 }
         ];
 
-        // Data khusus bulan berjalan (dipakai untuk pencapaian target bulanan)
+        // ===== PEMILIH BULAN (BARU) =====
+        // Format kunci bulan: "YYYY-MM" (contoh: "2026-10")
+        function currentMonthKey() {
+            return new Date().toISOString().slice(0, 7);
+        }
+
+        // Bulan yang sedang dipilih di dropdown (default: bulan berjalan)
+        let selectedMonth = currentMonthKey();
+
+        function formatMonthLabel(key) {
+            const parts = key.split('-').map(Number);
+            return new Date(parts[0], parts[1] - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        }
+
+        // Isi semua dropdown bulan: bulan yang punya data + bulan berjalan + bulan terpilih
+        function populateMonthSelects() {
+            const keys = new Set(
+                appData.map(d => (d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
+            );
+            keys.add(currentMonthKey());
+            keys.add(selectedMonth);
+
+            const sorted = Array.from(keys).sort().reverse(); // terbaru di atas
+            const optionsHTML = sorted.map(k => `<option value="${k}">${formatMonthLabel(k)}</option>`).join('');
+
+            document.querySelectorAll('.month-select').forEach(sel => {
+                sel.innerHTML = optionsHTML;
+                sel.value = selectedMonth;
+            });
+        }
+
+        function onMonthChange(value) {
+            if (!/^\d{4}-\d{2}$/.test(value)) return;
+            selectedMonth = value;
+            renderDashboard();
+            renderAnalytics();
+        }
+
+        function shiftMonth(delta) {
+            const parts = selectedMonth.split('-').map(Number);
+            const d = new Date(parts[0], parts[1] - 1 + delta, 1);
+            const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+            onMonthChange(key);
+        }
+
+        function goToCurrentMonth() {
+            onMonthChange(currentMonthKey());
+        }
+
+        // Data khusus bulan terpilih (dipakai untuk pencapaian target bulanan)
         function getMonthData() {
-            const prefix = new Date().toISOString().slice(0, 7); // contoh: "2026-09"
-            return appData.filter(d => (d.date || '').startsWith(prefix));
+            return appData.filter(d => (d.date || '').startsWith(selectedMonth));
         }
 
         // ===== PENGATURAN TARGET =====
@@ -856,13 +1015,19 @@
         function updateTargetLabels() {
             const fmt = n => n.toLocaleString('id-ID');
             const weekly = INDIVIDUAL_SOB_TARGET / 5;
-            const monthName = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            const monthName = formatMonthLabel(selectedMonth);
+            const isCurrent = selectedMonth === currentMonthKey();
 
             document.getElementById('labelDivTarget').innerText = `TARGET BULANAN DIVISI: ${fmt(DIVISION_TARGET)} POIN`;
             document.getElementById('labelIndTarget').innerHTML =
                 `<i class="fa-solid fa-bullseye text-blue-400 mr-1"></i> Target SOB Individual: <strong>${fmt(INDIVIDUAL_SOB_TARGET)} Poin / Trainer</strong> (${trainerList.length} Trainer)`;
-            document.getElementById('labelTargetPeriod').innerText = `Periode berjalan: ${monthName} (pencapaian dihitung dari data bulan ini)`;
+            document.getElementById('labelTargetPeriod').innerText = isCurrent
+                ? `Periode berjalan: ${monthName} (pencapaian dihitung dari data bulan ini)`
+                : `Periode terpilih: ${monthName} (pencapaian dihitung dari data bulan tersebut)`;
             document.getElementById('chartTargetTitle').innerText = `Pencapaian Poin vs Target SOB (${fmt(INDIVIDUAL_SOB_TARGET)} Poin)`;
+
+            const podiumLabel = document.getElementById('podiumMonthLabel');
+            if (podiumLabel) podiumLabel.innerText = isCurrent ? 'BULAN INI' : monthName.toUpperCase();
 
             document.querySelectorAll('#selectWeeklyPeriod option').forEach(opt => {
                 const w = parseInt(opt.value);
@@ -969,7 +1134,7 @@
             const message = `*FTL BLUE GYM - EVALUASI & REMINDER PERFORMA MINGGU KE-${week}*\n` +
                             `--------------------------------------------------\n` +
                             `👤 *Nama Trainer:* ${trainerName}\n` +
-                            `📅 *Periode Evaluasi:* Minggu ke-${week}\n\n` +
+                            `📅 *Periode Evaluasi:* Minggu ke-${week} (${formatMonthLabel(selectedMonth)})\n\n` +
                             `📊 *RINGKASAN EVALUASI PERFORMA:*` + evalPoints + `\n\n` +
                             `🎯 *TARGET & ACTION PLAN MINGGU KE-${week}:*\n` +
                             `• *Kekurangan Target Poin:* +${parseInt(dailyPaceNeeded).toLocaleString()} Poin / Hari sampai akhir periode\n` +
@@ -1583,6 +1748,7 @@
             const now = new Date();
             const todayStr = now.toISOString().split('T')[0];
 
+            populateMonthSelects();
             updateTargetLabels();
             renderDailyAuditTable(todayStr);
 
@@ -1600,14 +1766,14 @@
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     matchPeriod = diffDays <= 7;
                 } else if (selectedPeriod === 'monthly') {
-                    const itemDate = new Date(item.date);
-                    matchPeriod = itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+                    // Mengikuti bulan yang dipilih di dropdown pemilih bulan
+                    matchPeriod = (item.date || '').startsWith(selectedMonth);
                 }
 
                 return matchTrainer && matchPeriod;
             });
 
-            // Pencapaian divisi = total poin BULAN INI (agar target bulanan bisa diganti tiap bulan)
+            // Pencapaian divisi = total poin pada BULAN TERPILIH (agar target bulanan bisa dibandingkan tiap bulan)
             const overallPoints = monthData.reduce((acc, curr) => {
                 const pts = parseFloat(curr.points);
                 return acc + (isNaN(pts) ? 0 : pts);
@@ -1616,10 +1782,20 @@
             const percentage = Math.min(((overallPoints / DIVISION_TARGET) * 100), 100).toFixed(1);
             const remaining = Math.max(DIVISION_TARGET - overallPoints, 0);
             
-            const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            const remainingDaysInMonth = Math.max((lastDayOfMonth - now.getDate()) + 1, 1);
+            // Sisa hari: bulan berjalan = dari hari ini; bulan lalu = 0; bulan depan = seluruh hari
+            const selParts = selectedMonth.split('-').map(Number);
+            const lastDayOfMonth = new Date(selParts[0], selParts[1], 0).getDate();
+            const curKey = currentMonthKey();
+            let remainingDaysInMonth;
+            if (selectedMonth === curKey) {
+                remainingDaysInMonth = Math.max((lastDayOfMonth - now.getDate()) + 1, 1);
+            } else if (selectedMonth < curKey) {
+                remainingDaysInMonth = 0;
+            } else {
+                remainingDaysInMonth = lastDayOfMonth;
+            }
             
-            const dailyPointsNeeded = (remaining / remainingDaysInMonth).toFixed(0);
+            const dailyPointsNeeded = remainingDaysInMonth > 0 ? (remaining / remainingDaysInMonth).toFixed(0) : 0;
             const avgPerTrainer = (overallPoints / trainerList.length).toFixed(0);
 
             document.getElementById('targetPointsAchieved').innerText = `${overallPoints.toLocaleString('id-ID')} Poin`;
@@ -1712,6 +1888,7 @@
             document.getElementById('cardAvgRA').innerText = `${avgRA} / 20 RA`;
 
             renderCharts(filtered);
+            renderMonthlyEvaluation();
         }
 
         function renderCharts(data) {
@@ -1759,12 +1936,219 @@
             });
         }
 
+        // ===== EVALUASI PENCAPAIAN BULANAN (BARU) =====
+        let monthlyChartInstance = null;
+        let lastEvaluationExport = [];
+
+        function getMonthStats(key) {
+            const logs = appData.filter(d => (d.date || '').startsWith(key));
+            const points = logs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+            const bundling = logs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+            const conduct = logs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+            const raSum = logs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
+
+            const perTrainer = trainerList.map(t => {
+                const tl = logs.filter(d => d.trainer === t);
+                return {
+                    name: t,
+                    points: tl.reduce((a, b) => a + (parseFloat(b.points) || 0), 0),
+                    bundling: tl.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0),
+                    conduct: tl.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0),
+                    hasData: tl.length > 0
+                };
+            });
+
+            const best = perTrainer.slice().sort((a, b) => b.points - a.points)[0];
+
+            return {
+                key,
+                label: formatMonthLabel(key),
+                shortLabel: new Date(parseInt(key.slice(0, 4)), parseInt(key.slice(5, 7)) - 1, 1)
+                    .toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }),
+                reportCount: logs.length,
+                points,
+                bundling,
+                conduct,
+                avgRA: logs.length ? raSum / logs.length : 0,
+                perTrainer,
+                best: best && best.points > 0 ? best : null,
+                reachedSOB: perTrainer.filter(t => t.points >= INDIVIDUAL_SOB_TARGET).length
+            };
+        }
+
+        function deltaBadge(curr, prev) {
+            if (prev === null || prev === undefined) return '<span class="text-gray-400">-</span>';
+            if (prev === 0 && curr === 0) return '<span class="text-gray-400">-</span>';
+            const diff = curr - prev;
+            const pct = prev > 0 ? ((diff / prev) * 100).toFixed(0) + '%' : 'baru';
+            if (diff > 0) return `<span class="text-emerald-600 font-extrabold"><i class="fa-solid fa-arrow-trend-up mr-1"></i>+${diff.toLocaleString('id-ID')} (${pct})</span>`;
+            if (diff < 0) return `<span class="text-red-600 font-extrabold"><i class="fa-solid fa-arrow-trend-down mr-1"></i>${diff.toLocaleString('id-ID')} (${pct})</span>`;
+            return '<span class="text-gray-500 font-bold">Tetap</span>';
+        }
+
+        function openMonthFromEval(key) {
+            onMonthChange(key);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderMonthlyEvaluation() {
+            const section = document.getElementById('monthlyEvaluationSection');
+            if (!section) return;
+
+            const range = parseInt(document.getElementById('evalRange').value) || 6;
+            const keySet = new Set(
+                appData.map(d => (d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
+            );
+            keySet.add(currentMonthKey());
+
+            const allKeys = Array.from(keySet).sort();            // lama -> baru
+            const shownKeys = allKeys.slice(-range);
+            const stats = shownKeys.map(getMonthStats);
+            const curKey = currentMonthKey();
+
+            // ----- Tabel ringkasan divisi (terbaru di atas) -----
+            const summaryBody = document.getElementById('evalSummaryBody');
+            summaryBody.innerHTML = '';
+
+            [...stats].reverse().forEach(s => {
+                const idx = allKeys.indexOf(s.key);
+                const prev = idx > 0 ? getMonthStats(allKeys[idx - 1]) : null;
+                const pct = (s.points / DIVISION_TARGET) * 100;
+                const pctClass = pct >= 100 ? 'text-emerald-600' : (pct >= 80 ? 'text-amber-600' : 'text-red-600');
+                const isSelected = s.key === selectedMonth;
+                const isCurrent = s.key === curKey;
+
+                summaryBody.innerHTML += `
+                    <tr class="${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}">
+                        <td class="p-3 font-bold text-gray-800">
+                            ${s.label}
+                            ${isCurrent ? '<span class="ml-1 bg-blue-100 text-blue-800 text-[10px] font-black px-1.5 py-0.5 rounded-full">Berjalan</span>' : ''}
+                        </td>
+                        <td class="p-3 font-extrabold text-blue-600">${s.points.toLocaleString('id-ID')} Poin</td>
+                        <td class="p-3 font-black ${pctClass}">${pct.toFixed(1)}%</td>
+                        <td class="p-3">${deltaBadge(s.points, prev ? prev.points : null)}</td>
+                        <td class="p-3 font-bold text-emerald-600">${s.bundling} Unit</td>
+                        <td class="p-3 font-bold">${s.conduct} Sesi</td>
+                        <td class="p-3 font-bold">${s.avgRA.toFixed(1)}/20</td>
+                        <td class="p-3 font-bold">${s.reachedSOB} / ${trainerList.length} trainer</td>
+                        <td class="p-3 font-semibold text-gray-700">${s.best ? s.best.name.split(' ')[0] + ' (' + s.best.points.toLocaleString('id-ID') + ')' : '-'}</td>
+                        <td class="p-3 text-center">
+                            <button type="button" onclick="openMonthFromEval('${s.key}')" class="bg-gray-800 hover:bg-black text-white font-bold px-2.5 py-1 rounded text-xs whitespace-nowrap">
+                                Buka Detail
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // ----- Matriks poin per trainer per bulan -----
+            const head = document.getElementById('evalMatrixHead');
+            const body = document.getElementById('evalMatrixBody');
+
+            head.innerHTML = `<tr>
+                <th class="p-3">Trainer</th>
+                ${stats.map(s => `<th class="p-3 text-center whitespace-nowrap">${s.shortLabel}</th>`).join('')}
+                <th class="p-3 text-center">Rata-Rata</th>
+                <th class="p-3 text-center">Tren Bulan Terakhir</th>
+            </tr>`;
+
+            body.innerHTML = '';
+            stats.length && trainerList.forEach((trainer, tIdx) => {
+                let total = 0;
+                let monthsWithData = 0;
+
+                const cells = stats.map(s => {
+                    const t = s.perTrainer[tIdx];
+                    if (!t.hasData) return `<td class="p-3 text-center text-gray-300">-</td>`;
+                    total += t.points;
+                    monthsWithData++;
+                    const ratio = t.points / INDIVIDUAL_SOB_TARGET;
+                    const cls = ratio >= 1 ? 'bg-emerald-100 text-emerald-800'
+                              : ratio >= 0.8 ? 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-800';
+                    return `<td class="p-2 text-center"><span class="inline-block min-w-[64px] px-2 py-1 rounded font-extrabold ${cls}">${t.points.toLocaleString('id-ID')}</span></td>`;
+                }).join('');
+
+                const avg = monthsWithData ? Math.round(total / monthsWithData) : 0;
+
+                let trend = '<span class="text-gray-400">-</span>';
+                if (stats.length >= 2) {
+                    const last = stats[stats.length - 1].perTrainer[tIdx];
+                    const before = stats[stats.length - 2].perTrainer[tIdx];
+                    if (last.hasData && before.hasData) trend = deltaBadge(last.points, before.points);
+                }
+
+                body.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 font-bold text-gray-800 whitespace-nowrap">${trainer}</td>
+                        ${cells}
+                        <td class="p-3 text-center font-black text-gray-800">${avg ? avg.toLocaleString('id-ID') : '-'}</td>
+                        <td class="p-3 text-center text-xs">${trend}</td>
+                    </tr>
+                `;
+            });
+
+            // ----- Grafik total poin per bulan -----
+            const canvas = document.getElementById('monthlyTrendChart');
+            if (canvas) {
+                if (monthlyChartInstance) monthlyChartInstance.destroy();
+                monthlyChartInstance = new Chart(canvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: stats.map(s => s.shortLabel),
+                        datasets: [
+                            { label: 'Total Poin Divisi', data: stats.map(s => s.points), backgroundColor: '#2563EB' },
+                            { label: `Target Divisi (${DIVISION_TARGET.toLocaleString('id-ID')})`, data: stats.map(() => DIVISION_TARGET), type: 'line', borderColor: '#EF4444', borderDash: [6, 4], pointRadius: 0, fill: false }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // ----- Siapkan data untuk ekspor CSV (format panjang) -----
+            lastEvaluationExport = [];
+            stats.forEach(s => {
+                s.perTrainer.forEach(t => {
+                    lastEvaluationExport.push({
+                        bulan: s.key,
+                        trainer: t.name,
+                        poin: t.points,
+                        bundling: t.bundling,
+                        conduct: t.conduct,
+                        capaiSOB: t.points >= INDIVIDUAL_SOB_TARGET ? 'Ya' : 'Tidak',
+                        persenSOB: ((t.points / INDIVIDUAL_SOB_TARGET) * 100).toFixed(1)
+                    });
+                });
+            });
+        }
+
+        function exportEvaluationCSV() {
+            if (!lastEvaluationExport.length) {
+                alert('Belum ada data untuk diunduh.');
+                return;
+            }
+            let csv = '\ufeffBulan,Trainer,Poin,Unit_Bundling,Conduct_Sesi,Persen_Target_SOB,Capai_SOB\n';
+            lastEvaluationExport.forEach(r => {
+                csv += `${r.bulan},"${r.trainer}",${r.poin},${r.bundling},${r.conduct},${r.persenSOB},${r.capaiSOB}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Rekap_Evaluasi_Bulanan_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
         function renderAnalytics() {
             const tbody = document.getElementById('analyticsTableBody');
             const coachingList = document.getElementById('coachingList');
             tbody.innerHTML = '';
             coachingList.innerHTML = '';
 
+            populateMonthSelects();
             updateTargetLabels();
 
             const selectedWeek = parseInt(document.getElementById('selectWeeklyPeriod').value) || 5;
