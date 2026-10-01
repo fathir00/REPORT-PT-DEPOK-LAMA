@@ -970,8 +970,15 @@
     const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
     return appData.filter(d => {
         if (!d.date) return false;
-        const dateObj = new Date(d.date);
-        return dateObj.getFullYear() === selYear && (dateObj.getMonth() + 1) === selMonthNum;
+        
+        // Memisah string "YYYY-MM-DD" langsung tanpa konversi Date UTC
+        const parts = String(d.date).split('T')[0].split('-');
+        if (parts.length < 2) return false;
+        
+        const itemYear = parseInt(parts[0], 10);
+        const itemMonth = parseInt(parts[1], 10);
+        
+        return itemYear === selYear && itemMonth === selMonthNum;
     });
 }
         // ===== PENGATURAN TARGET =====
@@ -1757,8 +1764,8 @@
             renderDailyAuditTable(todayStr);
 
             const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
-            
-            let filtered = appData.filter(item => {
+
+let filtered = appData.filter(item => {
     const matchTrainer = selectedTrainer === 'all' || item.trainer === selectedTrainer;
     
     let matchPeriod = true;
@@ -1773,13 +1780,11 @@
         if (!item.date) {
             matchPeriod = false;
         } else {
-            // Parsing string tanggal item ke objek Date resmi
-            const d = new Date(item.date);
-            // d.getMonth() bernilai 0-11, sehingga perlu ditambah 1
-            const itemYear = d.getFullYear();
-            const itemMonth = d.getMonth() + 1;
+            // Ekstrak bagian tahun dan bulan langsung dari string "YYYY-MM-DD"
+            const parts = String(item.date).split('T')[0].split('-');
+            const itemYear = parseInt(parts[0], 10);
+            const itemMonth = parseInt(parts[1], 10);
 
-            // Bandingkan secara numerik presisi
             matchPeriod = (itemYear === selYear && itemMonth === selMonthNum);
         }
     }
