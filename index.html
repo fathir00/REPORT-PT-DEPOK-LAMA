@@ -127,7 +127,7 @@
                             </div>
                             <input type="number" id="inputConduct" min="0" placeholder="Jumlah sesi" required oninput="validateConductAndRA()" class="w-full border-gray-300 rounded-lg p-2.5 bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
                             <p id="conductWarning" class="text-xs text-amber-600 hidden mt-1 font-semibold">
-                                <i class="fa-solid fa-triangle-exclamation"></i> Melatih < 5 sesi harian! Trainer Wajib mengisi minimal 1 RA hari ini.
+                                <i class="fa-solid fa-triangle-exclamation"></i> Melatih &lt; 5 sesi harian! Trainer Wajib mengisi minimal 1 RA hari ini.
                             </p>
                         </div>
 
@@ -346,7 +346,7 @@
         <!-- TAB 2: DASHBOARD MONITORING & TARGET -->
         <section id="tab-dashboard" class="space-y-6">
 
-            <!-- ===== PEMILIH BULAN (BARU) ===== -->
+            <!-- ===== PEMILIH BULAN ===== -->
             <div class="bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white p-4 rounded-xl shadow-lg border-l-4 border-blue-600 flex flex-wrap justify-between items-center gap-3">
                 <div class="flex items-center space-x-3">
                     <div class="bg-blue-600 w-10 h-10 rounded-lg flex items-center justify-center shadow">
@@ -600,7 +600,7 @@
                 </div>
             </div>
 
-            <!-- ===== EVALUASI PENCAPAIAN BULAN SEBELUMNYA (BARU) ===== -->
+            <!-- ===== EVALUASI PENCAPAIAN BULAN SEBELUMNYA ===== -->
             <div id="monthlyEvaluationSection" class="bg-white p-6 rounded-xl shadow-md border-t-4 border-black space-y-6">
                 <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-3">
                     <div>
@@ -831,6 +831,16 @@
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrwmr3XKTHwmMh0UfIxma9xGhEYc0TL1bQx9w7wb2bJTHUMRM_1JIqFSLC5oR8Y8fL/exec";
 
+        // ===== HELPER TANGGAL LOKAL (FIX: zona waktu UTC vs WIB) =====
+        // Menghasilkan "YYYY-MM-DD" berdasarkan waktu perangkat (bukan UTC),
+        // sehingga pukul 00:00-06:59 WIB tetap menghasilkan tanggal hari ini.
+        function localDateStr(d) {
+            const dt = d || new Date();
+            return dt.getFullYear() + '-' +
+                String(dt.getMonth() + 1).padStart(2, '0') + '-' +
+                String(dt.getDate()).padStart(2, '0');
+        }
+
         // ===== TARGET (bisa diubah manual lewat tombol "Atur Target", disimpan di localStorage) =====
         const DEFAULT_DIVISION_TARGET = 34500;
         const DEFAULT_INDIVIDUAL_TARGET = 3000;
@@ -901,7 +911,8 @@
             return { feePerSession, code, pointCommission, conductCommission, totalCommission };
         }
 
-        document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+        // FIX: pakai tanggal lokal, bukan toISOString() (UTC)
+        document.getElementById('inputDate').value = localDateStr();
 
         let trendChartInstance = null;
         let trainerChartInstance = null;
@@ -910,16 +921,21 @@
         let appData = [];
         try { appData = JSON.parse(rawStorage) || []; } catch(e) { appData = []; }
 
-        let clientData = JSON.parse(localStorage.getItem('clientData')) || [
-            { id: 101, name: 'Bpk. Hendra', trainer: 'Arini Permata Pahwandi', sessions: 8 },
-            { id: 102, name: 'Ibu Siska', trainer: 'Bima Aminulah', sessions: 2 },
-            { id: 103, name: 'Mas Anton', trainer: 'Mega Putri Lusiana Sirait', sessions: 15 }
-        ];
+        let clientData = [];
+        try { clientData = JSON.parse(localStorage.getItem('clientData')) || null; } catch(e) { clientData = null; }
+        if (!Array.isArray(clientData)) {
+            clientData = [
+                { id: 101, name: 'Bpk. Hendra', trainer: 'Arini Permata Pahwandi', sessions: 8 },
+                { id: 102, name: 'Ibu Siska', trainer: 'Bima Aminulah', sessions: 2 },
+                { id: 103, name: 'Mas Anton', trainer: 'Mega Putri Lusiana Sirait', sessions: 15 }
+            ];
+        }
 
-        // ===== PEMILIH BULAN (BARU) =====
+        // ===== PEMILIH BULAN =====
         // Format kunci bulan: "YYYY-MM" (contoh: "2026-10")
+        // FIX: pakai waktu lokal agar tidak salah bulan di pergantian bulan (WIB)
         function currentMonthKey() {
-            return new Date().toISOString().slice(0, 7);
+            return localDateStr().slice(0, 7);
         }
 
         // Bulan yang sedang dipilih di dropdown (default: bulan berjalan)
@@ -933,7 +949,7 @@
         // Isi semua dropdown bulan: bulan yang punya data + bulan berjalan + bulan terpilih
         function populateMonthSelects() {
             const keys = new Set(
-                appData.map(d => (d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
+                appData.map(d => String(d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
             );
             keys.add(currentMonthKey());
             keys.add(selectedMonth);
@@ -967,20 +983,21 @@
 
         // Data khusus bulan terpilih (dipakai untuk pencapaian target bulanan)
         function getMonthData() {
-    const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
-    return appData.filter(d => {
-        if (!d.date) return false;
-        
-        // Memisah string "YYYY-MM-DD" langsung tanpa konversi Date UTC
-        const parts = String(d.date).split('T')[0].split('-');
-        if (parts.length < 2) return false;
-        
-        const itemYear = parseInt(parts[0], 10);
-        const itemMonth = parseInt(parts[1], 10);
-        
-        return itemYear === selYear && itemMonth === selMonthNum;
-    });
-}
+            const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
+            return appData.filter(d => {
+                if (!d.date) return false;
+
+                // Memisah string "YYYY-MM-DD" langsung tanpa konversi Date UTC
+                const parts = String(d.date).split('T')[0].split('-');
+                if (parts.length < 2) return false;
+
+                const itemYear = parseInt(parts[0], 10);
+                const itemMonth = parseInt(parts[1], 10);
+
+                return itemYear === selYear && itemMonth === selMonthNum;
+            });
+        }
+
         // ===== PENGATURAN TARGET =====
         function openTargetModal() {
             document.getElementById('inputDivisionalTarget').value = DIVISION_TARGET;
@@ -1069,6 +1086,26 @@
                 console.error("Gagal menyedot data cloud:", e);
             } finally {
                 if (syncBtnText) syncBtnText.innerText = "Sync Data Cloud";
+            }
+        }
+
+        // ===== KIRIM KE GOOGLE APPS SCRIPT =====
+        // Catatan: mode 'no-cors' membuat respons bersifat opaque, sehingga error HTTP
+        // (404/500) dari Apps Script TIDAK bisa terdeteksi di sini. Hanya error jaringan
+        // (offline, DNS, dll) yang akan tertangkap. Gunakan tombol "Sync Data Cloud"
+        // untuk memverifikasi bahwa data benar-benar masuk ke Google Sheet.
+        async function postToCloud(payload) {
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                return true;
+            } catch (err) {
+                console.error("Gagal mengirim ke cloud:", err);
+                return false;
             }
         }
 
@@ -1194,6 +1231,7 @@
                 renderClientTable();
             };
             reader.readAsText(file);
+            event.target.value = ''; // agar file yang sama bisa diimpor ulang
         }
 
         function importActivityFile(event) {
@@ -1239,6 +1277,7 @@
                 renderDashboard();
             };
             reader.readAsText(file);
+            event.target.value = ''; // agar file yang sama bisa diimpor ulang
         }
 
         document.getElementById('clientForm').addEventListener('submit', function(e) {
@@ -1274,7 +1313,8 @@
 
         document.getElementById('editClientForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const clientId = parseInt(document.getElementById('editClientId').value);
+            // FIX: parseFloat agar ID hasil impor CSV (Date.now() + Math.random()) tetap cocok
+            const clientId = parseFloat(document.getElementById('editClientId').value);
             
             clientData = clientData.map(c => {
                 if(c.id === clientId) {
@@ -1509,25 +1549,20 @@
                 }
             };
 
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(newEntry)
-                });
-            } catch(err) {
-                console.error("Gagal sync cloud:", err);
-            }
+            const cloudOk = await postToCloud(newEntry);
 
             appData.push(newEntry);
             localStorage.setItem('trainerData', JSON.stringify(appData));
             
-            alert('Data Aktivitas Berhasil Disimpan!');
+            alert(cloudOk
+                ? 'Data Aktivitas Berhasil Disimpan! (Klik "Sync Data Cloud" untuk memastikan data masuk ke Google Sheet)'
+                : 'Data tersimpan di perangkat ini, tetapi GAGAL dikirim ke Cloud (cek koneksi internet).');
             this.reset();
-            document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+            // FIX: tanggal lokal, bukan UTC
+            document.getElementById('inputDate').value = localDateStr();
             document.getElementById('raCounter').innerText = "0 / 20 RA";
             document.getElementById('conductWarning').classList.add('hidden');
+            document.getElementById('raWarning').classList.add('hidden');
             renderRecentTable();
             renderDashboard();
         });
@@ -1567,7 +1602,7 @@
                 const ra = parseInt(item.ra) || 0;
 
                 let conductBadge = conduct < 5 
-                    ? `<span class="text-amber-600 font-bold">${conduct} Sesi (< 5)</span>` 
+                    ? `<span class="text-amber-600 font-bold">${conduct} Sesi (&lt; 5)</span>` 
                     : `${conduct} Sesi`;
 
                 tbody.innerHTML += `
@@ -1622,17 +1657,10 @@
                 renderRecentTable();
                 renderDashboard();
 
-                try {
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: "delete", id: id })
-                    });
-                    alert('Data berhasil dihapus secara permanen dari Database Cloud!');
-                } catch(err) {
-                    console.error("Gagal menghapus data dari Cloud:", err);
-                }
+                const cloudOk = await postToCloud({ action: "delete", id: id });
+                alert(cloudOk
+                    ? 'Permintaan hapus telah dikirim ke Cloud. Klik "Sync Data Cloud" untuk memastikan data sudah terhapus di Google Sheet.'
+                    : 'Data dihapus dari perangkat ini, tetapi GAGAL mengirim perintah hapus ke Cloud (cek koneksi internet).');
             }
         }
 
@@ -1648,17 +1676,14 @@
                 renderRecentTable();
                 renderDashboard();
 
+                let failed = 0;
                 for (let id of idsToDelete) {
-                    try {
-                        await fetch(GOOGLE_SCRIPT_URL, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify({ action: "delete", id: id })
-                        });
-                    } catch(e) {}
+                    const ok = await postToCloud({ action: "delete", id: id });
+                    if (!ok) failed++;
                 }
-                alert('Data terpilih berhasil dihapus secara permanen!');
+                alert(failed === 0
+                    ? 'Permintaan hapus telah dikirim ke Cloud. Klik "Sync Data Cloud" untuk memastikan data sudah terhapus di Google Sheet.'
+                    : `Data dihapus dari perangkat ini, tetapi ${failed} perintah hapus GAGAL dikirim ke Cloud (cek koneksi internet).`);
             }
         }
 
@@ -1668,7 +1693,7 @@
                 return;
             }
 
-            let csvContent = "data:text/csv;charset=utf-8,ID,Tanggal,Trainer,Poin,Unit_Bundling,Conduct_Sesi,RA_Done,Maintenance,Followup_GO\n";
+            let csvContent = "ID,Tanggal,Trainer,Poin,Unit_Bundling,Conduct_Sesi,RA_Done,Maintenance,Followup_GO\n";
 
             appData.forEach(row => {
                 const maint = row.tasks && row.tasks.maint ? true : false;
@@ -1676,13 +1701,16 @@
                 csvContent += `${row.id},${row.date},"${row.trainer}",${row.points || 0},${row.bundling || 0},${row.conduct || 0},${row.ra || 0},${maint},${followupGO}\n`;
             });
 
-            const encodedUri = encodeURI(csvContent);
+            // FIX: pakai Blob (lebih aman untuk data besar / karakter khusus daripada data: URI)
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Data_Trainer_Monitoring_${new Date().toISOString().split('T')[0]}.csv`);
+            link.href = url;
+            link.download = `Data_Trainer_Monitoring_${localDateStr()}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
         function renderDailyAuditTable(todayStr) {
@@ -1696,7 +1724,7 @@
             let notReportedCount = 0;
 
             trainerList.forEach(trainerName => {
-                const todayLog = appData.find(d => d.trainer === trainerName && d.date === todayStr);
+                const todayLog = appData.find(d => d.trainer === trainerName && String(d.date || '').split('T')[0] === todayStr);
 
                 if (todayLog) {
                     reportedCount++;
@@ -1748,8 +1776,8 @@
                 }
             });
 
-            document.getElementById('badgeReportedCount').innerText = `${reportedCount}/11 Sudah Lapor`;
-            document.getElementById('badgeNotReportedCount').innerText = `${notReportedCount}/11 Belum Lapor`;
+            document.getElementById('badgeReportedCount').innerText = `${reportedCount}/${trainerList.length} Sudah Lapor`;
+            document.getElementById('badgeNotReportedCount').innerText = `${notReportedCount}/${trainerList.length} Belum Lapor`;
         }
 
         function renderDashboard() {
@@ -1757,40 +1785,50 @@
             const selectedPeriod = document.getElementById('filterPeriod').value;
 
             const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
+            // FIX: tanggal lokal (WIB), bukan UTC
+            const todayStr = localDateStr(now);
 
             populateMonthSelects();
             updateTargetLabels();
             renderDailyAuditTable(todayStr);
 
+            // FIX BUG #1: monthData sebelumnya tidak pernah dideklarasikan di fungsi ini
+            const monthData = getMonthData();
+
             const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
 
-let filtered = appData.filter(item => {
-    const matchTrainer = selectedTrainer === 'all' || item.trainer === selectedTrainer;
-    
-    let matchPeriod = true;
-    if (selectedPeriod === 'daily') {
-        matchPeriod = item.date === todayStr;
-    } else if (selectedPeriod === 'weekly') {
-        const itemDate = new Date(item.date);
-        const diffTime = Math.abs(now - itemDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        matchPeriod = diffDays <= 7;
-    } else if (selectedPeriod === 'monthly') {
-        if (!item.date) {
-            matchPeriod = false;
-        } else {
-            // Ekstrak bagian tahun dan bulan langsung dari string "YYYY-MM-DD"
-            const parts = String(item.date).split('T')[0].split('-');
-            const itemYear = parseInt(parts[0], 10);
-            const itemMonth = parseInt(parts[1], 10);
+            let filtered = appData.filter(item => {
+                const matchTrainer = selectedTrainer === 'all' || item.trainer === selectedTrainer;
 
-            matchPeriod = (itemYear === selYear && itemMonth === selMonthNum);
-        }
-    }
+                let matchPeriod = true;
+                if (selectedPeriod === 'daily') {
+                    matchPeriod = String(item.date || '').split('T')[0] === todayStr;
+                } else if (selectedPeriod === 'weekly') {
+                    if (!item.date) {
+                        matchPeriod = false;
+                    } else {
+                        // Bandingkan berdasarkan tanggal lokal (tanpa jam) agar akurat
+                        const p = String(item.date).split('T')[0].split('-').map(Number);
+                        const itemDate = new Date(p[0], (p[1] || 1) - 1, p[2] || 1);
+                        const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        const diffDays = Math.round((today0 - itemDate) / (1000 * 60 * 60 * 24));
+                        matchPeriod = diffDays >= 0 && diffDays < 7;
+                    }
+                } else if (selectedPeriod === 'monthly') {
+                    if (!item.date) {
+                        matchPeriod = false;
+                    } else {
+                        // Ekstrak bagian tahun dan bulan langsung dari string "YYYY-MM-DD"
+                        const parts = String(item.date).split('T')[0].split('-');
+                        const itemYear = parseInt(parts[0], 10);
+                        const itemMonth = parseInt(parts[1], 10);
 
-    return matchTrainer && matchPeriod;
-});
+                        matchPeriod = (itemYear === selYear && itemMonth === selMonthNum);
+                    }
+                }
+
+                return matchTrainer && matchPeriod;
+            });
 
             // Pencapaian divisi = total poin pada BULAN TERPILIH (agar target bulanan bisa dibandingkan tiap bulan)
             const overallPoints = monthData.reduce((acc, curr) => {
@@ -1955,12 +1993,12 @@ let filtered = appData.filter(item => {
             });
         }
 
-        // ===== EVALUASI PENCAPAIAN BULANAN (BARU) =====
+        // ===== EVALUASI PENCAPAIAN BULANAN =====
         let monthlyChartInstance = null;
         let lastEvaluationExport = [];
 
         function getMonthStats(key) {
-            const logs = appData.filter(d => (d.date || '').startsWith(key));
+            const logs = appData.filter(d => String(d.date || '').startsWith(key));
             const points = logs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
             const bundling = logs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
             const conduct = logs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
@@ -2016,7 +2054,7 @@ let filtered = appData.filter(item => {
 
             const range = parseInt(document.getElementById('evalRange').value) || 6;
             const keySet = new Set(
-                appData.map(d => (d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
+                appData.map(d => String(d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
             );
             keySet.add(currentMonthKey());
 
@@ -2072,7 +2110,7 @@ let filtered = appData.filter(item => {
             </tr>`;
 
             body.innerHTML = '';
-            stats.length && trainerList.forEach((trainer, tIdx) => {
+            if (stats.length) trainerList.forEach((trainer, tIdx) => {
                 let total = 0;
                 let monthsWithData = 0;
 
@@ -2154,7 +2192,7 @@ let filtered = appData.filter(item => {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Rekap_Evaluasi_Bulanan_${new Date().toISOString().split('T')[0]}.csv`;
+            link.download = `Rekap_Evaluasi_Bulanan_${localDateStr()}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -2175,6 +2213,7 @@ let filtered = appData.filter(item => {
             const targetRunRate = Math.min(selectedWeek * (INDIVIDUAL_SOB_TARGET / 5), INDIVIDUAL_SOB_TARGET);
             const minSafeRunRate = targetRunRate * 0.8; 
 
+            // Satu deklarasi saja di dalam fungsi ini (tidak ada redeclare)
             const monthData = getMonthData();
             let underPerformanceCount = 0;
 
