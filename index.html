@@ -29,6 +29,16 @@
                 <h1 class="text-lg font-extrabold tracking-wider text-gray-100">MANAGER MONITORING</h1>
             </div>
 
+            <!-- Dropdown Periode Bulan -->
+<div class="relative inline-flex items-center space-x-2 bg-gray-900 px-3 py-1.5 rounded-lg border border-gray-700">
+  <label for="periodSelect" class="text-xs text-gray-400 font-medium">Periode:</label>
+  <select id="periodSelect" onchange="changePeriod(this.value)" class="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer">
+    <option value="2026-10" class="bg-gray-900 text-white" selected>Oktober 2026</option>
+    <option value="2026-09" class="bg-gray-900 text-white">September 2026</option>
+    <option value="2026-08" class="bg-gray-900 text-white">Agustus 2026</option>
+  </select>
+</div>
+
             <!-- Jam Realtime & Tombol Aksi Header -->
             <div class="flex flex-wrap items-center space-x-2 sm:space-x-3 mt-2 sm:mt-0">
                 <!-- Tampilan Waktu Real-Time -->
