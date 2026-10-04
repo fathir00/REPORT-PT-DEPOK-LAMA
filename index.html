@@ -882,30 +882,33 @@
             });
         }
 
-        async function syncCloudToManager() {
-            const syncBtnText = document.getElementById('syncBtnText');
-            if (syncBtnText) syncBtnText.innerText = "Syncing...";
+       async function syncCloudToManager() {
+    const syncBtnText = document.getElementById('syncBtnText');
+    if (syncBtnText) syncBtnText.innerText = "Syncing...";
+    
+    try {
+        const res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'GET',
+            redirect: 'follow'
+        });
+        const cloudData = await res.json();
+        if (Array.isArray(cloudData)) {
+            appData = cloudData;
+            localStorage.setItem('trainerData', JSON.stringify(appData));
             
-            try {
-                const res = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'GET',
-                    redirect: 'follow'
-                });
-                const cloudData = await res.json();
-                if (Array.isArray(cloudData)) {
-                    appData = cloudData;
-                    localStorage.setItem('trainerData', JSON.stringify(appData));
-                    renderRecentTable();
-                    renderDashboard();
-                    renderAnalytics();
-                }
-            } catch(e) {
-                console.error("Gagal menyedot data cloud:", e);
-            } finally {
-                if (syncBtnText) syncBtnText.innerText = "Sync Data Cloud";
-            }
-        }
+            // --- POPULASI DROPDOWN OTOMATIS DARI DATA SHEET ---
+            populatePeriodDropdown();
 
+            renderRecentTable();
+            renderDashboard();
+            renderAnalytics();
+        }
+    } catch(e) {
+        console.error("Gagal menyedot data cloud:", e);
+    } finally {
+        if (syncBtnText) syncBtnText.innerText = "Sync Data Cloud";
+    }
+}
         function sendDailyWAReport(trainerName, date, points, bundling, conduct, ra) {
             const isConductLow = conduct < 5;
             const isRALow = isConductLow && ra < 1;
