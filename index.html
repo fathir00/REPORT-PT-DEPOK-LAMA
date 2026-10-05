@@ -29,16 +29,6 @@
                 <h1 class="text-lg font-extrabold tracking-wider text-gray-100">MANAGER MONITORING</h1>
             </div>
 
-            <!-- Dropdown Periode Bulan -->
-<div class="relative inline-flex items-center space-x-2 bg-gray-900 px-3 py-1.5 rounded-lg border border-gray-700">
-  <label for="periodSelect" class="text-xs text-gray-400 font-medium">Periode:</label>
-  <select id="periodSelect" onchange="changePeriod(this.value)" class="bg-transparent text-white text-xs font-semibold focus:outline-none cursor-pointer">
-    <option value="2026-10" class="bg-gray-900 text-white" selected>Oktober 2026</option>
-    <option value="2026-09" class="bg-gray-900 text-white">September 2026</option>
-    <option value="2026-08" class="bg-gray-900 text-white">Agustus 2026</option>
-  </select>
-</div>
-
             <!-- Jam Realtime & Tombol Aksi Header -->
             <div class="flex flex-wrap items-center space-x-2 sm:space-x-3 mt-2 sm:mt-0">
                 <!-- Tampilan Waktu Real-Time -->
@@ -137,7 +127,7 @@
                             </div>
                             <input type="number" id="inputConduct" min="0" placeholder="Jumlah sesi" required oninput="validateConductAndRA()" class="w-full border-gray-300 rounded-lg p-2.5 bg-gray-50 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
                             <p id="conductWarning" class="text-xs text-amber-600 hidden mt-1 font-semibold">
-                                <i class="fa-solid fa-triangle-exclamation"></i> Melatih < 5 sesi harian! Trainer Wajib mengisi minimal 1 RA hari ini.
+                                <i class="fa-solid fa-triangle-exclamation"></i> Melatih &lt; 5 sesi harian! Trainer Wajib mengisi minimal 1 RA hari ini.
                             </p>
                         </div>
 
@@ -355,6 +345,33 @@
 
         <!-- TAB 2: DASHBOARD MONITORING & TARGET -->
         <section id="tab-dashboard" class="space-y-6">
+
+            <!-- ===== PEMILIH BULAN ===== -->
+            <div class="bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white p-4 rounded-xl shadow-lg border-l-4 border-blue-600 flex flex-wrap justify-between items-center gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-600 w-10 h-10 rounded-lg flex items-center justify-center shadow">
+                        <i class="fa-solid fa-calendar-days text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-sm">Periode Bulan Dashboard</h3>
+                        <p class="text-[11px] text-gray-400">Pilih bulan untuk melihat target, podium, peringkat, dan analisis dari bulan tersebut.</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="shiftMonth(-1)" title="Bulan sebelumnya" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-200 w-9 h-9 rounded-lg transition">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <select id="filterMonth" onchange="onMonthChange(this.value)" class="month-select bg-gray-900 text-yellow-400 border border-gray-600 rounded-lg px-3 py-2 text-sm font-extrabold focus:ring-2 focus:ring-blue-500 focus:outline-none min-w-[170px]">
+                    </select>
+                    <button type="button" onclick="shiftMonth(1)" title="Bulan berikutnya" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-200 w-9 h-9 rounded-lg transition">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                    <button type="button" onclick="goToCurrentMonth()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-lg text-xs transition shadow">
+                        Bulan Ini
+                    </button>
+                </div>
+            </div>
+
             <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-600 space-y-4">
                 <div class="flex flex-wrap justify-between items-center border-b pb-3">
                     <div>
@@ -396,9 +413,9 @@
                 <div class="flex flex-wrap justify-between items-center border-b pb-3">
                     <div>
                         <h2 class="text-xl font-black text-gray-800 flex items-center">
-                            <i class="fa-solid fa-trophy text-yellow-500 text-2xl mr-2"></i> APRESIASI BEST PERFORMANCE TRAINER BULAN INI
+                            <i class="fa-solid fa-trophy text-yellow-500 text-2xl mr-2"></i> APRESIASI BEST PERFORMANCE TRAINER&nbsp;<span id="podiumMonthLabel">BULAN INI</span>
                         </h2>
-                        <p class="text-xs text-gray-500 mt-0.5">Penghargaan untuk trainer dengan capaian poin terbanyak di periode bulan berjalan.</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Penghargaan untuk trainer dengan capaian poin terbanyak di periode bulan terpilih.</p>
                     </div>
                     <span class="bg-amber-100 text-amber-800 font-extrabold text-xs px-3 py-1 rounded-full border border-amber-300 flex items-center">
                         <i class="fa-solid fa-crown text-yellow-600 mr-1"></i> Top Performers
@@ -534,7 +551,7 @@
                         <option value="all">Semua Periode</option>
                         <option value="daily">Harian (Hari Ini)</option>
                         <option value="weekly">7 Hari Terakhir (Mingguan)</option>
-                        <option value="monthly">Bulan Ini (Bulanan)</option>
+                        <option value="monthly" selected>Bulanan (Sesuai Bulan Terpilih)</option>
                     </select>
                     <select id="filterTrainer" onchange="renderDashboard()" class="border border-gray-300 rounded-lg p-2 text-sm bg-gray-50">
                         <option value="all">Semua Trainer</option>
@@ -582,6 +599,83 @@
                     <canvas id="trainerComparisonChart" class="w-full h-64"></canvas>
                 </div>
             </div>
+
+            <!-- ===== EVALUASI PENCAPAIAN BULAN SEBELUMNYA ===== -->
+            <div id="monthlyEvaluationSection" class="bg-white p-6 rounded-xl shadow-md border-t-4 border-black space-y-6">
+                <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-3">
+                    <div>
+                        <h2 class="text-xl font-black text-gray-800 flex items-center">
+                            <i class="fa-solid fa-clock-rotate-left text-blue-600 mr-2"></i> EVALUASI PENCAPAIAN BULAN SEBELUMNYA
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Bandingkan hasil divisi dan tiap trainer antarbulan untuk kebutuhan evaluasi.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <label class="text-xs font-bold text-gray-600">Tampilkan:</label>
+                        <select id="evalRange" onchange="renderMonthlyEvaluation()" class="border border-gray-300 rounded-lg p-2 text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="3">3 bulan terakhir</option>
+                            <option value="6" selected>6 bulan terakhir</option>
+                            <option value="12">12 bulan terakhir</option>
+                        </select>
+                        <button type="button" onclick="exportEvaluationCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-lg text-xs transition shadow">
+                            <i class="fa-solid fa-file-excel mr-1"></i> Download Rekap CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-gray-700 text-sm mb-3">Total Poin Divisi per Bulan vs Target Divisi</h3>
+                    <div class="relative h-64">
+                        <canvas id="monthlyTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-gray-700 text-sm mb-3"><i class="fa-solid fa-table-list text-blue-600 mr-1"></i> Ringkasan Divisi per Bulan</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm">
+                            <thead class="bg-gray-100 text-gray-700 border-b">
+                                <tr>
+                                    <th class="p-3">Bulan</th>
+                                    <th class="p-3">Total Poin</th>
+                                    <th class="p-3">% Target Divisi</th>
+                                    <th class="p-3">vs Bulan Lalu</th>
+                                    <th class="p-3">Unit Bundling</th>
+                                    <th class="p-3">Total Conduct</th>
+                                    <th class="p-3">Rata-Rata RA</th>
+                                    <th class="p-3">Capai Target SOB</th>
+                                    <th class="p-3">Trainer Terbaik</th>
+                                    <th class="p-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="evalSummaryBody" class="divide-y">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-gray-700 text-sm mb-1"><i class="fa-solid fa-users-viewfinder text-blue-600 mr-1"></i> Poin per Trainer per Bulan</h3>
+                    <p class="text-[11px] text-gray-500 mb-3">
+                        Warna sel:
+                        <span class="inline-block bg-emerald-100 text-emerald-800 font-bold px-1.5 rounded">hijau</span> capai target SOB,
+                        <span class="inline-block bg-amber-100 text-amber-800 font-bold px-1.5 rounded">kuning</span> 80% atau lebih,
+                        <span class="inline-block bg-red-100 text-red-800 font-bold px-1.5 rounded">merah</span> di bawah 80%.
+                    </p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm">
+                            <thead id="evalMatrixHead" class="bg-gray-100 text-gray-700 border-b">
+                            </thead>
+                            <tbody id="evalMatrixBody" class="divide-y">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <p class="text-[11px] text-gray-500 bg-gray-50 border rounded-lg p-2">
+                    <i class="fa-solid fa-circle-info text-blue-500 mr-1"></i>
+                    Persentase dan warna dihitung dari target yang aktif saat ini (target divisi dan SOB di tombol "Atur Target"). Bulan berjalan masih berlangsung, jadi angkanya belum final.
+                </p>
+            </div>
         </section>
 
         <!-- TAB 3: ANALISIS & COACHING -->
@@ -594,15 +688,22 @@
                         <p class="text-xs text-gray-500">Urutan Matriks: <strong>Good Pace (Atas)</strong> &rarr; <strong>Under Performance (Bawah)</strong></p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <label class="text-xs font-bold text-gray-600">Pilih Minggu Evaluasi:</label>
-                    <select id="selectWeeklyPeriod" onchange="renderAnalytics()" class="border border-gray-300 rounded-lg p-2 text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <option value="1">Minggu 1 (Tgt Run-Rate: 600 Poin)</option>
-                        <option value="2">Minggu 2 (Tgt Run-Rate: 1.200 Poin)</option>
-                        <option value="3">Minggu 3 (Tgt Run-Rate: 1.800 Poin)</option>
-                        <option value="4">Minggu 4 (Tgt Run-Rate: 2.400 Poin)</option>
-                        <option value="5" selected>Minggu 5 / Bulanan (Target SOB: 3.000 Poin)</option>
-                    </select>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs font-bold text-gray-600">Pilih Bulan:</label>
+                        <select id="analyticsMonth" onchange="onMonthChange(this.value)" class="month-select border border-gray-300 rounded-lg p-2 text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs font-bold text-gray-600">Pilih Minggu Evaluasi:</label>
+                        <select id="selectWeeklyPeriod" onchange="renderAnalytics()" class="border border-gray-300 rounded-lg p-2 text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="1">Minggu 1 (Tgt Run-Rate: 600 Poin)</option>
+                            <option value="2">Minggu 2 (Tgt Run-Rate: 1.200 Poin)</option>
+                            <option value="3">Minggu 3 (Tgt Run-Rate: 1.800 Poin)</option>
+                            <option value="4">Minggu 4 (Tgt Run-Rate: 2.400 Poin)</option>
+                            <option value="5" selected>Minggu 5 / Bulanan (Target SOB: 3.000 Poin)</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -728,7 +829,17 @@
 
     <!-- JavaScript Logic -->
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJowuIU-z6X32wwf-kRmjefEXIWjfLw2BQTkaJA4ORWB4fsJ_d3VgfGs_CH-De3rrD/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrwmr3XKTHwmMh0UfIxma9xGhEYc0TL1bQx9w7wb2bJTHUMRM_1JIqFSLC5oR8Y8fL/exec";
+
+        // ===== HELPER TANGGAL LOKAL (FIX: zona waktu UTC vs WIB) =====
+        // Menghasilkan "YYYY-MM-DD" berdasarkan waktu perangkat (bukan UTC),
+        // sehingga pukul 00:00-06:59 WIB tetap menghasilkan tanggal hari ini.
+        function localDateStr(d) {
+            const dt = d || new Date();
+            return dt.getFullYear() + '-' +
+                String(dt.getMonth() + 1).padStart(2, '0') + '-' +
+                String(dt.getDate()).padStart(2, '0');
+        }
 
         // ===== TARGET (bisa diubah manual lewat tombol "Atur Target", disimpan di localStorage) =====
         const DEFAULT_DIVISION_TARGET = 34500;
@@ -800,7 +911,8 @@
             return { feePerSession, code, pointCommission, conductCommission, totalCommission };
         }
 
-        document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+        // FIX: pakai tanggal lokal, bukan toISOString() (UTC)
+        document.getElementById('inputDate').value = localDateStr();
 
         let trendChartInstance = null;
         let trainerChartInstance = null;
@@ -809,16 +921,81 @@
         let appData = [];
         try { appData = JSON.parse(rawStorage) || []; } catch(e) { appData = []; }
 
-        let clientData = JSON.parse(localStorage.getItem('clientData')) || [
-            { id: 101, name: 'Bpk. Hendra', trainer: 'Arini Permata Pahwandi', sessions: 8 },
-            { id: 102, name: 'Ibu Siska', trainer: 'Bima Aminulah', sessions: 2 },
-            { id: 103, name: 'Mas Anton', trainer: 'Mega Putri Lusiana Sirait', sessions: 15 }
-        ];
+        let clientData = [];
+        try { clientData = JSON.parse(localStorage.getItem('clientData')) || null; } catch(e) { clientData = null; }
+        if (!Array.isArray(clientData)) {
+            clientData = [
+                { id: 101, name: 'Bpk. Hendra', trainer: 'Arini Permata Pahwandi', sessions: 8 },
+                { id: 102, name: 'Ibu Siska', trainer: 'Bima Aminulah', sessions: 2 },
+                { id: 103, name: 'Mas Anton', trainer: 'Mega Putri Lusiana Sirait', sessions: 15 }
+            ];
+        }
 
-        // Data khusus bulan berjalan (dipakai untuk pencapaian target bulanan)
+        // ===== PEMILIH BULAN =====
+        // Format kunci bulan: "YYYY-MM" (contoh: "2026-10")
+        // FIX: pakai waktu lokal agar tidak salah bulan di pergantian bulan (WIB)
+        function currentMonthKey() {
+            return localDateStr().slice(0, 7);
+        }
+
+        // Bulan yang sedang dipilih di dropdown (default: bulan berjalan)
+        let selectedMonth = currentMonthKey();
+
+        function formatMonthLabel(key) {
+            const parts = key.split('-').map(Number);
+            return new Date(parts[0], parts[1] - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        }
+
+        // Isi semua dropdown bulan: bulan yang punya data + bulan berjalan + bulan terpilih
+        function populateMonthSelects() {
+            const keys = new Set(
+                appData.map(d => String(d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
+            );
+            keys.add(currentMonthKey());
+            keys.add(selectedMonth);
+
+            const sorted = Array.from(keys).sort().reverse(); // terbaru di atas
+            const optionsHTML = sorted.map(k => `<option value="${k}">${formatMonthLabel(k)}</option>`).join('');
+
+            document.querySelectorAll('.month-select').forEach(sel => {
+                sel.innerHTML = optionsHTML;
+                sel.value = selectedMonth;
+            });
+        }
+
+        function onMonthChange(value) {
+            if (!/^\d{4}-\d{2}$/.test(value)) return;
+            selectedMonth = value;
+            renderDashboard();
+            renderAnalytics();
+        }
+
+        function shiftMonth(delta) {
+            const parts = selectedMonth.split('-').map(Number);
+            const d = new Date(parts[0], parts[1] - 1 + delta, 1);
+            const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+            onMonthChange(key);
+        }
+
+        function goToCurrentMonth() {
+            onMonthChange(currentMonthKey());
+        }
+
+        // Data khusus bulan terpilih (dipakai untuk pencapaian target bulanan)
         function getMonthData() {
-            const prefix = new Date().toISOString().slice(0, 7); // contoh: "2026-09"
-            return appData.filter(d => (d.date || '').startsWith(prefix));
+            const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
+            return appData.filter(d => {
+                if (!d.date) return false;
+
+                // Memisah string "YYYY-MM-DD" langsung tanpa konversi Date UTC
+                const parts = String(d.date).split('T')[0].split('-');
+                if (parts.length < 2) return false;
+
+                const itemYear = parseInt(parts[0], 10);
+                const itemMonth = parseInt(parts[1], 10);
+
+                return itemYear === selYear && itemMonth === selMonthNum;
+            });
         }
 
         // ===== PENGATURAN TARGET =====
@@ -866,13 +1043,19 @@
         function updateTargetLabels() {
             const fmt = n => n.toLocaleString('id-ID');
             const weekly = INDIVIDUAL_SOB_TARGET / 5;
-            const monthName = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            const monthName = formatMonthLabel(selectedMonth);
+            const isCurrent = selectedMonth === currentMonthKey();
 
             document.getElementById('labelDivTarget').innerText = `TARGET BULANAN DIVISI: ${fmt(DIVISION_TARGET)} POIN`;
             document.getElementById('labelIndTarget').innerHTML =
                 `<i class="fa-solid fa-bullseye text-blue-400 mr-1"></i> Target SOB Individual: <strong>${fmt(INDIVIDUAL_SOB_TARGET)} Poin / Trainer</strong> (${trainerList.length} Trainer)`;
-            document.getElementById('labelTargetPeriod').innerText = `Periode berjalan: ${monthName} (pencapaian dihitung dari data bulan ini)`;
+            document.getElementById('labelTargetPeriod').innerText = isCurrent
+                ? `Periode berjalan: ${monthName} (pencapaian dihitung dari data bulan ini)`
+                : `Periode terpilih: ${monthName} (pencapaian dihitung dari data bulan tersebut)`;
             document.getElementById('chartTargetTitle').innerText = `Pencapaian Poin vs Target SOB (${fmt(INDIVIDUAL_SOB_TARGET)} Poin)`;
+
+            const podiumLabel = document.getElementById('podiumMonthLabel');
+            if (podiumLabel) podiumLabel.innerText = isCurrent ? 'BULAN INI' : monthName.toUpperCase();
 
             document.querySelectorAll('#selectWeeklyPeriod option').forEach(opt => {
                 const w = parseInt(opt.value);
@@ -882,33 +1065,50 @@
             });
         }
 
-       async function syncCloudToManager() {
-    const syncBtnText = document.getElementById('syncBtnText');
-    if (syncBtnText) syncBtnText.innerText = "Syncing...";
-    
-    try {
-        const res = await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'GET',
-            redirect: 'follow'
-        });
-        const cloudData = await res.json();
-        if (Array.isArray(cloudData)) {
-            appData = cloudData;
-            localStorage.setItem('trainerData', JSON.stringify(appData));
+        async function syncCloudToManager() {
+            const syncBtnText = document.getElementById('syncBtnText');
+            if (syncBtnText) syncBtnText.innerText = "Syncing...";
             
-            // --- POPULASI DROPDOWN OTOMATIS DARI DATA SHEET ---
-            populatePeriodDropdown();
-
-            renderRecentTable();
-            renderDashboard();
-            renderAnalytics();
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                const cloudData = await res.json();
+                if (Array.isArray(cloudData)) {
+                    appData = cloudData;
+                    localStorage.setItem('trainerData', JSON.stringify(appData));
+                    renderRecentTable();
+                    renderDashboard();
+                    renderAnalytics();
+                }
+            } catch(e) {
+                console.error("Gagal menyedot data cloud:", e);
+            } finally {
+                if (syncBtnText) syncBtnText.innerText = "Sync Data Cloud";
+            }
         }
-    } catch(e) {
-        console.error("Gagal menyedot data cloud:", e);
-    } finally {
-        if (syncBtnText) syncBtnText.innerText = "Sync Data Cloud";
-    }
-}
+
+        // ===== KIRIM KE GOOGLE APPS SCRIPT =====
+        // Catatan: mode 'no-cors' membuat respons bersifat opaque, sehingga error HTTP
+        // (404/500) dari Apps Script TIDAK bisa terdeteksi di sini. Hanya error jaringan
+        // (offline, DNS, dll) yang akan tertangkap. Gunakan tombol "Sync Data Cloud"
+        // untuk memverifikasi bahwa data benar-benar masuk ke Google Sheet.
+        async function postToCloud(payload) {
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                return true;
+            } catch (err) {
+                console.error("Gagal mengirim ke cloud:", err);
+                return false;
+            }
+        }
+
         function sendDailyWAReport(trainerName, date, points, bundling, conduct, ra) {
             const isConductLow = conduct < 5;
             const isRALow = isConductLow && ra < 1;
@@ -982,7 +1182,7 @@
             const message = `*FTL BLUE GYM - EVALUASI & REMINDER PERFORMA MINGGU KE-${week}*\n` +
                             `--------------------------------------------------\n` +
                             `👤 *Nama Trainer:* ${trainerName}\n` +
-                            `📅 *Periode Evaluasi:* Minggu ke-${week}\n\n` +
+                            `📅 *Periode Evaluasi:* Minggu ke-${week} (${formatMonthLabel(selectedMonth)})\n\n` +
                             `📊 *RINGKASAN EVALUASI PERFORMA:*` + evalPoints + `\n\n` +
                             `🎯 *TARGET & ACTION PLAN MINGGU KE-${week}:*\n` +
                             `• *Kekurangan Target Poin:* +${parseInt(dailyPaceNeeded).toLocaleString()} Poin / Hari sampai akhir periode\n` +
@@ -1031,6 +1231,7 @@
                 renderClientTable();
             };
             reader.readAsText(file);
+            event.target.value = ''; // agar file yang sama bisa diimpor ulang
         }
 
         function importActivityFile(event) {
@@ -1076,6 +1277,7 @@
                 renderDashboard();
             };
             reader.readAsText(file);
+            event.target.value = ''; // agar file yang sama bisa diimpor ulang
         }
 
         document.getElementById('clientForm').addEventListener('submit', function(e) {
@@ -1111,7 +1313,8 @@
 
         document.getElementById('editClientForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const clientId = parseInt(document.getElementById('editClientId').value);
+            // FIX: parseFloat agar ID hasil impor CSV (Date.now() + Math.random()) tetap cocok
+            const clientId = parseFloat(document.getElementById('editClientId').value);
             
             clientData = clientData.map(c => {
                 if(c.id === clientId) {
@@ -1346,53 +1549,48 @@
                 }
             };
 
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(newEntry)
-                });
-            } catch(err) {
-                console.error("Gagal sync cloud:", err);
-            }
+            const cloudOk = await postToCloud(newEntry);
 
             appData.push(newEntry);
             localStorage.setItem('trainerData', JSON.stringify(appData));
             
-            alert('Data Aktivitas Berhasil Disimpan!');
+            alert(cloudOk
+                ? 'Data Aktivitas Berhasil Disimpan! (Klik "Sync Data Cloud" untuk memastikan data masuk ke Google Sheet)'
+                : 'Data tersimpan di perangkat ini, tetapi GAGAL dikirim ke Cloud (cek koneksi internet).');
             this.reset();
-            document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+            // FIX: tanggal lokal, bukan UTC
+            document.getElementById('inputDate').value = localDateStr();
             document.getElementById('raCounter').innerText = "0 / 20 RA";
             document.getElementById('conductWarning').classList.add('hidden');
+            document.getElementById('raWarning').classList.add('hidden');
             renderRecentTable();
             renderDashboard();
         });
 
         function renderRecentTable() {
-    const tbody = document.getElementById('recentTableBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    
-    const searchKeyword = (document.getElementById('recentSearchInput').value || '').toLowerCase();
-    const selectedTrainer = document.getElementById('recentTrainerFilter').value;
+            const tbody = document.getElementById('recentTableBody');
+            tbody.innerHTML = '';
+            
+            const searchKeyword = (document.getElementById('recentSearchInput').value || '').toLowerCase();
+            const selectedTrainer = document.getElementById('recentTrainerFilter').value;
 
-    let filteredData = appData.filter(item => {
-        const itemTrainer = item.trainer || '';
-        const itemDate = item.date || '';
-        const matchSearch = itemTrainer.toLowerCase().includes(searchKeyword) || itemDate.toLowerCase().includes(searchKeyword);
-        const matchTrainer = selectedTrainer === 'all' || itemTrainer === selectedTrainer;
-        return matchSearch && matchTrainer;
-    });
+            let filteredData = appData.filter(item => {
+                const itemTrainer = item.trainer || '';
+                const itemDate = item.date || '';
+                const matchSearch = itemTrainer.toLowerCase().includes(searchKeyword) || itemDate.includes(searchKeyword);
+                const matchTrainer = selectedTrainer === 'all' || itemTrainer === selectedTrainer;
+                return matchSearch && matchTrainer;
+            });
 
-    document.getElementById('recordCountText').innerText = filteredData.length;
+            document.getElementById('recordCountText').innerText = filteredData.length;
 
-    const selectAllCb = document.getElementById('selectAllActivity');
-    if (selectAllCb) selectAllCb.checked = false;
-    updateActivitySelectionCount();
+            const selectAllCb = document.getElementById('selectAllActivity');
+            if(selectAllCb) selectAllCb.checked = false;
+            updateActivitySelectionCount();
 
-    if (filteredData.length === 0) {
-        tbody.innerHTML = `
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center p-4 text-gray-500 italic">Tidak ada data ditemukan.</td></tr>`;
+                return;
             }
 
             [...filteredData].reverse().forEach(item => {
@@ -1404,7 +1602,7 @@
                 const ra = parseInt(item.ra) || 0;
 
                 let conductBadge = conduct < 5 
-                    ? `<span class="text-amber-600 font-bold">${conduct} Sesi (< 5)</span>` 
+                    ? `<span class="text-amber-600 font-bold">${conduct} Sesi (&lt; 5)</span>` 
                     : `${conduct} Sesi`;
 
                 tbody.innerHTML += `
@@ -1459,17 +1657,10 @@
                 renderRecentTable();
                 renderDashboard();
 
-                try {
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: "delete", id: id })
-                    });
-                    alert('Data berhasil dihapus secara permanen dari Database Cloud!');
-                } catch(err) {
-                    console.error("Gagal menghapus data dari Cloud:", err);
-                }
+                const cloudOk = await postToCloud({ action: "delete", id: id });
+                alert(cloudOk
+                    ? 'Permintaan hapus telah dikirim ke Cloud. Klik "Sync Data Cloud" untuk memastikan data sudah terhapus di Google Sheet.'
+                    : 'Data dihapus dari perangkat ini, tetapi GAGAL mengirim perintah hapus ke Cloud (cek koneksi internet).');
             }
         }
 
@@ -1485,17 +1676,14 @@
                 renderRecentTable();
                 renderDashboard();
 
+                let failed = 0;
                 for (let id of idsToDelete) {
-                    try {
-                        await fetch(GOOGLE_SCRIPT_URL, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify({ action: "delete", id: id })
-                        });
-                    } catch(e) {}
+                    const ok = await postToCloud({ action: "delete", id: id });
+                    if (!ok) failed++;
                 }
-                alert('Data terpilih berhasil dihapus secara permanen!');
+                alert(failed === 0
+                    ? 'Permintaan hapus telah dikirim ke Cloud. Klik "Sync Data Cloud" untuk memastikan data sudah terhapus di Google Sheet.'
+                    : `Data dihapus dari perangkat ini, tetapi ${failed} perintah hapus GAGAL dikirim ke Cloud (cek koneksi internet).`);
             }
         }
 
@@ -1505,7 +1693,7 @@
                 return;
             }
 
-            let csvContent = "data:text/csv;charset=utf-8,ID,Tanggal,Trainer,Poin,Unit_Bundling,Conduct_Sesi,RA_Done,Maintenance,Followup_GO\n";
+            let csvContent = "ID,Tanggal,Trainer,Poin,Unit_Bundling,Conduct_Sesi,RA_Done,Maintenance,Followup_GO\n";
 
             appData.forEach(row => {
                 const maint = row.tasks && row.tasks.maint ? true : false;
@@ -1513,13 +1701,16 @@
                 csvContent += `${row.id},${row.date},"${row.trainer}",${row.points || 0},${row.bundling || 0},${row.conduct || 0},${row.ra || 0},${maint},${followupGO}\n`;
             });
 
-            const encodedUri = encodeURI(csvContent);
+            // FIX: pakai Blob (lebih aman untuk data besar / karakter khusus daripada data: URI)
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Data_Trainer_Monitoring_${new Date().toISOString().split('T')[0]}.csv`);
+            link.href = url;
+            link.download = `Data_Trainer_Monitoring_${localDateStr()}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
         function renderDailyAuditTable(todayStr) {
@@ -1533,7 +1724,7 @@
             let notReportedCount = 0;
 
             trainerList.forEach(trainerName => {
-                const todayLog = appData.find(d => d.trainer === trainerName && d.date === todayStr);
+                const todayLog = appData.find(d => d.trainer === trainerName && String(d.date || '').split('T')[0] === todayStr);
 
                 if (todayLog) {
                     reportedCount++;
@@ -1585,8 +1776,8 @@
                 }
             });
 
-            document.getElementById('badgeReportedCount').innerText = `${reportedCount}/11 Sudah Lapor`;
-            document.getElementById('badgeNotReportedCount').innerText = `${notReportedCount}/11 Belum Lapor`;
+            document.getElementById('badgeReportedCount').innerText = `${reportedCount}/${trainerList.length} Sudah Lapor`;
+            document.getElementById('badgeNotReportedCount').innerText = `${notReportedCount}/${trainerList.length} Belum Lapor`;
         }
 
         function renderDashboard() {
@@ -1594,33 +1785,52 @@
             const selectedPeriod = document.getElementById('filterPeriod').value;
 
             const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
+            // FIX: tanggal lokal (WIB), bukan UTC
+            const todayStr = localDateStr(now);
 
+            populateMonthSelects();
             updateTargetLabels();
             renderDailyAuditTable(todayStr);
 
+            // FIX BUG #1: monthData sebelumnya tidak pernah dideklarasikan di fungsi ini
             const monthData = getMonthData();
-            
+
+            const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
+
             let filtered = appData.filter(item => {
                 const matchTrainer = selectedTrainer === 'all' || item.trainer === selectedTrainer;
-                
+
                 let matchPeriod = true;
                 if (selectedPeriod === 'daily') {
-                    matchPeriod = item.date === todayStr;
+                    matchPeriod = String(item.date || '').split('T')[0] === todayStr;
                 } else if (selectedPeriod === 'weekly') {
-                    const itemDate = new Date(item.date);
-                    const diffTime = Math.abs(now - itemDate);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    matchPeriod = diffDays <= 7;
+                    if (!item.date) {
+                        matchPeriod = false;
+                    } else {
+                        // Bandingkan berdasarkan tanggal lokal (tanpa jam) agar akurat
+                        const p = String(item.date).split('T')[0].split('-').map(Number);
+                        const itemDate = new Date(p[0], (p[1] || 1) - 1, p[2] || 1);
+                        const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        const diffDays = Math.round((today0 - itemDate) / (1000 * 60 * 60 * 24));
+                        matchPeriod = diffDays >= 0 && diffDays < 7;
+                    }
                 } else if (selectedPeriod === 'monthly') {
-                    const itemDate = new Date(item.date);
-                    matchPeriod = itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+                    if (!item.date) {
+                        matchPeriod = false;
+                    } else {
+                        // Ekstrak bagian tahun dan bulan langsung dari string "YYYY-MM-DD"
+                        const parts = String(item.date).split('T')[0].split('-');
+                        const itemYear = parseInt(parts[0], 10);
+                        const itemMonth = parseInt(parts[1], 10);
+
+                        matchPeriod = (itemYear === selYear && itemMonth === selMonthNum);
+                    }
                 }
 
                 return matchTrainer && matchPeriod;
             });
 
-            // Pencapaian divisi = total poin BULAN INI (agar target bulanan bisa diganti tiap bulan)
+            // Pencapaian divisi = total poin pada BULAN TERPILIH (agar target bulanan bisa dibandingkan tiap bulan)
             const overallPoints = monthData.reduce((acc, curr) => {
                 const pts = parseFloat(curr.points);
                 return acc + (isNaN(pts) ? 0 : pts);
@@ -1629,10 +1839,20 @@
             const percentage = Math.min(((overallPoints / DIVISION_TARGET) * 100), 100).toFixed(1);
             const remaining = Math.max(DIVISION_TARGET - overallPoints, 0);
             
-            const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-            const remainingDaysInMonth = Math.max((lastDayOfMonth - now.getDate()) + 1, 1);
+            // Sisa hari: bulan berjalan = dari hari ini; bulan lalu = 0; bulan depan = seluruh hari
+            const selParts = selectedMonth.split('-').map(Number);
+            const lastDayOfMonth = new Date(selParts[0], selParts[1], 0).getDate();
+            const curKey = currentMonthKey();
+            let remainingDaysInMonth;
+            if (selectedMonth === curKey) {
+                remainingDaysInMonth = Math.max((lastDayOfMonth - now.getDate()) + 1, 1);
+            } else if (selectedMonth < curKey) {
+                remainingDaysInMonth = 0;
+            } else {
+                remainingDaysInMonth = lastDayOfMonth;
+            }
             
-            const dailyPointsNeeded = (remaining / remainingDaysInMonth).toFixed(0);
+            const dailyPointsNeeded = remainingDaysInMonth > 0 ? (remaining / remainingDaysInMonth).toFixed(0) : 0;
             const avgPerTrainer = (overallPoints / trainerList.length).toFixed(0);
 
             document.getElementById('targetPointsAchieved').innerText = `${overallPoints.toLocaleString('id-ID')} Poin`;
@@ -1725,6 +1945,7 @@
             document.getElementById('cardAvgRA').innerText = `${avgRA} / 20 RA`;
 
             renderCharts(filtered);
+            renderMonthlyEvaluation();
         }
 
         function renderCharts(data) {
@@ -1772,12 +1993,219 @@
             });
         }
 
+        // ===== EVALUASI PENCAPAIAN BULANAN =====
+        let monthlyChartInstance = null;
+        let lastEvaluationExport = [];
+
+        function getMonthStats(key) {
+            const logs = appData.filter(d => String(d.date || '').startsWith(key));
+            const points = logs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+            const bundling = logs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+            const conduct = logs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+            const raSum = logs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
+
+            const perTrainer = trainerList.map(t => {
+                const tl = logs.filter(d => d.trainer === t);
+                return {
+                    name: t,
+                    points: tl.reduce((a, b) => a + (parseFloat(b.points) || 0), 0),
+                    bundling: tl.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0),
+                    conduct: tl.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0),
+                    hasData: tl.length > 0
+                };
+            });
+
+            const best = perTrainer.slice().sort((a, b) => b.points - a.points)[0];
+
+            return {
+                key,
+                label: formatMonthLabel(key),
+                shortLabel: new Date(parseInt(key.slice(0, 4)), parseInt(key.slice(5, 7)) - 1, 1)
+                    .toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }),
+                reportCount: logs.length,
+                points,
+                bundling,
+                conduct,
+                avgRA: logs.length ? raSum / logs.length : 0,
+                perTrainer,
+                best: best && best.points > 0 ? best : null,
+                reachedSOB: perTrainer.filter(t => t.points >= INDIVIDUAL_SOB_TARGET).length
+            };
+        }
+
+        function deltaBadge(curr, prev) {
+            if (prev === null || prev === undefined) return '<span class="text-gray-400">-</span>';
+            if (prev === 0 && curr === 0) return '<span class="text-gray-400">-</span>';
+            const diff = curr - prev;
+            const pct = prev > 0 ? ((diff / prev) * 100).toFixed(0) + '%' : 'baru';
+            if (diff > 0) return `<span class="text-emerald-600 font-extrabold"><i class="fa-solid fa-arrow-trend-up mr-1"></i>+${diff.toLocaleString('id-ID')} (${pct})</span>`;
+            if (diff < 0) return `<span class="text-red-600 font-extrabold"><i class="fa-solid fa-arrow-trend-down mr-1"></i>${diff.toLocaleString('id-ID')} (${pct})</span>`;
+            return '<span class="text-gray-500 font-bold">Tetap</span>';
+        }
+
+        function openMonthFromEval(key) {
+            onMonthChange(key);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderMonthlyEvaluation() {
+            const section = document.getElementById('monthlyEvaluationSection');
+            if (!section) return;
+
+            const range = parseInt(document.getElementById('evalRange').value) || 6;
+            const keySet = new Set(
+                appData.map(d => String(d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
+            );
+            keySet.add(currentMonthKey());
+
+            const allKeys = Array.from(keySet).sort();            // lama -> baru
+            const shownKeys = allKeys.slice(-range);
+            const stats = shownKeys.map(getMonthStats);
+            const curKey = currentMonthKey();
+
+            // ----- Tabel ringkasan divisi (terbaru di atas) -----
+            const summaryBody = document.getElementById('evalSummaryBody');
+            summaryBody.innerHTML = '';
+
+            [...stats].reverse().forEach(s => {
+                const idx = allKeys.indexOf(s.key);
+                const prev = idx > 0 ? getMonthStats(allKeys[idx - 1]) : null;
+                const pct = (s.points / DIVISION_TARGET) * 100;
+                const pctClass = pct >= 100 ? 'text-emerald-600' : (pct >= 80 ? 'text-amber-600' : 'text-red-600');
+                const isSelected = s.key === selectedMonth;
+                const isCurrent = s.key === curKey;
+
+                summaryBody.innerHTML += `
+                    <tr class="${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}">
+                        <td class="p-3 font-bold text-gray-800">
+                            ${s.label}
+                            ${isCurrent ? '<span class="ml-1 bg-blue-100 text-blue-800 text-[10px] font-black px-1.5 py-0.5 rounded-full">Berjalan</span>' : ''}
+                        </td>
+                        <td class="p-3 font-extrabold text-blue-600">${s.points.toLocaleString('id-ID')} Poin</td>
+                        <td class="p-3 font-black ${pctClass}">${pct.toFixed(1)}%</td>
+                        <td class="p-3">${deltaBadge(s.points, prev ? prev.points : null)}</td>
+                        <td class="p-3 font-bold text-emerald-600">${s.bundling} Unit</td>
+                        <td class="p-3 font-bold">${s.conduct} Sesi</td>
+                        <td class="p-3 font-bold">${s.avgRA.toFixed(1)}/20</td>
+                        <td class="p-3 font-bold">${s.reachedSOB} / ${trainerList.length} trainer</td>
+                        <td class="p-3 font-semibold text-gray-700">${s.best ? s.best.name.split(' ')[0] + ' (' + s.best.points.toLocaleString('id-ID') + ')' : '-'}</td>
+                        <td class="p-3 text-center">
+                            <button type="button" onclick="openMonthFromEval('${s.key}')" class="bg-gray-800 hover:bg-black text-white font-bold px-2.5 py-1 rounded text-xs whitespace-nowrap">
+                                Buka Detail
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // ----- Matriks poin per trainer per bulan -----
+            const head = document.getElementById('evalMatrixHead');
+            const body = document.getElementById('evalMatrixBody');
+
+            head.innerHTML = `<tr>
+                <th class="p-3">Trainer</th>
+                ${stats.map(s => `<th class="p-3 text-center whitespace-nowrap">${s.shortLabel}</th>`).join('')}
+                <th class="p-3 text-center">Rata-Rata</th>
+                <th class="p-3 text-center">Tren Bulan Terakhir</th>
+            </tr>`;
+
+            body.innerHTML = '';
+            if (stats.length) trainerList.forEach((trainer, tIdx) => {
+                let total = 0;
+                let monthsWithData = 0;
+
+                const cells = stats.map(s => {
+                    const t = s.perTrainer[tIdx];
+                    if (!t.hasData) return `<td class="p-3 text-center text-gray-300">-</td>`;
+                    total += t.points;
+                    monthsWithData++;
+                    const ratio = t.points / INDIVIDUAL_SOB_TARGET;
+                    const cls = ratio >= 1 ? 'bg-emerald-100 text-emerald-800'
+                              : ratio >= 0.8 ? 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-800';
+                    return `<td class="p-2 text-center"><span class="inline-block min-w-[64px] px-2 py-1 rounded font-extrabold ${cls}">${t.points.toLocaleString('id-ID')}</span></td>`;
+                }).join('');
+
+                const avg = monthsWithData ? Math.round(total / monthsWithData) : 0;
+
+                let trend = '<span class="text-gray-400">-</span>';
+                if (stats.length >= 2) {
+                    const last = stats[stats.length - 1].perTrainer[tIdx];
+                    const before = stats[stats.length - 2].perTrainer[tIdx];
+                    if (last.hasData && before.hasData) trend = deltaBadge(last.points, before.points);
+                }
+
+                body.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 font-bold text-gray-800 whitespace-nowrap">${trainer}</td>
+                        ${cells}
+                        <td class="p-3 text-center font-black text-gray-800">${avg ? avg.toLocaleString('id-ID') : '-'}</td>
+                        <td class="p-3 text-center text-xs">${trend}</td>
+                    </tr>
+                `;
+            });
+
+            // ----- Grafik total poin per bulan -----
+            const canvas = document.getElementById('monthlyTrendChart');
+            if (canvas) {
+                if (monthlyChartInstance) monthlyChartInstance.destroy();
+                monthlyChartInstance = new Chart(canvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: stats.map(s => s.shortLabel),
+                        datasets: [
+                            { label: 'Total Poin Divisi', data: stats.map(s => s.points), backgroundColor: '#2563EB' },
+                            { label: `Target Divisi (${DIVISION_TARGET.toLocaleString('id-ID')})`, data: stats.map(() => DIVISION_TARGET), type: 'line', borderColor: '#EF4444', borderDash: [6, 4], pointRadius: 0, fill: false }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // ----- Siapkan data untuk ekspor CSV (format panjang) -----
+            lastEvaluationExport = [];
+            stats.forEach(s => {
+                s.perTrainer.forEach(t => {
+                    lastEvaluationExport.push({
+                        bulan: s.key,
+                        trainer: t.name,
+                        poin: t.points,
+                        bundling: t.bundling,
+                        conduct: t.conduct,
+                        capaiSOB: t.points >= INDIVIDUAL_SOB_TARGET ? 'Ya' : 'Tidak',
+                        persenSOB: ((t.points / INDIVIDUAL_SOB_TARGET) * 100).toFixed(1)
+                    });
+                });
+            });
+        }
+
+        function exportEvaluationCSV() {
+            if (!lastEvaluationExport.length) {
+                alert('Belum ada data untuk diunduh.');
+                return;
+            }
+            let csv = '\ufeffBulan,Trainer,Poin,Unit_Bundling,Conduct_Sesi,Persen_Target_SOB,Capai_SOB\n';
+            lastEvaluationExport.forEach(r => {
+                csv += `${r.bulan},"${r.trainer}",${r.poin},${r.bundling},${r.conduct},${r.persenSOB},${r.capaiSOB}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Rekap_Evaluasi_Bulanan_${localDateStr()}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
         function renderAnalytics() {
             const tbody = document.getElementById('analyticsTableBody');
             const coachingList = document.getElementById('coachingList');
             tbody.innerHTML = '';
             coachingList.innerHTML = '';
 
+            populateMonthSelects();
             updateTargetLabels();
 
             const selectedWeek = parseInt(document.getElementById('selectWeeklyPeriod').value) || 5;
@@ -1785,6 +2213,7 @@
             const targetRunRate = Math.min(selectedWeek * (INDIVIDUAL_SOB_TARGET / 5), INDIVIDUAL_SOB_TARGET);
             const minSafeRunRate = targetRunRate * 0.8; 
 
+            // Satu deklarasi saja di dalam fungsi ini (tidak ada redeclare)
             const monthData = getMonthData();
             let underPerformanceCount = 0;
 
