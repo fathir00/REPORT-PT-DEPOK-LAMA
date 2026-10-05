@@ -1370,29 +1370,29 @@
         });
 
         function renderRecentTable() {
-            const tbody = document.getElementById('recentTableBody');
-            tbody.innerHTML = '';
-            
-            const searchKeyword = (document.getElementById('recentSearchInput').value || '').toLowerCase();
-            const selectedTrainer = document.getElementById('recentTrainerFilter').value;
+    const tbody = document.getElementById('recentTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    const searchKeyword = (document.getElementById('recentSearchInput').value || '').toLowerCase();
+    const selectedTrainer = document.getElementById('recentTrainerFilter').value;
 
-            let filteredData = appData.filter(item => {
-                const itemTrainer = item.trainer || '';
-                const itemDate = item.date || '';
-                const matchSearch = itemTrainer.toLowerCase().includes(searchKeyword) || itemDate.includes(searchKeyword);
-                const matchTrainer = selectedTrainer === 'all' || itemTrainer === selectedTrainer;
-                return matchSearch && matchTrainer;
-            });
+    let filteredData = appData.filter(item => {
+        const itemTrainer = item.trainer || '';
+        const itemDate = item.date || '';
+        const matchSearch = itemTrainer.toLowerCase().includes(searchKeyword) || itemDate.toLowerCase().includes(searchKeyword);
+        const matchTrainer = selectedTrainer === 'all' || itemTrainer === selectedTrainer;
+        return matchSearch && matchTrainer;
+    });
 
-            document.getElementById('recordCountText').innerText = filteredData.length;
+    document.getElementById('recordCountText').innerText = filteredData.length;
 
-            const selectAllCb = document.getElementById('selectAllActivity');
-            if(selectAllCb) selectAllCb.checked = false;
-            updateActivitySelectionCount();
+    const selectAllCb = document.getElementById('selectAllActivity');
+    if (selectAllCb) selectAllCb.checked = false;
+    updateActivitySelectionCount();
 
-            if (filteredData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center p-4 text-gray-500 italic">Tidak ada data ditemukan.</td></tr>`;
-                return;
+    if (filteredData.length === 0) {
+        tbody.innerHTML = `
             }
 
             [...filteredData].reverse().forEach(item => {
