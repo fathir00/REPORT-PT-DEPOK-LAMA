@@ -316,47 +316,69 @@
         }
 
         function renderTrainerDashboard(selectedTrainer) {
-            const trainerLogs = cachedCloudData.filter(d => d.trainer === selectedTrainer);
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1 - 12 (Oktober = 10)
 
-            const totalPoints = trainerLogs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
-            const totalBundling = trainerLogs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
-            const totalConduct = trainerLogs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
-            const totalRA = trainerLogs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
-            const avgRA = trainerLogs.length ? (totalRA / trainerLogs.length).toFixed(1) : 0;
+    // FILTER KHUSUS NAMA TRAINER DAN BULAN BERJALAN (OKTOBER 2026)
+    const trainerLogs = cachedCloudData.filter(d => {
+        if (d.trainer !== selectedTrainer) return false;
+        if (!d.date) return false;
 
-            const comm = calculateSmartCoachCommission(totalPoints, totalConduct);
+        // Split manual format YYYY-MM-DD untuk menghindari offset UTC/Timezone
+        const parts = d.date.split('-');
+        if (parts.length < 3) return false;
 
-            let nextGoalText = "";
-            if (totalPoints < 500) {
-                nextGoalText = `Kejar +${(500 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk capai Tier N!`;
-            } else if (totalPoints < 1400) {
-                nextGoalText = `Kejar +${(1400 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier V!`;
-            } else if (totalPoints < 1700) {
-                nextGoalText = `Kejar +${(1700 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier W!`;
-            } else if (totalPoints < 2700) {
-                nextGoalText = `Kejar +${(2700 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier X!`;
-            } else if (totalPoints < 3200) {
-                nextGoalText = `Kejar +${(3200 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier Y!`;
-            } else if (totalPoints < 3560) {
-                nextGoalText = `Kejar +${(3560 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier Maksimal Z!`;
-            } else {
-                nextGoalText = "Selamat! Anda di Tier Tertinggi (Tier Z)! 🔥";
-            }
+        const itemYear = parseInt(parts[0], 10);
+        const itemMonth = parseInt(parts[1], 10); // Ambil nilai bulan langsung (1-12)
 
-            document.getElementById('summaryTrainerName').innerText = selectedTrainer;
-            document.getElementById('summaryCurrentTierBadge').innerText = `${comm.code} (Rp ${comm.feePerSession.toLocaleString('id-ID')}/Sesi)`;
-            document.getElementById('summaryTotalPoints').innerText = `${totalPoints.toLocaleString('id-ID')} Poin`;
-            document.getElementById('summaryTotalBundling').innerText = `${totalBundling} Unit`;
-            document.getElementById('summaryTotalConduct').innerText = `${totalConduct} Sesi`;
-            document.getElementById('summaryAvgRA').innerText = `${avgRA} / 20 RA`;
+        // Hanya ambil data yang Tahun dan Bulannya persis sama dengan bulan ini
+        return itemYear === currentYear && itemMonth === currentMonth;
+    });
 
-            document.getElementById('summaryTotalCommission').innerText = `Rp ${comm.totalCommission.toLocaleString('id-ID')}`;
-            document.getElementById('summaryPointCommDetail').innerText = `${totalPoints.toLocaleString('id-ID')} Poin × Rp 1.000`;
-            document.getElementById('summaryPointCommAmount').innerText = `Rp ${comm.pointCommission.toLocaleString('id-ID')}`;
-            document.getElementById('summaryFeeBracketInfo').innerText = `Tier: ${comm.code} (Rp ${comm.feePerSession.toLocaleString('id-ID')}/Sesi)`;
-            document.getElementById('summaryConductCommAmount').innerText = `Rp ${comm.conductCommission.toLocaleString('id-ID')}`;
-            document.getElementById('summaryBracketNextGoal').innerText = nextGoalText;
-        }
+    // Perhitungan akumulasi khusus data bulan ini saja
+    const totalPoints = trainerLogs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+    const totalBundling = trainerLogs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+    const totalConduct = trainerLogs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+    const totalRA = trainerLogs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
+    const avgRA = trainerLogs.length ? (totalRA / trainerLogs.length).toFixed(1) : 0;
+
+    // Perhitungan Estimasi Komisi Smart Coach
+    const comm = calculateSmartCoachCommission(totalPoints, totalConduct);
+
+    // Menentukan Target Pace berikutnya
+    let nextGoalText = "";
+    if (totalPoints < 500) {
+        nextGoalText = `Kejar +${(500 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk capai Tier N!`;
+    } else if (totalPoints < 1400) {
+        nextGoalText = `Kejar +${(1400 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier V!`;
+    } else if (totalPoints < 1700) {
+        nextGoalText = `Kejar +${(1700 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier W!`;
+    } else if (totalPoints < 2700) {
+        nextGoalText = `Kejar +${(2700 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier X!`;
+    } else if (totalPoints < 3200) {
+        nextGoalText = `Kejar +${(3200 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier Y!`;
+    } else if (totalPoints < 3560) {
+        nextGoalText = `Kejar +${(3560 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier Maksimal Z!`;
+    } else {
+        nextGoalText = "Selamat! Anda di Tier Tertinggi (Tier Z)! 🔥";
+    }
+
+    // Update Elemen Tampilan HTML
+    document.getElementById('summaryTrainerName').innerText = selectedTrainer;
+    document.getElementById('summaryCurrentTierBadge').innerText = `\({comm.code} (Rp\){comm.feePerSession.toLocaleString('id-ID')}/Sesi)`;
+    document.getElementById('summaryTotalPoints').innerText = `${totalPoints.toLocaleString('id-ID')} Poin`;
+    document.getElementById('summaryTotalBundling').innerText = `${totalBundling} Unit`;
+    document.getElementById('summaryTotalConduct').innerText = `${totalConduct} Sesi`;
+    document.getElementById('summaryAvgRA').innerText = `${avgRA} / 20 RA`;
+
+    document.getElementById('summaryTotalCommission').innerText = `Rp ${comm.totalCommission.toLocaleString('id-ID')}`;
+    document.getElementById('summaryPointCommDetail').innerText = `${totalPoints.toLocaleString('id-ID')} Poin × Rp 1.000`;
+    document.getElementById('summaryPointCommAmount').innerText = `Rp ${comm.pointCommission.toLocaleString('id-ID')}`;
+    document.getElementById('summaryFeeBracketInfo').innerText = `Tier: \({comm.code} (Rp\){comm.feePerSession.toLocaleString('id-ID')}/Sesi)`;
+    document.getElementById('summaryConductCommAmount').innerText = `Rp ${comm.conductCommission.toLocaleString('id-ID')}`;
+    document.getElementById('summaryBracketNextGoal').innerText = nextGoalText;
+}
 
         function validateForm() {
             const conductInput = parseInt(document.getElementById('inputConduct').value) || 0;
