@@ -349,34 +349,34 @@
     // Menentukan Target Pace berikutnya
     let nextGoalText = "";
     if (totalPoints < 500) {
-        nextGoalText = `Kejar +${(500 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk capai Tier N!`;
+        nextGoalText = "Kejar +" + (500 - totalPoints).toLocaleString('id-ID') + " Poin lagi untuk capai Tier N!";
     } else if (totalPoints < 1400) {
-        nextGoalText = `Kejar +${(1400 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier V!`;
+        nextGoalText = "Kejar +" + (1400 - totalPoints).toLocaleString('id-ID') + " Poin lagi untuk Tier V!";
     } else if (totalPoints < 1700) {
-        nextGoalText = `Kejar +${(1700 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier W!`;
+        nextGoalText = "Kejar +" + (1700 - totalPoints).toLocaleString('id-ID') + " Poin lagi untuk Tier W!";
     } else if (totalPoints < 2700) {
-        nextGoalText = `Kejar +${(2700 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier X!`;
+        nextGoalText = "Kejar +" + (2700 - totalPoints).toLocaleString('id-ID') + " Poin lagi untuk Tier X!";
     } else if (totalPoints < 3200) {
-        nextGoalText = `Kejar +${(3200 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier Y!`;
+        nextGoalText = "Kejar +" + (3200 - totalPoints).toLocaleString('id-ID') + " Poin lagi untuk Tier Y!";
     } else if (totalPoints < 3560) {
-        nextGoalText = `Kejar +${(3560 - totalPoints).toLocaleString('id-ID')} Poin lagi untuk Tier Maksimal Z!`;
+        nextGoalText = "Kejar +" + (3560 - totalPoints).toLocaleString('id-ID') + " Poin lagi untuk Tier Maksimal Z!";
     } else {
         nextGoalText = "Selamat! Anda di Tier Tertinggi (Tier Z)! 🔥";
     }
 
-    // Update Elemen Tampilan HTML
+    // UPDATE ELEMEN TAMPILAN HTML (MENGGUNAKAN TEKNIK AMAN CONCAT STRINGS)
     document.getElementById('summaryTrainerName').innerText = selectedTrainer;
-    document.getElementById('summaryCurrentTierBadge').innerText = `\({comm.code} (Rp\){comm.feePerSession.toLocaleString('id-ID')}/Sesi)`;
-    document.getElementById('summaryTotalPoints').innerText = `${totalPoints.toLocaleString('id-ID')} Poin`;
-    document.getElementById('summaryTotalBundling').innerText = `${totalBundling} Unit`;
-    document.getElementById('summaryTotalConduct').innerText = `${totalConduct} Sesi`;
-    document.getElementById('summaryAvgRA').innerText = `${avgRA} / 20 RA`;
+    document.getElementById('summaryCurrentTierBadge').innerText = comm.code + " (Rp " + comm.feePerSession.toLocaleString('id-ID') + "/Sesi)";
+    document.getElementById('summaryTotalPoints').innerText = totalPoints.toLocaleString('id-ID') + " Poin";
+    document.getElementById('summaryTotalBundling').innerText = totalBundling + " Unit";
+    document.getElementById('summaryTotalConduct').innerText = totalConduct + " Sesi";
+    document.getElementById('summaryAvgRA').innerText = avgRA + " / 20 RA";
 
-    document.getElementById('summaryTotalCommission').innerText = `Rp ${comm.totalCommission.toLocaleString('id-ID')}`;
-    document.getElementById('summaryPointCommDetail').innerText = `${totalPoints.toLocaleString('id-ID')} Poin × Rp 1.000`;
-    document.getElementById('summaryPointCommAmount').innerText = `Rp ${comm.pointCommission.toLocaleString('id-ID')}`;
-    document.getElementById('summaryFeeBracketInfo').innerText = `Tier: \({comm.code} (Rp\){comm.feePerSession.toLocaleString('id-ID')}/Sesi)`;
-    document.getElementById('summaryConductCommAmount').innerText = `Rp ${comm.conductCommission.toLocaleString('id-ID')}`;
+    document.getElementById('summaryTotalCommission').innerText = "Rp " + comm.totalCommission.toLocaleString('id-ID');
+    document.getElementById('summaryPointCommDetail').innerText = totalPoints.toLocaleString('id-ID') + " Poin × Rp 1.000";
+    document.getElementById('summaryPointCommAmount').innerText = "Rp " + comm.pointCommission.toLocaleString('id-ID');
+    document.getElementById('summaryFeeBracketInfo').innerText = "Tier: " + comm.code + " (Rp " + comm.feePerSession.toLocaleString('id-ID') + "/Sesi)";
+    document.getElementById('summaryConductCommAmount').innerText = "Rp " + comm.conductCommission.toLocaleString('id-ID');
     document.getElementById('summaryBracketNextGoal').innerText = nextGoalText;
 }
 
