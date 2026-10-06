@@ -829,7 +829,7 @@
 
     <!-- JavaScript Logic -->
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKtFnXJfmrALVhJs1i1yWOEVlkHAA9CVilSiSTvxR3KOorELU8FApX_4RJTpT9uS_q/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwvabnpygmvUwV9smWdzlU7S8oIhDVHJMe_kroFZwxvUQpY2DzpH99CqsQU_eOMfiIA/exec";
 
         // ===== HELPER TANGGAL LOKAL (FIX: zona waktu UTC vs WIB) =====
         // Menghasilkan "YYYY-MM-DD" berdasarkan waktu perangkat (bukan UTC),
@@ -1568,29 +1568,29 @@
         });
 
         function renderRecentTable() {
-            const tbody = document.getElementById('recentTableBody');
-            tbody.innerHTML = '';
-            
-            const searchKeyword = (document.getElementById('recentSearchInput').value || '').toLowerCase();
-            const selectedTrainer = document.getElementById('recentTrainerFilter').value;
+    const tbody = document.getElementById('recentTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    const searchKeyword = (document.getElementById('recentSearchInput').value || '').toLowerCase();
+    const selectedTrainer = document.getElementById('recentTrainerFilter').value;
 
-            let filteredData = appData.filter(item => {
-                const itemTrainer = item.trainer || '';
-                const itemDate = item.date || '';
-                const matchSearch = itemTrainer.toLowerCase().includes(searchKeyword) || itemDate.includes(searchKeyword);
-                const matchTrainer = selectedTrainer === 'all' || itemTrainer === selectedTrainer;
-                return matchSearch && matchTrainer;
-            });
+    let filteredData = appData.filter(item => {
+        const itemTrainer = item.trainer || '';
+        const itemDate = item.date || '';
+        const matchSearch = itemTrainer.toLowerCase().includes(searchKeyword) || itemDate.toLowerCase().includes(searchKeyword);
+        const matchTrainer = selectedTrainer === 'all' || itemTrainer === selectedTrainer;
+        return matchSearch && matchTrainer;
+    });
 
-            document.getElementById('recordCountText').innerText = filteredData.length;
+    document.getElementById('recordCountText').innerText = filteredData.length;
 
-            const selectAllCb = document.getElementById('selectAllActivity');
-            if(selectAllCb) selectAllCb.checked = false;
-            updateActivitySelectionCount();
+    const selectAllCb = document.getElementById('selectAllActivity');
+    if (selectAllCb) selectAllCb.checked = false;
+    updateActivitySelectionCount();
 
-            if (filteredData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center p-4 text-gray-500 italic">Tidak ada data ditemukan.</td></tr>`;
-                return;
+    if (filteredData.length === 0) {
+        tbody.innerHTML = `
             }
 
             [...filteredData].reverse().forEach(item => {
