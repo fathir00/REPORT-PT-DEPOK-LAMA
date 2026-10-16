@@ -13,6 +13,151 @@
     <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
+    <!-- ========================================== -->
+    <!-- LUXURY LOGIN & REGISTRATION OVERLAY LOCK   -->
+    <!-- ========================================== -->
+    <div id="authModalOverlay" class="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4 sm:p-6">
+        
+        <!-- Background Ambient Glow -->
+        <div class="absolute top-[-10%] left-[-10%] w-[450px] h-[450px] bg-blue-600/20 rounded-full blur-[140px] pointer-events-none"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[450px] h-[450px] bg-amber-500/15 rounded-full blur-[140px] pointer-events-none"></div>
+
+        <div class="w-full max-w-4xl bg-gray-900/90 border border-gray-800 rounded-2xl shadow-2xl overflow-hidden relative border-blue-500/30">
+            
+            <!-- HEADER LOGO LUXURY OVERLAY -->
+            <div class="absolute top-6 left-6 z-30 flex items-center space-x-3">
+                <div class="flex flex-col items-center justify-center bg-black px-3 py-1 rounded border border-gray-800">
+                    <span class="text-2xl font-black italic tracking-tighter text-white leading-none font-brand" style="-webkit-text-stroke: 1px white; color: transparent;">FTL</span>
+                    <div class="w-full bg-gradient-to-r from-blue-900 via-blue-700 to-sky-400 mt-0.5 px-1 py-0.5 text-center transform -skew-x-12">
+                        <span class="text-[9px] font-black tracking-[0.2em] text-white uppercase block leading-none transform skew-x-12">BLUE</span>
+                    </div>
+                </div>
+                <span class="text-xs font-bold uppercase tracking-widest text-gray-400 border-l border-gray-700 pl-3 hidden sm:inline-block">Manager Portal Depok Lama</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 min-h-[550px]">
+
+                <!-- FORM SIGN IN -->
+                <div id="signInContainer" class="p-8 sm:p-12 flex flex-col justify-center space-y-6 pt-20 md:pt-12">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-black uppercase tracking-wider text-white">Authentications</h2>
+                        <p class="text-xs text-gray-400 mt-1">Masukkan akun pengelola untuk mengaktifkan Dashboard.</p>
+                    </div>
+
+                    <form id="signInForm" onsubmit="handleAuthSignIn(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email / Username</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-user-shield absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
+                                <input type="text" id="signInEmail" required placeholder="manager@ftlgym.id" class="w-full bg-black/60 border border-gray-800 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Kata Sandi</label>
+                                <a href="#" onclick="alert('Silakan hubungi Super Admin untuk keamanan akses.')" class="text-[10px] text-blue-400 hover:text-blue-300">Lupa Password?</a>
+                            </div>
+                            <div class="relative">
+                                <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
+                                <input type="password" id="signInPassword" required placeholder="••••••••" class="w-full bg-black/60 border border-gray-800 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btnSignIn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center space-x-2">
+                            <span>Masuk Dashboard</span>
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                    </form>
+
+                    <div class="text-center md:hidden pt-4 border-t border-gray-800">
+                        <p class="text-xs text-gray-400">Belum mendaftarkan akun pengelola?</p>
+                        <button onclick="toggleAuthForm('signUp')" class="text-xs font-bold text-amber-400 mt-1 uppercase tracking-wider">Registrasi Akun Baru &rarr;</button>
+                    </div>
+                </div>
+
+                <!-- FORM SIGN UP -->
+                <div id="signUpContainer" class="p-8 sm:p-12 hidden md:flex flex-col justify-center space-y-6 pt-20 md:pt-12">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-black uppercase tracking-wider text-amber-400">Registrasi Akun</h2>
+                        <p class="text-xs text-gray-400 mt-1">Daftarkan otorisasi baru Manager / Head Coach.</p>
+                    </div>
+
+                    <form id="signUpForm" onsubmit="handleAuthSignUp(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nama Lengkap</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-user-circle absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
+                                <input type="text" id="signUpName" required placeholder="Nama Manager / Lead" class="w-full bg-black/60 border border-gray-800 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email Resmi</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
+                                <input type="email" id="signUpEmail" required placeholder="manager@ftlgym.id" class="w-full bg-black/60 border border-gray-800 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Buat Kata Sandi</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
+                                <input type="password" id="signUpPassword" required placeholder="••••••••" class="w-full bg-black/60 border border-gray-800 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btnSignUp" class="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black py-3 rounded-lg text-xs uppercase tracking-wider transition shadow-lg hover:opacity-90 flex items-center justify-center space-x-2">
+                            <span>Buat Otorisasi Akun</span>
+                            <i class="fa-solid fa-user-plus text-xs"></i>
+                        </button>
+                    </form>
+
+                    <div class="text-center md:hidden pt-4 border-t border-gray-800">
+                        <p class="text-xs text-gray-400">Sudah memiliki otorisasi?</p>
+                        <button onclick="toggleAuthForm('signIn')" class="text-xs font-bold text-blue-400 mt-1 uppercase tracking-wider">&larr; Masuk Sekarang</button>
+                    </div>
+                </div>
+
+                <!-- OVERLAY SLIDER DESKTOP -->
+                <div id="overlayContainer" class="hidden md:flex flex-col justify-center items-center text-center p-10 bg-gradient-to-br from-gray-950 via-black to-gray-900 border-l border-gray-800 relative space-y-6">
+                    
+                    <div id="overlaySignInText" class="space-y-4">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-r from-amber-500 to-yellow-300 p-0.5 mx-auto">
+                            <div class="w-full h-full bg-black rounded-full flex items-center justify-center">
+                                <i class="fa-solid fa-gem text-amber-400 text-xl"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-white uppercase tracking-wider">Akses Manajemen FTL</h3>
+                        <p class="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
+                            Punya akun Manager atau Lead Coach baru?
+                        </p>
+                        <button onclick="toggleAuthDesktop('signUp')" class="px-6 py-2.5 border border-amber-500/50 hover:border-amber-400 text-amber-300 rounded-full text-xs font-bold uppercase tracking-wider transition">
+                            Daftar Akun Baru
+                        </button>
+                    </div>
+
+                    <div id="overlaySignUpText" class="hidden space-y-4">
+                        <div class="w-16 h-16 rounded-full bg-blue-600/30 border border-blue-500 p-0.5 mx-auto">
+                            <div class="w-full h-full bg-black rounded-full flex items-center justify-center">
+                                <i class="fa-solid fa-shield-halved text-blue-400 text-xl"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-white uppercase tracking-wider">Sudah Memiliki Akses?</h3>
+                        <p class="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
+                            Kembali ke layar masuk untuk membuka Portal Dashboard Monitoring.
+                        </p>
+                        <button onclick="toggleAuthDesktop('signIn')" class="px-6 py-2.5 border border-blue-500/50 hover:border-blue-400 text-blue-300 rounded-full text-xs font-bold uppercase tracking-wider transition">
+                            Masuk ke System
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
 
     <!-- Header Navigation with FTL Blue Logo -->
     <header class="bg-black text-white shadow-xl sticky top-0 z-50 border-b-2 border-blue-600">
@@ -2356,6 +2501,71 @@
         setInterval(updateRealtimeClock, 1000);
     </script>
 </body>
+    <script>
+        // TOGGLE DESKTOP AUTH FORM
+        function toggleAuthDesktop(target) {
+            const signInForm = document.getElementById('signInContainer');
+            const signUpForm = document.getElementById('signUpContainer');
+            const overlaySignIn = document.getElementById('overlaySignInText');
+            const overlaySignUp = document.getElementById('overlaySignUpText');
+
+            if (target === 'signUp') {
+                signInForm.classList.add('hidden');
+                signUpForm.classList.remove('hidden');
+                overlaySignIn.classList.add('hidden');
+                overlaySignUp.classList.remove('hidden');
+            } else {
+                signUpForm.classList.add('hidden');
+                signInForm.classList.remove('hidden');
+                overlaySignUp.classList.add('hidden');
+                overlaySignIn.classList.remove('hidden');
+            }
+        }
+
+        function toggleAuthForm(target) {
+            toggleAuthDesktop(target);
+        }
+
+        // MEMBUKA LAYAR DASHBOARD KETIKA LOGIN BERHASIL
+        function unlockDashboard() {
+            const overlay = document.getElementById('authModalOverlay');
+            overlay.style.opacity = '0';
+            overlay.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 500);
+        }
+
+        // HANDLER PROSES SIGN IN
+        function handleAuthSignIn(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSignIn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memverifikasi Hak Akses...`;
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Masuk Dashboard</span><i class="fa-solid fa-arrow-right text-xs"></i>`;
+                unlockDashboard();
+            }, 1000);
+        }
+
+        // HANDLER PROSES SIGN UP
+        function handleAuthSignUp(e) {
+            e.preventDefault();
+            const name = document.getElementById('signUpName').value;
+            const btn = document.getElementById('btnSignUp');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Mendaftarkan Akun...`;
+
+            setTimeout(() => {
+                alert(`Akun otorisasi untuk ${name} berhasil dibuat! Silakan masuk.`);
+                btn.disabled = false;
+                btn.innerHTML = `<span>Buat Otorisasi Akun</span><i class="fa-solid fa-user-plus text-xs"></i>`;
+                toggleAuthDesktop('signIn');
+            }, 1200);
+        }
+    </script>
 </html>
 
  
