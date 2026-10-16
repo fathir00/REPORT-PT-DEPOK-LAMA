@@ -202,6 +202,8 @@
                     </button>
                     <button onclick="switchTab('analytics')" id="btn-tab-analytics" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition hover:bg-gray-800 text-gray-300">
                         <i class="fa-solid fa-user-doctor mr-1 sm:mr-2"></i>Analisis & Coaching
+                        <button onclick="showLogoutConfirmation()" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition bg-red-600 hover:bg-red-700 text-white shadow-md flex items-center ml-2">
+                        <i class="fa-solid fa-right-from-bracket mr-1 sm:mr-2"></i> Keluar
                     </button>
                 </nav>
             </div>
@@ -2564,6 +2566,21 @@
                 btn.innerHTML = `<span>Buat Otorisasi Akun</span><i class="fa-solid fa-user-plus text-xs"></i>`;
                 toggleAuthDesktop('signIn');
             }, 1200);
+        }
+        
+    // FUNGSI LOGOUT & MENGUNCI KEMBALI DASHBOARD
+    function showLogoutConfirmation() {
+        if (confirm("Apakah Anda yakin ingin keluar dan mengunci kembali Dashboard Manager?")) {
+            const overlay = document.getElementById('authModalOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                overlay.style.opacity = '1';
+                overlay.style.visibility = 'visible';
+                const signInForm = document.getElementById('signInForm');
+                if (signInForm) signInForm.reset();
+            } else {
+                location.reload();
+            }
         }
     </script>
 </html>
