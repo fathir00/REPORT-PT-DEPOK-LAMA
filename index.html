@@ -2703,49 +2703,58 @@
         // ==========================================
             // FUNGSI EKSPOR PDF LAPORAN EKSEKUTIF
             // ==========================================
-            function generateExecutivePDF(event) {
-                const element = document.getElementById('monthlyEvaluationSection');
-                
-                if (!element) {
-                    alert("Elemen tabel tidak ditemukan! Pastikan id='monthlyEvaluationSection' sudah terpasang.");
+            async function generateExecutivePDF(event) {
+                const originalElement = document.getElementById('monthlyEvaluationSection');
+                if (!originalElement) {
+                    alert("Elemen #monthlyEvaluationSection tidak ditemukan!");
                     return;
                 }
-            
-                const monthSelect = document.getElementById('filterMonth');
-                const monthName = monthSelect ? monthSelect.value : 'Oktober_2026';
             
                 const btn = event ? (event.currentTarget || event.target) : null;
                 const originalText = btn ? btn.innerHTML : '';
                 if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
             
-                // Konfigurasi html2pdf yang diperbaiki agar tidak menghasilkan halaman kosong
+                // 1. Buat kontainer sementara terisolasi
+                const container = document.createElement('div');
+                container.style.position = 'absolute';
+                container.style.top = '-9999px';
+                container.style.left = '0';
+                container.style.width = '1200px'; // Paksa lebar pasti agar layout teratur
+                container.style.backgroundColor = '#ffffff';
+            
+                // 2. Duplikasi elemen target
+                const clone = originalElement.cloneNode(true);
+                container.appendChild(clone);
+                document.body.appendChild(container);
+            
+                // 3. Konfigurasi rendering
                 const opt = {
-                    margin: [10, 10, 10, 10],
-                    filename: `Laporan_Eksekutif_FTL_Depok_${monthName}.pdf`,
+                    margin: 10,
+                    filename: `Laporan_Eksekutif_FTL_Depok.pdf`,
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { 
+                    html2canvas: {
                         scale: 2,
                         useCORS: true,
                         backgroundColor: '#ffffff',
-                        logging: false,
+                        logging: true, // Aktifkan log untuk cek error di Console jika perlu
                         scrollX: 0,
-                        scrollY: 0,
-                        windowWidth: document.documentElement.offsetWidth
+                        scrollY: 0
                     },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
                 };
             
-                // Beri sedikit jeda waktu agar DOM & Chart selesai dirender penuh sebelum dicetak
-                setTimeout(() => {
-                    html2pdf().set(opt).from(element).save().then(() => {
-                        if (btn) btn.innerHTML = originalText;
-                    }).catch(err => {
-                        console.error("Gagal export PDF:", err);
-                        if (btn) btn.innerHTML = originalText;
-                        alert("Gagal mengunduh PDF. Silakan coba lagi.");
-                    });
-                }, 300);
+                try {
+                    // Berikan jeda sebentar agar browser selesai merender clone
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    await html2pdf().set(opt).from(clone).save();
+                } catch (err) {
+                    console.error("Gagal export PDF:", err);
+                    alert("Terjadi kesalahan saat mengunduh PDF.");
+                } finally {
+                    // Hapus kontainer sementara setelah selesai
+                    document.body.removeChild(container);
+                    if (btn) btn.innerHTML = originalText;
+                }
             }
     </script>
     </body>
