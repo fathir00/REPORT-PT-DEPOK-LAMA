@@ -2654,24 +2654,18 @@
             e.preventDefault();
             const name = document.getElementById('signUpName').value;
             const email = document.getElementById('signUpEmail').value;
-            const btn = document.getElementById('btnSignUp');
-
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Mengirim Permintaan...`;
-            }
-
-            setTimeout(() => {
-                alert(`PERMINTAAN TERKIRIM!\n\nPengajuan akun untuk ${name} (${email}) telah dikirimkan ke Manager.\n\nSilakan tunggu notifikasi persetujuan/verifikasi dari Manager sebelum akun dapat digunakan untuk login.`);
-                
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = `<span>Kirim Permintaan Verifikasi</span><i class="fa-solid fa-paper-plane text-xs"></i>`;
-                }
-                
-                document.getElementById('signUpForm').reset();
-                toggleAuthForm('signIn');
-            }, 1500);
+        
+            // 1. Pesan Notifikasi untuk Pendaftar
+            alert(`Pengajuan akun untuk ${name} (${email}) berhasil dikirim!\nSistem akan mengarahkan Anda ke WhatsApp Manager untuk verifikasi.`);
+        
+            // 2. Kirim Notifikasi Langsung ke WhatsApp Manager
+            const targetWA = "6285240201806";
+            const message = `*PENGAJUAN AKUN BARU FTL BLUE*\n\nNama: ${name}\nEmail: ${email}\n\nMohon untuk menambahkan akun ini ke daftar allowedUsers.`;
+            
+            window.open(`https://wa.me/${targetWA}?text=${encodeURIComponent(message)}`, '_blank');
+        
+            document.getElementById('signUpForm').reset();
+            toggleAuthForm('signIn');
         }
 
         // FUNGSI LOGOUT & MENGUNCI KEMBALI DASHBOARD
