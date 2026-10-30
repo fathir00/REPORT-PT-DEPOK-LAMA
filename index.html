@@ -903,14 +903,25 @@
                     </div>
                 </div>
 
-                <div>
-                    <h3 class="font-bold text-gray-700 text-sm mb-1"><i class="fa-solid fa-users-viewfinder text-blue-600 mr-1"></i> Poin per Trainer per Bulan</h3>
-                    <p class="text-[11px] text-gray-500 mb-3">
-                        Warna sel:
-                        <span class="inline-block bg-emerald-100 text-emerald-800 font-bold px-1.5 rounded">hijau</span> capai target SOB,
-                        <span class="inline-block bg-amber-100 text-amber-800 font-bold px-1.5 rounded">kuning</span> 80% atau lebih,
-                        <span class="inline-block bg-red-100 text-red-800 font-bold px-1.5 rounded">merah</span> di bawah 80%.
-                    </p>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
+            <div>
+                <h3 class="font-bold text-gray-700 text-sm mb-1">
+                    <i class="fa-solid fa-users-viewfinder text-blue-600 mr-1"></i> Poin per Trainer per Bulan
+                </h3>
+                <p class="text-[11px] text-gray-500">
+                    Warna sel: 
+                    <span class="inline-block bg-emerald-100 text-emerald-800 font-bold px-1.5 rounded">hijau</span> capai target SOB, 
+                    <span class="inline-block bg-amber-100 text-amber-800 font-bold px-1.5 rounded">kuning</span> 80% atau lebih, 
+                    <span class="inline-block bg-red-100 text-red-800 font-bold px-1.5 rounded">merah</span> di bawah 80%.
+                </p>
+            </div>
+        
+            <!-- TOMBOL DOWNLOAD PDF -->
+            <button type="button" onclick="generateExecutivePDF()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-sm flex items-center space-x-1.5 shrink-0">
+                <i class="fa-solid fa-file-pdf"></i>
+                <span>Download PDF Eksekutif</span>
+            </button>
+        </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs sm:text-sm">
                             <thead id="evalMatrixHead" class="bg-gray-100 text-gray-700 border-b">
