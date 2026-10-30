@@ -917,7 +917,7 @@
             </div>
         
             <!-- TOMBOL DOWNLOAD PDF -->
-            <button type="button" onclick="generateExecutivePDF()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-sm flex items-center space-x-1.5 shrink-0">
+            <button type="button" onclick="generateExecutivePDF(event)" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-sm flex items-center space-x-1.5 shrink-0">
                 <i class="fa-solid fa-file-pdf"></i>
                 <span>Download PDF Eksekutif</span>
             </button>
@@ -2711,39 +2711,42 @@
                     return;
                 }
             
-                // Mengambil periode bulan yang sedang dipilih
                 const monthSelect = document.getElementById('filterMonth');
                 const monthName = monthSelect ? monthSelect.value : 'Oktober_2026';
             
-                // Konfigurasi html2pdf yang sudah dioptimalkan
+                const btn = event ? (event.currentTarget || event.target) : null;
+                const originalText = btn ? btn.innerHTML : '';
+                if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+            
+                // Konfigurasi html2pdf yang diperbaiki agar tidak menghasilkan halaman kosong
                 const opt = {
-                    margin:       [10, 10, 10, 10],
-                    filename:     `Laporan_Eksekutif_FTL_Depok_${monthName}.pdf`,
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { 
+                    margin: [10, 10, 10, 10],
+                    filename: `Laporan_Eksekutif_FTL_Depok_${monthName}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { 
                         scale: 2,
                         useCORS: true,
-                        backgroundColor: '#ffffff', // Latar belakang putih agar teks & tabel terbaca jelas
-                        logging: false
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        scrollX: 0,
+                        scrollY: 0,
+                        windowWidth: document.documentElement.offsetWidth
                     },
-                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
                 };
             
-                // Tampilkan efek loading pada tombol saat memproses
-                const btn = event ? event.currentTarget : null;
-                const originalText = btn ? btn.innerHTML : '';
-                if(btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
-            
-                // Jalankan proses download PDF
-                html2pdf().set(opt).from(element).save().then(() => {
-                    if(btn) btn.innerHTML = originalText;
-                }).catch(err => {
-                    console.error("Gagal export PDF:", err);
-                    if(btn) btn.innerHTML = originalText;
-                    alert("Gagal mengunduh PDF. Silakan coba lagi.");
-                });
+                // Beri sedikit jeda waktu agar DOM & Chart selesai dirender penuh sebelum dicetak
+                setTimeout(() => {
+                    html2pdf().set(opt).from(element).save().then(() => {
+                        if (btn) btn.innerHTML = originalText;
+                    }).catch(err => {
+                        console.error("Gagal export PDF:", err);
+                        if (btn) btn.innerHTML = originalText;
+                        alert("Gagal mengunduh PDF. Silakan coba lagi.");
+                    });
+                }, 300);
             }
-
     </script>
     </body>
 </html>
