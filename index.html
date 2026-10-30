@@ -2655,16 +2655,20 @@
             const name = document.getElementById('signUpName').value;
             const email = document.getElementById('signUpEmail').value;
         
-            // 1. Pesan Notifikasi untuk Pendaftar
-            alert(`Pengajuan akun untuk ${name} (${email}) berhasil dikirim!\nSistem akan mengarahkan Anda ke WhatsApp Manager untuk verifikasi.`);
+            // Pop-up pemberitahuan
+            alert(`Pengajuan akun untuk ${name} (${email}) berhasil dikirim!\n\nSistem akan mengarahkan Anda ke WhatsApp Manager untuk verifikasi.`);
         
-            // 2. Kirim Notifikasi Langsung ke WhatsApp Manager
-            const targetWA = "6285240201806";
-            const message = `*PENGAJUAN AKUN BARU FTL BLUE*\n\nNama: ${name}\nEmail: ${email}\n\nMohon untuk menambahkan akun ini ke daftar allowedUsers.`;
+            // MASUKKAN NOMOR WA ANDA DI SINI (Ganti angka di bawah):
+            const targetWA = "6285240201806"; 
+        
+            // Pesan Notifikasi Otomatis
+            const message = `*PENGAJUAN AKUN BARU FTL BLUE*\n\nHalo Manager, ada pengajuan akun baru:\n• *Nama:* ${name}\n• *Email:* ${email}\n\nMohon untuk memverifikasi dan menyetujui akun ini ke dalam sistem.`;
             
+            // Membuka WhatsApp secara otomatis
             window.open(`https://wa.me/${targetWA}?text=${encodeURIComponent(message)}`, '_blank');
         
-            document.getElementById('signUpForm').reset();
+            // Reset form dan kembali ke halaman login
+            if(document.getElementById('signUpForm')) document.getElementById('signUpForm').reset();
             toggleAuthForm('signIn');
         }
 
