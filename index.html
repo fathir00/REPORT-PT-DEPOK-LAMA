@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     <!-- html2pdf.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style> body { font-family: 'Inter', sans-serif; } </style>
@@ -2687,6 +2689,24 @@
                 }
             }
         }
-</script>
+        // ==========================================
+        // FUNGSI EKSPOR PDF LAPORAN EKSEKUTIF
+        // ==========================================
+        function generateExecutivePDF() {
+            const element = document.getElementById('monthlyEvaluationSection');
+            
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     `Laporan_Eksekutif_FTL_Depok_${selectedMonth}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+    </script>
+    </body>
 </html>
  
