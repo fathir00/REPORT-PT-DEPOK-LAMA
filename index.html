@@ -2701,21 +2701,48 @@
             }
         }
         // ==========================================
-        // FUNGSI EKSPOR PDF LAPORAN EKSEKUTIF
-        // ==========================================
-        function generateExecutivePDF() {
-            const element = document.getElementById('monthlyEvaluationSection');
+            // FUNGSI EKSPOR PDF LAPORAN EKSEKUTIF
+            // ==========================================
+            function generateExecutivePDF(event) {
+                const element = document.getElementById('monthlyEvaluationSection');
+                
+                if (!element) {
+                    alert("Elemen tabel tidak ditemukan! Pastikan id='monthlyEvaluationSection' sudah terpasang.");
+                    return;
+                }
             
-            const opt = {
-                margin:       [10, 10, 10, 10],
-                filename:     `Laporan_Eksekutif_FTL_Depok_${selectedMonth}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            };
-
-            html2pdf().set(opt).from(element).save();
-        }
+                // Mengambil periode bulan yang sedang dipilih
+                const monthSelect = document.getElementById('filterMonth');
+                const monthName = monthSelect ? monthSelect.value : 'Oktober_2026';
+            
+                // Konfigurasi html2pdf yang sudah dioptimalkan
+                const opt = {
+                    margin:       [10, 10, 10, 10],
+                    filename:     `Laporan_Eksekutif_FTL_Depok_${monthName}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { 
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff', // Latar belakang putih agar teks & tabel terbaca jelas
+                        logging: false
+                    },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                };
+            
+                // Tampilkan efek loading pada tombol saat memproses
+                const btn = event ? event.currentTarget : null;
+                const originalText = btn ? btn.innerHTML : '';
+                if(btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+            
+                // Jalankan proses download PDF
+                html2pdf().set(opt).from(element).save().then(() => {
+                    if(btn) btn.innerHTML = originalText;
+                }).catch(err => {
+                    console.error("Gagal export PDF:", err);
+                    if(btn) btn.innerHTML = originalText;
+                    alert("Gagal mengunduh PDF. Silakan coba lagi.");
+                });
+            }
 
     </script>
     </body>
