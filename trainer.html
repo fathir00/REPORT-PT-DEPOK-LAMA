@@ -169,7 +169,7 @@
                     </div>
                 </div>
 
-                <!-- TAMBAHAN INPUT POINT BUNDLING -->
+                <!-- INPUT POINT BUNDLING -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1"><i class="fa-solid fa-box text-emerald-600 mr-1"></i> Point Bundling</label>
@@ -241,7 +241,6 @@
         setTodayReportDate();
         let cachedCloudData = [];
 
-        // FUNGSI SKEMA KOMISI TERBARU SESUAI TABEL (TIDAK BERUBAH)
         function calculateSmartCoachCommission(points, conduct) {
             let feePerSession = 0;
             let code = "FC";
@@ -365,7 +364,7 @@
         function renderTrainerDashboard(selectedTrainer) {
             const now = new Date();
             const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth() + 1; // 1 - 12
+            const currentMonth = now.getMonth() + 1;
 
             const trainerLogs = cachedCloudData.filter(d => {
                 if (d.trainer !== selectedTrainer) return false;
@@ -382,15 +381,21 @@
 
             const totalPoints = trainerLogs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
             const totalBundling = trainerLogs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
-            const totalBundlingPoint = trainerLogs.reduce((a, b) => a + (parseFloat(b.bundlingPoint) || 0), 0);
+            
+            // Mendukung berbagai variasi penamaan properti point bundling dari cloud/spreadsheet
+            const totalBundlingPoint = trainerLogs.reduce((a, b) => {
+                let val = b.bundlingPoint !== undefined ? b.bundlingPoint : 
+                          (b.bundling_point !== undefined ? b.bundling_point : 
+                          (b.point_bundling !== undefined ? b.point_bundling : 0));
+                return a + (parseFloat(val) || 0);
+            }, 0);
+
             const totalConduct = trainerLogs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
             const totalRA = trainerLogs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
             const avgRA = trainerLogs.length ? (totalRA / trainerLogs.length).toFixed(1) : 0;
 
-            // Hitung komisi dasar (tier tidak terpengaruh point bundling)
             const comm = calculateSmartCoachCommission(totalPoints, totalConduct);
 
-            // Pendapatan Point Bundling (Masuk ke total estimasi pendapatan berjalan)
             const bundlingPointCommission = totalBundlingPoint * 1000;
             const totalCommission = comm.pointCommission + bundlingPointCommission + comm.conductCommission;
 
