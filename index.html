@@ -128,7 +128,7 @@
 </div>
 
 <div class="flex flex-col md:flex-row min-h-screen">
-    <!-- SIDEBAR NAVIGASI KIRI (Inspirasi Gambar Contoh) -->
+    <!-- SIDEBAR NAVIGASI KIRI -->
     <aside class="w-full md:w-64 bg-[#0f172a] border-r border-gray-800/80 shrink-0 flex flex-col justify-between">
         <div>
             <!-- BRAND LOGO -->
@@ -314,6 +314,7 @@
                     </form>
                 </div>
 
+                <!-- PUSAT DATA TERINPUT -->
                 <div class="bg-[#111827] p-6 rounded-2xl border border-gray-800 shadow-xl space-y-4">
                     <div class="flex flex-wrap justify-between items-center gap-3">
                         <div>
@@ -330,12 +331,13 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#0b0f19] p-3 rounded-xl border border-gray-800">
+                    <!-- BARIS FILTER & PILIHAN LIMIT TAMPILAN -->
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-[#0b0f19] p-3 rounded-xl border border-gray-800 items-center">
                         <div>
-                            <input type="text" id="recentSearchInput" onkeyup="renderRecentTable()" placeholder="Cari Nama / Tanggal..." class="w-full bg-[#111827] border border-gray-800 rounded-lg p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                            <input type="text" id="recentSearchInput" onkeyup="onRecentTableFilterChange()" placeholder="Cari Nama / Tanggal..." class="w-full bg-[#111827] border border-gray-800 rounded-lg p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
                         </div>
                         <div>
-                            <select id="recentTrainerFilter" onchange="renderRecentTable()" class="w-full bg-[#111827] border border-gray-800 rounded-lg p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                            <select id="recentTrainerFilter" onchange="onRecentTableFilterChange()" class="w-full bg-[#111827] border border-gray-800 rounded-lg p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
                                 <option value="all">Semua Trainer</option>
                                 <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
                                 <option value="Bima Aminulah">Bima Aminulah</option>
@@ -350,7 +352,17 @@
                                 <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
                             </select>
                         </div>
-                        <div class="flex items-center justify-between text-xs font-bold text-gray-400 px-2">
+                        <!-- PILIHAN LIMIT DATA TAMPILAN -->
+                        <div class="flex items-center space-x-2">
+                            <label class="text-[11px] font-bold text-gray-400 whitespace-nowrap">Tampilkan:</label>
+                            <select id="recentLimitSelect" onchange="changeRecentLimit(this.value)" class="w-full bg-[#111827] border border-gray-800 rounded-lg p-2 text-xs font-bold text-blue-400 focus:border-blue-500 focus:outline-none">
+                                <option value="25" selected>25 Data / Hal</option>
+                                <option value="50">50 Data / Hal</option>
+                                <option value="100">100 Data / Hal</option>
+                                <option value="all">Tampilkan Semua</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between sm:justify-end text-xs font-bold text-gray-400 px-2">
                             <span>Total Records: <strong id="recordCountText" class="text-blue-400">0</strong></span>
                         </div>
                     </div>
@@ -375,6 +387,22 @@
                             <tbody id="recentTableBody" class="divide-y divide-gray-800/60 bg-[#111827]">
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- PAGING & KONTROL HALAMAN -->
+                    <div id="recentPaginationContainer" class="flex flex-wrap justify-between items-center gap-3 pt-2 text-xs text-gray-400">
+                        <div id="recentPaginationInfo" class="font-medium">
+                            Menampilkan data 0 - 0 dari 0
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <button type="button" id="btnRecentPrev" onclick="changeRecentPage(-1)" class="bg-[#0b0f19] hover:bg-gray-800 border border-gray-800 text-gray-300 px-3 py-1.5 rounded-lg font-bold transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center">
+                                <i class="fa-solid fa-chevron-left mr-1"></i> Prev
+                            </button>
+                            <span id="recentPageNum" class="px-3 py-1.5 bg-[#0b0f19] border border-gray-800 text-blue-400 font-extrabold rounded-lg">1</span>
+                            <button type="button" id="btnRecentNext" onclick="changeRecentPage(1)" class="bg-[#0b0f19] hover:bg-gray-800 border border-gray-800 text-gray-300 px-3 py-1.5 rounded-lg font-bold transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center">
+                                Next <i class="fa-solid fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -496,7 +524,7 @@
             <!-- TAB 2: DASHBOARD MONITORING & TARGET -->
             <section id="tab-dashboard" class="space-y-6">
 
-                <!-- KARTU STATISTIK ATAS METRIC CARDS (Model DobraMax) -->
+                <!-- KARTU STATISTIK ATAS METRIC CARDS -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden">
                         <div class="flex justify-between items-start">
@@ -879,7 +907,7 @@
 
                     <p class="text-[11px] text-gray-400 bg-[#0b0f19] border border-gray-800 rounded-xl p-3">
                         <i class="fa-solid fa-circle-info text-blue-400 mr-1"></i>
-                        Persentase dan warna dihitung dari target yang aktif saat ini (target divisi dan SOB di tombol "Atur Target"). Bulan berjalan masih berlangsung, jadi angkanya belum final.
+                        Persentase dan warna dihitung dari target yang aktif saat ini. Bulan berjalan masih berlangsung, jadi angkanya belum final.
                     </p>
                 </div>
             </section>
@@ -1035,7 +1063,7 @@
     </div>
 </div>
 
-<!-- JavaScript Logic (SEMUA LOGIKA ASLI DIJAGA TANPA DIUBAH SAMA SEKALI) -->
+<!-- JavaScript Logic -->
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdf7dyKVM5qEkYNZJIma0DqiPdmO0GpqbchiJsYz3jcm1Pc28EFq7cgKH7pRSkRkqx/exec";
 
@@ -1064,6 +1092,10 @@
         "Wahyu Setiawan",
         "Yomi David Armada Siahaan"
     ];
+
+    // VARIABEL UNTUK PAGINATION PUSAT DATA TERINPUT
+    let currentRecentPage = 1;
+    let recentRowsPerPage = 25; // Default limit per halaman
 
     function calculateCommission(points, conduct) {
         let feePerSession = 0;
@@ -1781,6 +1813,23 @@
         renderDashboard();
     });
 
+    // FUNGSI LOGIKA PAGINATION PUSAT DATA TERINPUT
+    function changeRecentLimit(val) {
+        recentRowsPerPage = val === 'all' ? 'all' : parseInt(val);
+        currentRecentPage = 1;
+        renderRecentTable();
+    }
+
+    function changeRecentPage(delta) {
+        currentRecentPage += delta;
+        renderRecentTable();
+    }
+
+    function onRecentTableFilterChange() {
+        currentRecentPage = 1;
+        renderRecentTable();
+    }
+
     function renderRecentTable() {
         const tbody = document.getElementById('recentTableBody');
         tbody.innerHTML = '';
@@ -1796,18 +1845,49 @@
             return matchSearch && matchTrainer;
         });
 
-        document.getElementById('recordCountText').innerText = filteredData.length;
+        const totalRecords = filteredData.length;
+        document.getElementById('recordCountText').innerText = totalRecords;
 
         const selectAllCb = document.getElementById('selectAllActivity');
         if(selectAllCb) selectAllCb.checked = false;
         updateActivitySelectionCount();
 
-        if (filteredData.length === 0) {
+        if (totalRecords === 0) {
             tbody.innerHTML = `<tr><td colspan="9" class="text-center p-4 text-gray-500 italic">Tidak ada data ditemukan.</td></tr>`;
+            document.getElementById('recentPaginationInfo').innerText = "Menampilkan data 0 - 0 dari 0";
+            document.getElementById('btnRecentPrev').disabled = true;
+            document.getElementById('btnRecentNext').disabled = true;
+            document.getElementById('recentPageNum').innerText = "1";
             return;
         }
 
-        [...filteredData].reverse().forEach(item => {
+        // TENTUKAN DATA SLICE SESUAI LIMIT DAN PAGINATION
+        let paginatedData = [...filteredData].reverse();
+        let startIndex = 0;
+        let endIndex = totalRecords;
+
+        if (recentRowsPerPage !== 'all') {
+            const totalPages = Math.ceil(totalRecords / recentRowsPerPage);
+            if (currentRecentPage < 1) currentRecentPage = 1;
+            if (currentRecentPage > totalPages) currentRecentPage = totalPages;
+
+            startIndex = (currentRecentPage - 1) * recentRowsPerPage;
+            endIndex = Math.min(startIndex + recentRowsPerPage, totalRecords);
+            paginatedData = paginatedData.slice(startIndex, endIndex);
+
+            document.getElementById('recentPaginationInfo').innerText = `Menampilkan data ${startIndex + 1} - ${endIndex} dari ${totalRecords}`;
+            document.getElementById('recentPageNum').innerText = `${currentRecentPage} / ${totalPages}`;
+            document.getElementById('btnRecentPrev').disabled = currentRecentPage <= 1;
+            document.getElementById('btnRecentNext').disabled = currentRecentPage >= totalPages;
+            document.getElementById('recentPaginationContainer').classList.remove('hidden');
+        } else {
+            document.getElementById('recentPaginationInfo').innerText = `Menampilkan seluruh ${totalRecords} data`;
+            document.getElementById('btnRecentPrev').disabled = true;
+            document.getElementById('btnRecentNext').disabled = true;
+            document.getElementById('recentPageNum').innerText = "All";
+        }
+
+        paginatedData.forEach(item => {
             const tasks = item.tasks || {};
             const taskCount = Object.values(tasks).filter(Boolean).length;
             const points = parseFloat(item.points) || 0;
@@ -2164,7 +2244,6 @@
         const pointsTrend = dates.map(date => data.filter(d => d.date === date).reduce((a, b) => a + (parseFloat(b.points) || 0), 0));
         const conductTrend = dates.map(date => data.filter(d => d.date === date).reduce((a, b) => a + (parseInt(b.conduct) || 0), 0));
 
-        // Global Chart.js Styling for Dark Mode
         Chart.defaults.color = '#94a3b8';
         Chart.defaults.borderColor = '#1e293b';
 
@@ -2634,9 +2713,6 @@
         }
     }
 
-    // =========================================================================
-    // FUNGSI EKSPOR PDF LAPORAN EKSEKUTIF (DIPERBAIKI DENGAN SCROLL & CANVAS FIX)
-    // =========================================================================
     async function generateExecutivePDF(event) {
         const element = document.getElementById('monthlyEvaluationSection');
         if (!element) return alert("Elemen #monthlyEvaluationSection tidak ditemukan!");
@@ -2647,7 +2723,6 @@
 
         const currentScrollY = window.scrollY;
 
-        // 1. Ubah sementara grafik Chart.js menjadi tag <img> statis
         const chartCanvases = element.querySelectorAll('canvas');
         const tempImages = [];
 
@@ -2668,7 +2743,6 @@
         });
 
         try {
-            // 2. Scroll sementara ke paling atas (0, 0) agar html2canvas tidak offset/blank
             window.scrollTo(0, 0);
             await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -2694,7 +2768,6 @@
             console.error("Gagal export PDF:", err);
             alert("Gagal mengunduh PDF. Silakan coba lagi.");
         } finally {
-            // 3. Kembalikan canvas chart dan posisi scroll pengguna
             tempImages.forEach(item => {
                 item.canvas.style.display = '';
                 if (item.img.parentNode) item.img.parentNode.removeChild(item.img);
