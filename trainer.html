@@ -386,7 +386,8 @@
             const totalBundlingPoint = trainerLogs.reduce((a, b) => {
                 let val = b.bundlingPoint !== undefined ? b.bundlingPoint : 
                           (b.bundling_point !== undefined ? b.bundling_point : 
-                          (b.point_bundling !== undefined ? b.point_bundling : 0));
+                          (b.point_bundling !== undefined ? b.point_bundling : 
+                          (b.pointBundlingInput !== undefined ? b.pointBundlingInput : 0)));
                 return a + (parseFloat(val) || 0);
             }, 0);
 
@@ -428,8 +429,11 @@
             document.getElementById('summaryTotalCommission').innerText = "Rp " + totalCommission.toLocaleString('id-ID');
             document.getElementById('summaryPointCommDetail').innerText = totalPoints.toLocaleString('id-ID') + " Poin × Rp 1.000";
             document.getElementById('summaryPointCommAmount').innerText = "Rp " + comm.pointCommission.toLocaleString('id-ID');
+            
+            // PERBAIKAN: Menampilkan jumlah poin bundling dan nominal rupiahnya dengan benar
             document.getElementById('summaryBundlingPointDetail').innerText = totalBundlingPoint.toLocaleString('id-ID') + " Poin × Rp 1.000";
             document.getElementById('summaryBundlingPointAmount').innerText = "Rp " + bundlingPointCommission.toLocaleString('id-ID');
+            
             document.getElementById('summaryFeeBracketInfo').innerText = "Tier: " + comm.code + " (Rp " + comm.feePerSession.toLocaleString('id-ID') + "/Sesi)";
             document.getElementById('summaryConductCommAmount').innerText = "Rp " + comm.conductCommission.toLocaleString('id-ID');
             document.getElementById('summaryBracketNextGoal').innerText = nextGoalText;
