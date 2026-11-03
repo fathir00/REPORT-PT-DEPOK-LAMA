@@ -18,7 +18,7 @@
     <!-- OVERLAY LOGIN & REGISTRASI -->
 <div id="authModalOverlay" class="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6">
     
-    <!-- CARD MODAL PROPORSIONAL (Lebar ideal ~420px di desktop, 100% di HP) -->
+    <!-- CARD MODAL PROPORSIONAL -->
     <div class="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl overflow-hidden relative p-6 sm:p-8">
         
         <!-- LOGO & BRAND -->
@@ -73,7 +73,7 @@
             </div>
         </div>
 
-        <!-- 2. FORM REGISTRASI (SIGN UP) - Tersembunyi secara default (class "hidden") -->
+        <!-- 2. FORM REGISTRASI (SIGN UP) -->
         <div id="signUpContainer" class="hidden space-y-5">
             <div>
                 <h2 class="text-xl font-black uppercase tracking-wider text-amber-400">Pengajuan Akun</h2>
@@ -121,147 +121,6 @@
     </div>
 </div>
 
-           <!-- WADAH MODAL REGISTRASI RINGKAS -->
-<div id="signUpContainer" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-    
-    <!-- CARD MODAL COMPACT (Lebar Maksimal ~440px) -->
-    <div class="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-5 relative">
-        
-        <!-- HEADER FORM -->
-        <div class="text-left space-y-1">
-            <span class="bg-amber-500/10 text-amber-400 font-extrabold text-[10px] px-2.5 py-1 rounded-full border border-amber-500/20 uppercase tracking-widest">
-                Pengajuan Otorisasi
-            </span>
-            <h2 class="text-xl font-black uppercase tracking-wider text-white pt-1">Registrasi Akun</h2>
-            <p class="text-xs text-gray-400">Daftarkan otorisasi baru Manager / Head Coach.</p>
-        </div>
-
-        <!-- FORM REGISTRASI -->
-        <form id="signUpForm" onsubmit="handleAuthSignUp(event)" class="space-y-4">
-            <div>
-                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nama Lengkap</label>
-                <div class="relative">
-                    <i class="fa-solid fa-user absolute left-3.5 top-3 text-gray-500 text-xs"></i>
-                    <input type="text" id="signUpName" required placeholder="Nama Manager / Lead" class="w-full bg-black/60 border border-gray-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email Resmi</label>
-                <div class="relative">
-                    <i class="fa-solid fa-envelope absolute left-3.5 top-3 text-gray-500 text-xs"></i>
-                    <input type="email" id="signUpEmail" required placeholder="mfatihin96@gmail.com" class="w-full bg-black/60 border border-gray-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Buat Kata Sandi</label>
-                <div class="relative">
-                    <i class="fa-solid fa-lock absolute left-3.5 top-3 text-gray-500 text-xs"></i>
-                    <input type="password" id="signUpPassword" required placeholder="••••••••" class="w-full bg-black/60 border border-gray-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
-                </div>
-            </div>
-
-            <button type="submit" id="btnSignUp" class="w-full bg-gradient-to-r from-amber-500 to-yellow-400 hover:opacity-90 text-black font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center space-x-2">
-                <span>Buat Otorisasi Akun</span>
-                <i class="fa-solid fa-user-plus text-xs"></i>
-            </button>
-        </form>
-
-        <!-- FOOTER / KEMBALI TO LOGIN -->
-        <div class="text-center pt-3 border-t border-gray-800">
-            <button onclick="toggleAuthForm('signIn')" class="text-xs font-bold text-blue-400 hover:text-blue-300 transition flex items-center justify-center mx-auto space-x-1">
-                <i class="fa-solid fa-arrow-left text-[10px]"></i>
-                <span>Kembali ke Halaman Login</span>
-            </button>
-        </div>
-
-    </div>
-</div>
-
-                <!-- FORM SIGN UP -->
-                <div id="signUpContainer" class="p-8 sm:p-12 hidden md:flex flex-col justify-center space-y-6 pt-20 md:pt-12">
-                    <div>
-                        <h2 class="text-2xl sm:text-3xl font-black uppercase tracking-wider text-amber-400">Registrasi Akun</h2>
-                        <p class="text-xs text-gray-400 mt-1">Daftarkan otorisasi baru Manager / Head Coach.</p>
-                    </div>
-
-                    <form id="signUpForm" onsubmit="handleAuthSignUp(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nama Lengkap</label>
-                            <div class="relative">
-                                <i class="fa-solid fa-user-circle absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
-                                <input type="text" id="signUpName" required placeholder="Nama Manager / Lead" class="w-full bg-black/60 border border-gray-800 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email Resmi</label>
-                            <div class="relative">
-                                <i class="fa-solid fa-envelope absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
-                                <input type="email" id="signUpEmail" required placeholder="manager@ftlgym.id" class="w-full bg-black/60 border border-gray-800 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Buat Kata Sandi</label>
-                            <div class="relative">
-                                <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
-                                <input type="password" id="signUpPassword" required placeholder="••••••••" class="w-full bg-black/60 border border-gray-800 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
-                            </div>
-                        </div>
-
-                        <button type="submit" id="btnSignUp" class="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black py-3 rounded-lg text-xs uppercase tracking-wider transition shadow-lg hover:opacity-90 flex items-center justify-center space-x-2">
-                            <span>Buat Otorisasi Akun</span>
-                            <i class="fa-solid fa-user-plus text-xs"></i>
-                        </button>
-                    </form>
-
-                    <div class="text-center md:hidden pt-4 border-t border-gray-800">
-                        <p class="text-xs text-gray-400">Sudah memiliki otorisasi?</p>
-                        <button onclick="toggleAuthForm('signIn')" class="text-xs font-bold text-blue-400 mt-1 uppercase tracking-wider">&larr; Masuk Sekarang</button>
-                    </div>
-                </div>
-
-                <!-- OVERLAY SLIDER DESKTOP -->
-                <div id="overlayContainer" class="hidden md:flex flex-col justify-center items-center text-center p-10 bg-gradient-to-br from-gray-950 via-black to-gray-900 border-l border-gray-800 relative space-y-6">
-                    
-                    <div id="overlaySignInText" class="space-y-4">
-                        <div class="w-16 h-16 rounded-full bg-gradient-to-r from-amber-500 to-yellow-300 p-0.5 mx-auto">
-                            <div class="w-full h-full bg-black rounded-full flex items-center justify-center">
-                                <i class="fa-solid fa-gem text-amber-400 text-xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="text-xl font-extrabold text-white uppercase tracking-wider">Akses Manajemen FTL</h3>
-                        <p class="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
-                            Punya akun Manager atau Lead Coach baru?
-                        </p>
-                        <button onclick="toggleAuthDesktop('signUp')" class="px-6 py-2.5 border border-amber-500/50 hover:border-amber-400 text-amber-300 rounded-full text-xs font-bold uppercase tracking-wider transition">
-                            Daftar Akun Baru
-                        </button>
-                    </div>
-
-                    <div id="overlaySignUpText" class="hidden space-y-4">
-                        <div class="w-16 h-16 rounded-full bg-blue-600/30 border border-blue-500 p-0.5 mx-auto">
-                            <div class="w-full h-full bg-black rounded-full flex items-center justify-center">
-                                <i class="fa-solid fa-shield-halved text-blue-400 text-xl"></i>
-                            </div>
-                        </div>
-                        <h3 class="text-xl font-extrabold text-white uppercase tracking-wider">Sudah Memiliki Akses?</h3>
-                        <p class="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
-                            Kembali ke layar masuk untuk membuka Portal Dashboard Monitoring.
-                        </p>
-                        <button onclick="toggleAuthDesktop('signIn')" class="px-6 py-2.5 border border-blue-500/50 hover:border-blue-400 text-blue-300 rounded-full text-xs font-bold uppercase tracking-wider transition">
-                            Masuk ke System
-                        </button>
-                    </div>
-
-                </div>
-
-            </div>
-        </div>
-    </div>
-
     <!-- Header Navigation with FTL Blue Logo -->
     <header class="bg-black text-white shadow-xl sticky top-0 z-50 border-b-2 border-blue-600">
         <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
@@ -279,7 +138,6 @@
 
             <!-- Jam Realtime & Tombol Aksi Header -->
             <div class="flex flex-wrap items-center space-x-2 sm:space-x-3 mt-2 sm:mt-0">
-                <!-- Tampilan Waktu Real-Time -->
                 <div class="text-right text-xs text-gray-300 font-semibold bg-gray-900/80 px-3 py-1.5 rounded-lg border border-gray-700">
                     <div id="realtimeDate" class="text-[10px] text-gray-400">Loading tanggal...</div>
                     <div id="realtimeClock" class="text-xs sm:text-sm font-black text-yellow-400 font-mono tracking-wider">00:00:00 WIB</div>
@@ -305,7 +163,8 @@
                     </button>
                     <button onclick="switchTab('analytics')" id="btn-tab-analytics" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition hover:bg-gray-800 text-gray-300">
                         <i class="fa-solid fa-user-doctor mr-1 sm:mr-2"></i>Analisis & Coaching
-                        <button onclick="showLogoutConfirmation()" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition bg-red-600 hover:bg-red-700 text-white shadow-md flex items-center ml-2">
+                    </button>
+                    <button onclick="showLogoutConfirmation()" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition bg-red-600 hover:bg-red-700 text-white shadow-md flex items-center ml-2">
                         <i class="fa-solid fa-right-from-bracket mr-1 sm:mr-2"></i> Keluar
                     </button>
                 </nav>
@@ -596,7 +455,7 @@
         <!-- TAB 2: DASHBOARD MONITORING & TARGET -->
         <section id="tab-dashboard" class="space-y-6">
 
-            <!-- ===== PEMILIH BULAN ===== -->
+            <!-- PEMILIH BULAN -->
             <div class="bg-gradient-to-r from-gray-900 via-black to-gray-900 text-white p-4 rounded-xl shadow-lg border-l-4 border-blue-600 flex flex-wrap justify-between items-center gap-3">
                 <div class="flex items-center space-x-3">
                     <div class="bg-blue-600 w-10 h-10 rounded-lg flex items-center justify-center shadow">
@@ -723,7 +582,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-blue-600 space-y-3">
+                <div class="bg-white p-5 rounded-xl shadow border-l-4 border-blue-600 space-y-3">
                     <div class="flex justify-between items-center border-b pb-2">
                         <h3 class="font-black text-gray-800 text-sm sm:text-base flex items-center">
                             <i class="fa-solid fa-dumbbell text-blue-600 mr-2 text-lg"></i> Top Conduct Terbanyak (High Perform)
@@ -734,7 +593,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-amber-500 space-y-3">
+                <div class="bg-white p-5 rounded-xl shadow border-l-4 border-amber-500 space-y-3">
                     <div class="flex justify-between items-center border-b pb-2">
                         <h3 class="font-black text-gray-800 text-sm sm:text-base flex items-center">
                             <i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2 text-lg"></i> Conduct Terendah (Low Perform)
@@ -850,7 +709,7 @@
                 </div>
             </div>
 
-            <!-- ===== EVALUASI PENCAPAIAN BULAN SEBELUMNYA ===== -->
+            <!-- ===== EVALUASI PENCAPAIAN BULAN SEBELUMNYA (Bungkus Utama Eksekutif) ===== -->
             <div id="monthlyEvaluationSection" class="bg-white p-6 rounded-xl shadow-md border-t-4 border-black space-y-6">
                 <div class="flex flex-wrap justify-between items-center gap-3 border-b pb-3">
                     <div>
@@ -901,35 +760,35 @@
                             </tbody>
                         </table>
                     </div>
-                <div id="monthlyEvaluationSection">
+                </div>
 
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
-            <div>
-                <h3 class="font-bold text-gray-700 text-sm mb-1">
-                    <i class="fa-solid fa-users-viewfinder text-blue-600 mr-1"></i> Poin per Trainer per Bulan
-                </h3>
-                <p class="text-[11px] text-gray-500">
-                    Warna sel: 
-                    <span class="inline-block bg-emerald-100 text-emerald-800 font-bold px-1.5 rounded">hijau</span> capai target SOB, 
-                    <span class="inline-block bg-amber-100 text-amber-800 font-bold px-1.5 rounded">kuning</span> 80% atau lebih, 
-                    <span class="inline-block bg-red-100 text-red-800 font-bold px-1.5 rounded">merah</span> di bawah 80%.
-                </p>
-            </div>
-        
-            <!-- TOMBOL DOWNLOAD PDF -->
-            <button type="button" onclick="generateExecutivePDF(event)" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-sm flex items-center space-x-1.5 shrink-0">
-                <i class="fa-solid fa-file-pdf"></i>
-                <span>Download PDF Eksekutif</span>
-            </button>
-        </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs sm:text-sm">
-                            <thead id="evalMatrixHead" class="bg-gray-100 text-gray-700 border-b">
-                            </thead>
-                            <tbody id="evalMatrixBody" class="divide-y">
-                            </tbody>
-                        </table>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-4 border-t">
+                    <div>
+                        <h3 class="font-bold text-gray-700 text-sm mb-1">
+                            <i class="fa-solid fa-users-viewfinder text-blue-600 mr-1"></i> Poin per Trainer per Bulan
+                        </h3>
+                        <p class="text-[11px] text-gray-500">
+                            Warna sel: 
+                            <span class="inline-block bg-emerald-100 text-emerald-800 font-bold px-1.5 rounded">hijau</span> capai target SOB, 
+                            <span class="inline-block bg-amber-100 text-amber-800 font-bold px-1.5 rounded">kuning</span> 80% atau lebih, 
+                            <span class="inline-block bg-red-100 text-red-800 font-bold px-1.5 rounded">merah</span> di bawah 80%.
+                        </p>
                     </div>
+                
+                    <!-- TOMBOL DOWNLOAD PDF -->
+                    <button type="button" onclick="generateExecutivePDF(event)" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-sm flex items-center space-x-1.5 shrink-0">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>Download PDF Eksekutif</span>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm">
+                        <thead id="evalMatrixHead" class="bg-gray-100 text-gray-700 border-b">
+                        </thead>
+                        <tbody id="evalMatrixBody" class="divide-y">
+                        </tbody>
+                    </table>
                 </div>
 
                 <p class="text-[11px] text-gray-500 bg-gray-50 border rounded-lg p-2">
@@ -1092,9 +951,6 @@
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdf7dyKVM5qEkYNZJIma0DqiPdmO0GpqbchiJsYz3jcm1Pc28EFq7cgKH7pRSkRkqx/exec";
 
-        // ===== HELPER TANGGAL LOKAL (FIX: zona waktu UTC vs WIB) =====
-        // Menghasilkan "YYYY-MM-DD" berdasarkan waktu perangkat (bukan UTC),
-        // sehingga pukul 00:00-06:59 WIB tetap menghasilkan tanggal hari ini.
         function localDateStr(d) {
             const dt = d || new Date();
             return dt.getFullYear() + '-' +
@@ -1102,7 +958,6 @@
                 String(dt.getDate()).padStart(2, '0');
         }
 
-        // ===== TARGET (bisa diubah manual lewat tombol "Atur Target", disimpan di localStorage) =====
         const DEFAULT_DIVISION_TARGET = 34500;
         const DEFAULT_INDIVIDUAL_TARGET = 3000;
         let DIVISION_TARGET = parseFloat(localStorage.getItem('FTL_TARGET_DIVISION')) || DEFAULT_DIVISION_TARGET;
@@ -1122,8 +977,7 @@
             "Yomi David Armada Siahaan"
         ];
 
-        // FUNGSI SKEMA KOMISI TERBARU SESUAI TABEL
-        function calculateSmartCoachCommission(points, conduct) {
+        function calculateCommission(points, conduct) {
             let feePerSession = 0;
             let code = "FC";
 
@@ -1202,7 +1056,6 @@
             return { feePerSession, code, pointCommission, conductCommission, totalCommission };
         }
 
-        // FIX: pakai tanggal lokal, bukan toISOString() (UTC)
         document.getElementById('inputDate').value = localDateStr();
 
         let trendChartInstance = null;
@@ -1222,14 +1075,10 @@
             ];
         }
 
-        // ===== PEMILIH BULAN =====
-        // Format kunci bulan: "YYYY-MM" (contoh: "2026-10")
-        // FIX: pakai waktu lokal agar tidak salah bulan di pergantian bulan (WIB)
         function currentMonthKey() {
             return localDateStr().slice(0, 7);
         }
 
-        // Bulan yang sedang dipilih di dropdown (default: bulan berjalan)
         let selectedMonth = currentMonthKey();
 
         function formatMonthLabel(key) {
@@ -1237,7 +1086,6 @@
             return new Date(parts[0], parts[1] - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
         }
 
-        // Isi semua dropdown bulan: bulan yang punya data + bulan berjalan + bulan terpilih
         function populateMonthSelects() {
             const keys = new Set(
                 appData.map(d => String(d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
@@ -1245,7 +1093,7 @@
             keys.add(currentMonthKey());
             keys.add(selectedMonth);
 
-            const sorted = Array.from(keys).sort().reverse(); // terbaru di atas
+            const sorted = Array.from(keys).sort().reverse();
             const optionsHTML = sorted.map(k => `<option value="${k}">${formatMonthLabel(k)}</option>`).join('');
 
             document.querySelectorAll('.month-select').forEach(sel => {
@@ -1272,24 +1120,18 @@
             onMonthChange(currentMonthKey());
         }
 
-        // Data khusus bulan terpilih (dipakai untuk pencapaian target bulanan)
         function getMonthData() {
             const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
             return appData.filter(d => {
                 if (!d.date) return false;
-
-                // Memisah string "YYYY-MM-DD" langsung tanpa konversi Date UTC
                 const parts = String(d.date).split('T')[0].split('-');
                 if (parts.length < 2) return false;
-
                 const itemYear = parseInt(parts[0], 10);
                 const itemMonth = parseInt(parts[1], 10);
-
                 return itemYear === selYear && itemMonth === selMonthNum;
             });
         }
 
-        // ===== PENGATURAN TARGET =====
         function openTargetModal() {
             document.getElementById('inputDivisionalTarget').value = DIVISION_TARGET;
             document.getElementById('inputIndividualTarget').value = INDIVIDUAL_SOB_TARGET;
@@ -1380,11 +1222,6 @@
             }
         }
 
-        // ===== KIRIM KE GOOGLE APPS SCRIPT =====
-        // Catatan: mode 'no-cors' membuat respons bersifat opaque, sehingga error HTTP
-        // (404/500) dari Apps Script TIDAK bisa terdeteksi di sini. Hanya error jaringan
-        // (offline, DNS, dll) yang akan tertangkap. Gunakan tombol "Sync Data Cloud"
-        // untuk memverifikasi bahwa data benar-benar masuk ke Google Sheet.
         async function postToCloud(payload) {
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
@@ -1522,7 +1359,7 @@
                 renderClientTable();
             };
             reader.readAsText(file);
-            event.target.value = ''; // agar file yang sama bisa diimpor ulang
+            event.target.value = '';
         }
 
         function importActivityFile(event) {
@@ -1568,7 +1405,7 @@
                 renderDashboard();
             };
             reader.readAsText(file);
-            event.target.value = ''; // agar file yang sama bisa diimpor ulang
+            event.target.value = '';
         }
 
         document.getElementById('clientForm').addEventListener('submit', function(e) {
@@ -1604,7 +1441,6 @@
 
         document.getElementById('editClientForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            // FIX: parseFloat agar ID hasil impor CSV (Date.now() + Math.random()) tetap cocok
             const clientId = parseFloat(document.getElementById('editClientId').value);
             
             clientData = clientData.map(c => {
@@ -1849,7 +1685,6 @@
                 ? 'Data Aktivitas Berhasil Disimpan! (Klik "Sync Data Cloud" untuk memastikan data masuk ke Google Sheet)'
                 : 'Data tersimpan di perangkat ini, tetapi GAGAL dikirim ke Cloud (cek koneksi internet).');
             this.reset();
-            // FIX: tanggal lokal, bukan UTC
             document.getElementById('inputDate').value = localDateStr();
             document.getElementById('raCounter').innerText = "0 / 20 RA";
             document.getElementById('conductWarning').classList.add('hidden');
@@ -1992,7 +1827,6 @@
                 csvContent += `${row.id},${row.date},"${row.trainer}",${row.points || 0},${row.bundling || 0},${row.conduct || 0},${row.ra || 0},${maint},${followupGO}\n`;
             });
 
-            // FIX: pakai Blob (lebih aman untuk data besar / karakter khusus daripada data: URI)
             const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -2076,16 +1910,13 @@
             const selectedPeriod = document.getElementById('filterPeriod').value;
 
             const now = new Date();
-            // FIX: tanggal lokal (WIB), bukan UTC
             const todayStr = localDateStr(now);
 
             populateMonthSelects();
             updateTargetLabels();
             renderDailyAuditTable(todayStr);
 
-            // FIX BUG #1: monthData sebelumnya tidak pernah dideklarasikan di fungsi ini
             const monthData = getMonthData();
-
             const [selYear, selMonthNum] = selectedMonth.split('-').map(Number);
 
             let filtered = appData.filter(item => {
@@ -2098,7 +1929,6 @@
                     if (!item.date) {
                         matchPeriod = false;
                     } else {
-                        // Bandingkan berdasarkan tanggal lokal (tanpa jam) agar akurat
                         const p = String(item.date).split('T')[0].split('-').map(Number);
                         const itemDate = new Date(p[0], (p[1] || 1) - 1, p[2] || 1);
                         const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -2109,11 +1939,9 @@
                     if (!item.date) {
                         matchPeriod = false;
                     } else {
-                        // Ekstrak bagian tahun dan bulan langsung dari string "YYYY-MM-DD"
                         const parts = String(item.date).split('T')[0].split('-');
                         const itemYear = parseInt(parts[0], 10);
                         const itemMonth = parseInt(parts[1], 10);
-
                         matchPeriod = (itemYear === selYear && itemMonth === selMonthNum);
                     }
                 }
@@ -2121,7 +1949,6 @@
                 return matchTrainer && matchPeriod;
             });
 
-            // Pencapaian divisi = total poin pada BULAN TERPILIH (agar target bulanan bisa dibandingkan tiap bulan)
             const overallPoints = monthData.reduce((acc, curr) => {
                 const pts = parseFloat(curr.points);
                 return acc + (isNaN(pts) ? 0 : pts);
@@ -2130,7 +1957,6 @@
             const percentage = Math.min(((overallPoints / DIVISION_TARGET) * 100), 100).toFixed(1);
             const remaining = Math.max(DIVISION_TARGET - overallPoints, 0);
             
-            // Sisa hari: bulan berjalan = dari hari ini; bulan lalu = 0; bulan depan = seluruh hari
             const selParts = selectedMonth.split('-').map(Number);
             const lastDayOfMonth = new Date(selParts[0], selParts[1], 0).getDate();
             const curKey = currentMonthKey();
@@ -2284,7 +2110,6 @@
             });
         }
 
-        // ===== EVALUASI PENCAPAIAN BULANAN =====
         let monthlyChartInstance = null;
         let lastEvaluationExport = [];
 
@@ -2349,12 +2174,11 @@
             );
             keySet.add(currentMonthKey());
 
-            const allKeys = Array.from(keySet).sort();            // lama -> baru
+            const allKeys = Array.from(keySet).sort();
             const shownKeys = allKeys.slice(-range);
             const stats = shownKeys.map(getMonthStats);
             const curKey = currentMonthKey();
 
-            // ----- Tabel ringkasan divisi (terbaru di atas) -----
             const summaryBody = document.getElementById('evalSummaryBody');
             summaryBody.innerHTML = '';
 
@@ -2389,7 +2213,6 @@
                 `;
             });
 
-            // ----- Matriks poin per trainer per bulan -----
             const head = document.getElementById('evalMatrixHead');
             const body = document.getElementById('evalMatrixBody');
 
@@ -2436,7 +2259,6 @@
                 `;
             });
 
-            // ----- Grafik total poin per bulan -----
             const canvas = document.getElementById('monthlyTrendChart');
             if (canvas) {
                 if (monthlyChartInstance) monthlyChartInstance.destroy();
@@ -2453,7 +2275,6 @@
                 });
             }
 
-            // ----- Siapkan data untuk ekspor CSV (format panjang) -----
             lastEvaluationExport = [];
             stats.forEach(s => {
                 s.perTrainer.forEach(t => {
@@ -2504,7 +2325,6 @@
             const targetRunRate = Math.min(selectedWeek * (INDIVIDUAL_SOB_TARGET / 5), INDIVIDUAL_SOB_TARGET);
             const minSafeRunRate = targetRunRate * 0.8; 
 
-            // Satu deklarasi saja di dalam fungsi ini (tidak ada redeclare)
             const monthData = getMonthData();
             let underPerformanceCount = 0;
 
@@ -2645,10 +2465,7 @@
 
         updateRealtimeClock();
         setInterval(updateRealtimeClock, 1000);
-    </script>
-</body>
-    <script>
-        // TOGGLE TAMPILAN ANTARA LOGIN DAN PENGAJUAN REGISTRASI
+
         function toggleAuthForm(mode) {
             const signInBox = document.getElementById('signInContainer');
             const signUpBox = document.getElementById('signUpContainer');
@@ -2662,7 +2479,6 @@
             }
         }
 
-        // BUKA KUNCI OVERLAY DASHBOARD
         function unlockDashboard() {
             const overlay = document.getElementById('authModalOverlay');
             if (overlay) {
@@ -2674,7 +2490,6 @@
             }
         }
 
-        // HANDLER PROSES SIGN IN
         function handleAuthSignIn(e) {
             e.preventDefault();
             const btn = document.getElementById('btnSignIn');
@@ -2692,30 +2507,22 @@
             }, 1000);
         }
 
-        // HANDLER PENGAJUAN REGISTRASI (VERIFIKASI NOTIFIKASI MANAGER)
         function handleAuthSignUp(e) {
             e.preventDefault();
             const name = document.getElementById('signUpName').value;
             const email = document.getElementById('signUpEmail').value;
         
-            // Pop-up pemberitahuan
             alert(`Pengajuan akun untuk ${name} (${email}) berhasil dikirim!\n\nSistem akan mengarahkan Anda ke WhatsApp Manager untuk verifikasi.`);
         
-            // MASUKKAN NOMOR WA ANDA DI SINI (Ganti angka di bawah):
             const targetWA = "6285240201806"; 
-        
-            // Pesan Notifikasi Otomatis
             const message = `*PENGAJUAN AKUN BARU FTL BLUE*\n\nHalo Manager, ada pengajuan akun baru:\n• *Nama:* ${name}\n• *Email:* ${email}\n\nMohon untuk memverifikasi dan menyetujui akun ini ke dalam sistem.`;
             
-            // Membuka WhatsApp secara otomatis
             window.open(`https://wa.me/${targetWA}?text=${encodeURIComponent(message)}`, '_blank');
         
-            // Reset form dan kembali ke halaman login
             if(document.getElementById('signUpForm')) document.getElementById('signUpForm').reset();
             toggleAuthForm('signIn');
         }
 
-        // FUNGSI LOGOUT & MENGUNCI KEMBALI DASHBOARD
         function showLogoutConfirmation() {
             if (confirm("Apakah Anda yakin ingin keluar dan mengunci kembali Dashboard Manager?")) {
                 const overlay = document.getElementById('authModalOverlay');
@@ -2730,69 +2537,76 @@
                 }
             }
         }
-        // ==========================================
-            // FUNGSI EKSPOR PDF LAPORAN EKSEKUTIF
-            // ==========================================
-            async function generateExecutivePDF(event) {
-    const element = document.getElementById('monthlyEvaluationSection');
-    if (!element) return alert("Elemen tidak ditemukan!");
 
-    const btn = event ? (event.currentTarget || event.target) : null;
-    const originalText = btn ? btn.innerHTML : '';
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+        // =========================================================================
+        // FUNGSI EKSPOR PDF LAPORAN EKSEKUTIF (DIPERBAIKI DENGAN SCROLL & CANVAS FIX)
+        // =========================================================================
+        async function generateExecutivePDF(event) {
+            const element = document.getElementById('monthlyEvaluationSection');
+            if (!element) return alert("Elemen #monthlyEvaluationSection tidak ditemukan!");
 
-    // 1. UBAH SEMUA CANVAS/CHART DI DALAM SECTION MENJADI GAMBAR IMG BERSATU
-    const chartCanvases = element.querySelectorAll('canvas');
-    const tempImages = [];
+            const btn = event ? (event.currentTarget || event.target) : null;
+            const originalText = btn ? btn.innerHTML : '';
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
 
-    chartCanvases.forEach(canvas => {
-        try {
-            const img = document.createElement('img');
-            img.src = canvas.toDataURL('image/png');
-            img.style.width = canvas.style.width || '100%';
-            img.style.height = canvas.style.height || 'auto';
-            img.className = 'temp-pdf-chart';
-            
-            // Sembunyikan canvas asli sementara & tampilkan gambar
-            canvas.style.display = 'none';
-            canvas.parentNode.insertBefore(img, canvas);
-            tempImages.push({ canvas, img });
-        } catch (e) {
-            console.warn("Gagal konversi canvas chart:", e);
+            const currentScrollY = window.scrollY;
+
+            // 1. Ubah sementara grafik Chart.js menjadi tag <img> statis
+            const chartCanvases = element.querySelectorAll('canvas');
+            const tempImages = [];
+
+            chartCanvases.forEach(canvas => {
+                try {
+                    const img = document.createElement('img');
+                    img.src = canvas.toDataURL('image/png');
+                    img.style.width = (canvas.offsetWidth || canvas.clientWidth || 600) + 'px';
+                    img.style.height = (canvas.offsetHeight || canvas.clientHeight || 250) + 'px';
+                    img.className = 'temp-pdf-chart';
+                    
+                    canvas.style.display = 'none';
+                    canvas.parentNode.insertBefore(img, canvas);
+                    tempImages.push({ canvas, img });
+                } catch (e) {
+                    console.warn("Gagal konversi canvas chart:", e);
+                }
+            });
+
+            try {
+                // 2. Scroll sementara ke paling atas (0, 0) agar html2canvas tidak offset/blank
+                window.scrollTo(0, 0);
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                const opt = {
+                    margin: [8, 8, 8, 8],
+                    filename: `Laporan_Eksekutif_FTL_Depok.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        scrollX: 0,
+                        scrollY: 0,
+                        logging: false
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                };
+
+                await html2pdf().set(opt).from(element).save();
+
+            } catch (err) {
+                console.error("Gagal export PDF:", err);
+                alert("Gagal mengunduh PDF. Silakan coba lagi.");
+            } finally {
+                // 3. Kembalikan canvas chart dan posisi scroll pengguna
+                tempImages.forEach(item => {
+                    item.canvas.style.display = '';
+                    if (item.img.parentNode) item.img.parentNode.removeChild(item.img);
+                });
+                window.scrollTo(0, currentScrollY);
+                if (btn) btn.innerHTML = originalText;
+            }
         }
-    });
-
-    try {
-        // 2. RENDER DENGAN OPTIMASI WARNA Latar BELAKANG
-        const opt = {
-            margin: [8, 8, 8, 8],
-            filename: `Laporan_Eksekutif_FTL_Depok.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                logging: false
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-        };
-
-        await html2pdf().set(opt).from(element).save();
-
-    } catch (err) {
-        console.error("Gagal export PDF:", err);
-        alert("Gagal mengunduh PDF.");
-    } finally {
-        // 3. KEMBALIKAN TAMPILAN CANVAS SEPERTI SEMULA
-        tempImages.forEach(item => {
-            item.canvas.style.display = '';
-            if (item.img.parentNode) item.img.parentNode.removeChild(item.img);
-        });
-        if (btn) btn.innerHTML = originalText;
-    }
-}
     </script>
-    </body>
+</body>
 </html>
- 
