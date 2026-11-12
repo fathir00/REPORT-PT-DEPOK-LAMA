@@ -14,7 +14,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style> 
         body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; } 
-        /* Custom Scrollbar for Dark Theme */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
@@ -50,14 +49,14 @@
                     <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Email / Username</label>
                     <div class="relative">
                         <i class="fa-solid fa-user-shield absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
-                        <input type="text" id="signInEmail" required placeholder="manager@ftlgym.id" class="w-full bg-black/60 border border-gray-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                        <input type="text" id="signInEmail" required placeholder="mfatihin96@gmail.com" class="w-full bg-black/60 border border-gray-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
                     </div>
                 </div>
 
                 <div>
                     <div class="flex justify-between items-center mb-1.5">
                         <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Kata Sandi</label>
-                        <a href="#" onclick="alert('Silakan hubungi Super Admin untuk keamanan akses.')" class="text-[10px] text-blue-400 hover:text-blue-300">Lupa Password?</a>
+                        <a href="#" onclick="resetPasswordFromLogin(event)" class="text-[10px] text-blue-400 hover:text-blue-300">Lupa Password?</a>
                     </div>
                     <div class="relative">
                         <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-gray-500 text-xs"></i>
@@ -141,7 +140,7 @@
                 </div>
                 <div>
                     <h2 class="text-xs font-black tracking-wider text-white uppercase">FTL GERENCIAL</h2>
-                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Depok Branch</p>
+                    <p id="sidebarBranchSubtitle" class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Depok Branch</p>
                 </div>
             </div>
 
@@ -166,6 +165,10 @@
                             <i class="fa-solid fa-user-doctor w-4 text-center"></i>
                             <span>Analisis & Coaching</span>
                         </button>
+                        <button onclick="switchTab('settings')" id="btn-tab-settings" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800/60 transition">
+                            <i class="fa-solid fa-user-gear w-4 text-center"></i>
+                            <span>Pengaturan & Profil</span>
+                        </button>
                     </nav>
                 </div>
 
@@ -187,8 +190,19 @@
             </div>
         </div>
 
-        <!-- LOGOUT USER FOOTER -->
-        <div class="p-4 border-t border-gray-800/80 bg-[#0b0f19]/40">
+        <!-- PROFIL SINGKAT & LOGOUT USER FOOTER -->
+        <div class="p-4 border-t border-gray-800/80 bg-[#0b0f19]/40 space-y-2.5">
+            <div onclick="switchTab('settings')" class="flex items-center space-x-2.5 px-2.5 py-2 rounded-xl bg-[#111827] border border-gray-800/80 cursor-pointer hover:border-blue-600/50 transition">
+                <div class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-black text-xs shrink-0" id="sidebarAvatarInitial">
+                    MF
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p id="sidebarProfileName" class="text-xs font-bold text-white truncate">M. Fatihin (Fathir)</p>
+                    <p id="sidebarProfileRole" class="text-[10px] text-emerald-400 font-semibold truncate">Fitness Manager</p>
+                </div>
+                <i class="fa-solid fa-chevron-right text-[10px] text-gray-500"></i>
+            </div>
+
             <button onclick="showLogoutConfirmation()" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-red-400 hover:bg-red-950/30 border border-red-900/30 transition">
                 <span class="flex items-center"><i class="fa-solid fa-right-from-bracket mr-2"></i> Keluar Portal</span>
                 <i class="fa-solid fa-shield text-[10px]"></i>
@@ -201,12 +215,16 @@
         <!-- TOP HEADER BAR -->
         <header class="bg-[#0f172a]/90 backdrop-blur border-b border-gray-800/80 px-6 py-3.5 sticky top-0 z-40 flex flex-wrap justify-between items-center gap-4">
             <div>
-                <h1 class="text-base font-black uppercase tracking-wider text-white">Dashboard Gerencial</h1>
+                <h1 id="topHeaderTitle" class="text-base font-black uppercase tracking-wider text-white">Dashboard Gerencial</h1>
                 <p class="text-[11px] text-gray-400">Análise e extração de métricas operacionais Depok Lama</p>
             </div>
 
             <!-- REALTIME CLOCK & QUICK ACTIONS -->
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
+                <button onclick="switchTab('settings')" title="Pengaturan & Profil" class="bg-[#111827] hover:bg-gray-800 border border-gray-800 px-3 py-2 rounded-xl text-xs text-gray-300 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-user-circle text-blue-400"></i>
+                    <span id="headerManagerBadge" class="hidden sm:inline font-bold">Fathir</span>
+                </button>
                 <div class="text-right text-xs bg-[#111827] px-3.5 py-1.5 rounded-xl border border-gray-800">
                     <div id="realtimeDate" class="text-[10px] text-gray-400 font-medium">Loading tanggal...</div>
                     <div id="realtimeClock" class="text-xs font-black text-blue-400 font-mono tracking-wider">00:00:00 WIB</div>
@@ -241,20 +259,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-400 uppercase mb-1.5">Nama Trainer</label>
-                                <select id="inputTrainer" required class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none transition">
-                                    <option value="">-- Pilih Trainer --</option>
-                                    <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
-                                    <option value="Bima Aminulah">Bima Aminulah</option>
-                                    <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
-                                    <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
-                                    <option value="Dedy Mawansyah">Dedy Mawansyah</option>
-                                    <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
-                                    <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
-                                    <option value="Rindu Adji">Rindu Adji</option>
-                                    <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
-                                    <option value="Wahyu Setiawan">Wahyu Setiawan</option>
-                                    <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
-                                    <option value="Manager">Manager</option>
+                                <select id="inputTrainer" required class="trainer-dropdown w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none transition">
                                 </select>
                             </div>
                             <div>
@@ -332,29 +337,14 @@
                         </div>
                     </div>
 
-                    <!-- BARIS FILTER & PILIHAN LIMIT TAMPILAN -->
                     <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-[#0b0f19] p-3 rounded-xl border border-gray-800 items-center">
                         <div>
                             <input type="text" id="recentSearchInput" onkeyup="onRecentTableFilterChange()" placeholder="Cari Nama / Tanggal..." class="w-full bg-[#111827] border border-gray-800 rounded-lg p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
                         </div>
                         <div>
-                            <select id="recentTrainerFilter" onchange="onRecentTableFilterChange()" class="w-full bg-[#111827] border border-gray-800 rounded-lg p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
-                                <option value="all">Semua Trainer</option>
-                                <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
-                                <option value="Bima Aminulah">Bima Aminulah</option>
-                                <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
-                                <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
-                                <option value="Dedy Mawansyah">Dedy Mawansyah</option>
-                                <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
-                                <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
-                                <option value="Rindu Adji">Rindu Adji</option>
-                                <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
-                                <option value="Wahyu Setiawan">Wahyu Setiawan</option>
-                                <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
-                                <option value="Manager">Manager</option>
+                            <select id="recentTrainerFilter" onchange="onRecentTableFilterChange()" class="trainer-filter-dropdown w-full bg-[#111827] border border-gray-800 rounded-lg p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
                             </select>
                         </div>
-                        <!-- PILIHAN LIMIT DATA TAMPILAN -->
                         <div class="flex items-center space-x-2">
                             <label class="text-[11px] font-bold text-gray-400 whitespace-nowrap">Tampilkan:</label>
                             <select id="recentLimitSelect" onchange="changeRecentLimit(this.value)" class="w-full bg-[#111827] border border-gray-800 rounded-lg p-2 text-xs font-bold text-blue-400 focus:border-blue-500 focus:outline-none">
@@ -391,7 +381,6 @@
                         </table>
                     </div>
 
-                    <!-- PAGING & KONTROL HALAMAN -->
                     <div id="recentPaginationContainer" class="flex flex-wrap justify-between items-center gap-3 pt-2 text-xs text-gray-400">
                         <div id="recentPaginationInfo" class="font-medium">
                             Menampilkan data 0 - 0 dari 0
@@ -434,20 +423,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Trainer Pengampu</label>
-                            <select id="clientTrainer" required class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
-                                <option value="">-- Pilih Trainer --</option>
-                                <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
-                                <option value="Bima Aminulah">Bima Aminulah</option>
-                                <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
-                                <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
-                                <option value="Dedy Mawansyah">Dedy Mawansyah</option>
-                                <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
-                                <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
-                                <option value="Rindu Adji">Rindu Adji</option>
-                                <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
-                                <option value="Wahyu Setiawan">Wahyu Setiawan</option>
-                                <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
-                                <option value="Manager">Manager</option>
+                            <select id="clientTrainer" required class="trainer-dropdown w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
                             </select>
                         </div>
                         <div>
@@ -485,20 +461,7 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-extrabold text-gray-500 uppercase mb-1"><i class="fa-solid fa-filter mr-1 text-blue-400"></i> Filter Trainer Pengampu</label>
-                            <select id="filterClientTrainer" onchange="renderClientTable()" class="w-full bg-[#111827] border border-gray-800 rounded-lg p-2 text-xs font-bold text-white focus:border-blue-500 focus:outline-none">
-                                <option value="all">-- Semua Trainer Pengampu --</option>
-                                <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
-                                <option value="Bima Aminulah">Bima Aminulah</option>
-                                <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
-                                <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
-                                <option value="Dedy Mawansyah">Dedy Mawansyah</option>
-                                <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
-                                <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
-                                <option value="Rindu Adji">Rindu Adji</option>
-                                <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
-                                <option value="Wahyu Setiawan">Wahyu Setiawan</option>
-                                <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
-                                <option value="Manager">Manager</option>
+                            <select id="filterClientTrainer" onchange="renderClientTable()" class="trainer-filter-dropdown w-full bg-[#111827] border border-gray-800 rounded-lg p-2 text-xs font-bold text-white focus:border-blue-500 focus:outline-none">
                             </select>
                         </div>
                     </div>
@@ -528,7 +491,6 @@
             <!-- TAB 2: DASHBOARD MONITORING & TARGET -->
             <section id="tab-dashboard" class="space-y-6">
 
-                <!-- KARTU STATISTIK ATAS METRIC CARDS -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden">
                         <div class="flex justify-between items-start">
@@ -616,10 +578,10 @@
                         </div>
                         <div class="flex items-center space-x-2 mt-2 sm:mt-0">
                             <span id="badgeReportedCount" class="bg-emerald-950/60 text-emerald-400 text-xs font-black px-3 py-1 rounded-full border border-emerald-800">
-                                0/11 Sudah Lapor
+                                0/12 Sudah Lapor
                             </span>
                             <span id="badgeNotReportedCount" class="bg-red-950/60 text-red-400 text-xs font-black px-3 py-1 rounded-full border border-red-800">
-                                0/11 Belum Lapor
+                                0/12 Belum Lapor
                             </span>
                         </div>
                     </div>
@@ -659,7 +621,6 @@
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-end">
                         <div class="lg:col-span-2 bg-[#0b0f19] p-6 rounded-2xl border border-gray-800 shadow-inner flex justify-center items-end space-x-2 sm:space-x-4 min-h-[260px]">
-                            <!-- JUARA 2 -->
                             <div class="flex flex-col items-center w-1/3">
                                 <div class="text-center mb-2">
                                     <span class="bg-gray-800 text-gray-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Juara 2</span>
@@ -672,7 +633,6 @@
                                 </div>
                             </div>
 
-                            <!-- JUARA 1 -->
                             <div class="flex flex-col items-center w-1/3 -mt-6">
                                 <div class="text-center mb-2">
                                     <i class="fa-solid fa-crown text-yellow-400 text-xl animate-bounce"></i>
@@ -686,7 +646,6 @@
                                 </div>
                             </div>
 
-                            <!-- JUARA 3 -->
                             <div class="flex flex-col items-center w-1/3">
                                 <div class="text-center mb-2">
                                     <span class="bg-amber-900 text-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Juara 3</span>
@@ -794,20 +753,7 @@
                             <option value="weekly">7 Hari Terakhir (Mingguan)</option>
                             <option value="monthly" selected>Bulanan (Sesuai Bulan Terpilih)</option>
                         </select>
-                        <select id="filterTrainer" onchange="renderDashboard()" class="bg-[#0b0f19] border border-gray-800 rounded-xl p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
-                            <option value="all">Semua Trainer</option>
-                            <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
-                            <option value="Bima Aminulah">Bima Aminulah</option>
-                            <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
-                            <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
-                            <option value="Dedy Mawansyah">Dedy Mawansyah</option>
-                            <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
-                            <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
-                            <option value="Rindu Adji">Rindu Adji</option>
-                            <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
-                            <option value="Wahyu Setiawan">Wahyu Setiawan</option>
-                            <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
-                            <option value="Manager">Manager</option>
+                        <select id="filterTrainer" onchange="renderDashboard()" class="trainer-filter-dropdown bg-[#0b0f19] border border-gray-800 rounded-xl p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
                         </select>
                     </div>
                 </div>
@@ -894,7 +840,6 @@
                             </p>
                         </div>
                     
-                        <!-- TOMBOL DOWNLOAD PDF -->
                         <button type="button" onclick="generateExecutivePDF(event)" class="bg-red-900/60 hover:bg-red-800 border border-red-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition shadow flex items-center space-x-1.5 shrink-0">
                             <i class="fa-solid fa-file-pdf"></i>
                             <span>Download PDF Eksekutif</span>
@@ -951,7 +896,7 @@
                         <i class="fa-solid fa-arrow-down-wide-short text-blue-400 text-2xl"></i>
                         <div>
                             <h4 class="font-bold text-blue-200 text-sm">Struktur Urutan Matriks Performance</h4>
-                            <p class="text-xs text-blue-300/80">Tabel disusun rapi mulai dari trainer berstatus **Good Pace** di atas, lalu diikuti trainer berstatus **Under Performance** di bagian bawah.</p>
+                            <p class="text-xs text-blue-300/80">Tabel disusun rapi mulai dari trainer berstatus <strong>Good Pace</strong> di atas, lalu diikuti trainer berstatus <strong>Under Performance</strong> di bagian bawah.</p>
                         </div>
                     </div>
                     <span id="coachingBadgeCount" class="bg-red-900/80 text-red-200 font-bold text-xs px-3 py-1.5 rounded-full border border-red-700">0 Trainer Under Performance</span>
@@ -989,6 +934,203 @@
                 </div>
             </section>
 
+            <!-- TAB 4: PENGATURAN & PROFIL MANAGER -->
+            <section id="tab-settings" class="space-y-6 hidden">
+                <!-- HEADER PROFIL -->
+                <div class="bg-gradient-to-r from-blue-950/60 via-[#111827] to-[#111827] p-6 rounded-2xl border border-blue-800/40 shadow-xl flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex items-center space-x-4">
+                        <div id="profileBigAvatar" class="w-16 h-16 rounded-2xl bg-blue-600/20 border-2 border-blue-500/60 flex items-center justify-center text-blue-400 font-black text-2xl shadow-lg">
+                            MF
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h2 id="profileDisplayHeaderName" class="text-xl font-black text-white">M. Fatihin (Fathir)</h2>
+                                <span class="bg-emerald-950 text-emerald-400 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-emerald-800 uppercase">Active Manager</span>
+                            </div>
+                            <p id="profileDisplayHeaderEmail" class="text-xs text-gray-400 mt-0.5"><i class="fa-solid fa-envelope text-blue-400 mr-1.5"></i>mfatihin96@gmail.com</p>
+                            <p id="profileDisplayHeaderBranch" class="text-[11px] text-gray-500 mt-0.5"><i class="fa-solid fa-location-dot text-red-400 mr-1.5"></i>FTL Gym Depok Lama</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="exportFullBackupJSON()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center">
+                            <i class="fa-solid fa-cloud-arrow-down mr-1.5"></i> Backup Full Data (.JSON)
+                        </button>
+                        <input type="file" id="importBackupJSON" accept=".json" class="hidden" onchange="importFullBackupJSON(event)">
+                        <button type="button" onclick="document.getElementById('importBackupJSON').click()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center">
+                            <i class="fa-solid fa-cloud-arrow-up mr-1.5 text-emerald-400"></i> Restore Backup
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- KARTU 1: EDIT PROFIL MANAGER -->
+                    <div class="bg-[#111827] p-6 rounded-2xl border border-gray-800 shadow-xl space-y-4">
+                        <div class="border-b border-gray-800 pb-3">
+                            <h3 class="font-bold text-sm text-white flex items-center">
+                                <i class="fa-solid fa-id-badge text-blue-400 mr-2 text-base"></i> Informasi Profil Pengelola
+                            </h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Sesuaikan identitas profil Anda dan kontak WhatsApp penerima laporan.</p>
+                        </div>
+
+                        <form onsubmit="saveManagerProfile(event)" class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nama Lengkap</label>
+                                    <input type="text" id="profFullName" required class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nama Panggilan / Alias</label>
+                                    <input type="text" id="profAlias" required class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Email Akun Resmi</label>
+                                    <input type="email" id="profEmail" required class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Jabatan / Role</label>
+                                    <input type="text" id="profRole" required class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Cabang / Branch</label>
+                                    <input type="text" id="profBranch" required class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">No. WhatsApp Manager (628...)</label>
+                                    <input type="text" id="profWhatsApp" placeholder="6285240201806" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider transition shadow">
+                                <i class="fa-solid fa-floppy-disk mr-1.5"></i> Simpan Perubahan Profil
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- KARTU 2: UBAH KATA SANDI LOGIN -->
+                    <div class="bg-[#111827] p-6 rounded-2xl border border-gray-800 shadow-xl space-y-4">
+                        <div class="border-b border-gray-800 pb-3 flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-sm text-white flex items-center">
+                                    <i class="fa-solid fa-key text-yellow-400 mr-2 text-base"></i> Pengaturan Kata Sandi Login
+                                </h3>
+                                <p class="text-xs text-gray-400 mt-0.5">Atur atau ganti kata sandi untuk mengunci akses Dashboard Manager.</p>
+                            </div>
+                            <span id="passwordStatusBadge" class="bg-amber-950/60 text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-800">
+                                Sandi Kustom Aktif
+                            </span>
+                        </div>
+
+                        <form onsubmit="handleUpdatePassword(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Kata Sandi Saat Ini</label>
+                                <div class="relative">
+                                    <input type="password" id="currentPassInput" placeholder="Kosongkan jika baru pertama kali mengatur" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 pr-10 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                    <button type="button" onclick="togglePassVisibility('currentPassInput')" class="absolute right-3 top-2.5 text-gray-500 hover:text-gray-300 text-xs">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
+                                <p id="defaultPassHint" class="text-[10px] text-gray-500 mt-1">Catatan: Jika belum pernah diubah, sandi default adalah <strong class="text-gray-300">admin123</strong>.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Kata Sandi Baru</label>
+                                <div class="relative">
+                                    <input type="password" id="newPassInput" required minlength="4" placeholder="Minimal 4 karakter" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 pr-10 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                    <button type="button" onclick="togglePassVisibility('newPassInput')" class="absolute right-3 top-2.5 text-gray-500 hover:text-gray-300 text-xs">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Konfirmasi Kata Sandi Baru</label>
+                                <div class="relative">
+                                    <input type="password" id="confirmNewPassInput" required minlength="4" placeholder="Ulangi kata sandi baru" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 pr-10 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                    <button type="button" onclick="togglePassVisibility('confirmNewPassInput')" class="absolute right-3 top-2.5 text-gray-500 hover:text-gray-300 text-xs">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-wider transition shadow">
+                                <i class="fa-solid fa-shield-halved mr-1.5"></i> Perbarui Kata Sandi
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- KARTU 3: KELOLA TIM PERSONAL TRAINER -->
+                    <div class="bg-[#111827] p-6 rounded-2xl border border-gray-800 shadow-xl space-y-4">
+                        <div class="border-b border-gray-800 pb-3 flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-sm text-white flex items-center">
+                                    <i class="fa-solid fa-users-gear text-emerald-400 mr-2 text-base"></i> Kelola Daftar Tim Personal Trainer
+                                </h3>
+                                <p class="text-xs text-gray-400 mt-0.5">Tambah atau hapus nama trainer. Riwayat data lama tetap aman.</p>
+                            </div>
+                            <span id="settingsTrainerBadge" class="bg-blue-950 text-blue-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-800">12 Anggota</span>
+                        </div>
+
+                        <form onsubmit="addNewTrainerFromSettings(event)" class="flex space-x-2">
+                            <input type="text" id="settingsNewTrainerName" required placeholder="Ketik nama lengkap trainer baru..." class="flex-1 bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none">
+                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow flex items-center shrink-0">
+                                <i class="fa-solid fa-plus mr-1.5"></i> Tambah
+                            </button>
+                        </form>
+
+                        <div class="rounded-xl border border-gray-800 bg-[#0b0f19] overflow-hidden">
+                            <ul id="settingsTrainerListContainer" class="divide-y divide-gray-800/60 max-h-[260px] overflow-y-auto">
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- KARTU 4: TARGET & PARAMETER OPERASIONAL -->
+                    <div class="bg-[#111827] p-6 rounded-2xl border border-gray-800 shadow-xl space-y-4">
+                        <div class="border-b border-gray-800 pb-3">
+                            <h3 class="font-bold text-sm text-white flex items-center">
+                                <i class="fa-solid fa-sliders text-purple-400 mr-2 text-base"></i> Target & Parameter Operasional
+                            </h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Atur target poin bulanan divisi, target SOB individual, dan standar sesi harian.</p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Target Bulanan Divisi (Poin)</label>
+                                    <input type="number" id="settingsDivTargetInput" min="1" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Target SOB Individual (Poin)</label>
+                                    <input type="number" id="settingsIndTargetInput" min="1" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0b0f19] p-3.5 rounded-xl border border-gray-800 flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs font-bold text-white">Auto-Sync Cloud Saat Buka Aplikasi</p>
+                                    <p class="text-[11px] text-gray-400">Otomatis menarik data terbaru dari Google Sheets saat login.</p>
+                                </div>
+                                <input type="checkbox" id="settingsAutoSyncToggle" onchange="saveAutoSyncPref()" class="w-4 h-4 text-blue-600 bg-gray-900 border-gray-700 rounded focus:ring-blue-500 cursor-pointer">
+                            </div>
+
+                            <div class="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-gray-800">
+                                <button type="button" onclick="resetTargetSettings()" class="text-xs font-bold text-gray-400 hover:text-red-400 transition">
+                                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset Target Default
+                                </button>
+                                <button type="button" onclick="saveSettingsPageTargets()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow">
+                                    <i class="fa-solid fa-check mr-1"></i> Simpan Parameter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 </div>
@@ -1009,19 +1151,7 @@
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Trainer Pengampu</label>
-                <select id="editClientTrainer" required class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
-                    <option value="Arini Permata Pahwandi">Arini Permata Pahwandi</option>
-                    <option value="Bima Aminulah">Bima Aminulah</option>
-                    <option value="Caraka Vira Satriya">Caraka Vira Satriya</option>
-                    <option value="Davara Cahya Alamanda">Davara Cahya Alamanda</option>
-                    <option value="Dedy Mawansyah">Dedy Mawansyah</option>
-                    <option value="Mega Putri Lusiana Sirait">Mega Putri Lusiana Sirait</option>
-                    <option value="Muhammad Alwansyah Arsathama">Muhammad Alwansyah Arsathama</option>
-                    <option value="Rindu Adji">Rindu Adji</option>
-                    <option value="Rosi Kurnia Ayu Indah Sari">Rosi Kurnia Ayu Indah Sari</option>
-                    <option value="Wahyu Setiawan">Wahyu Setiawan</option>
-                    <option value="Yomi David Armada Siahaan">Yomi David Armada Siahaan</option>
-                    <option value="Manager">Manager</option>
+                <select id="editClientTrainer" required class="trainer-dropdown w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
                 </select>
             </div>
             <div>
@@ -1085,7 +1215,150 @@
     let DIVISION_TARGET = parseFloat(localStorage.getItem('FTL_TARGET_DIVISION')) || DEFAULT_DIVISION_TARGET;
     let INDIVIDUAL_SOB_TARGET = parseFloat(localStorage.getItem('FTL_TARGET_INDIVIDUAL')) || DEFAULT_INDIVIDUAL_TARGET;
 
-    const trainerList = [
+    // --- 1. PROFIL & PENGATURAN MANAGER (AMAN & TIDAK MENGGANGGU DATA LAMA) ---
+    const DEFAULT_PROFILE = {
+        fullName: "M. Fatihin",
+        alias: "Fathir",
+        email: "mfatihin96@gmail.com",
+        role: "Fitness Manager",
+        branch: "FTL Gym Depok Lama",
+        whatsapp: "6285240201806",
+        autoSync: true
+    };
+
+    let managerProfile = DEFAULT_PROFILE;
+    try {
+        const savedProf = JSON.parse(localStorage.getItem('FTL_MANAGER_PROFILE'));
+        if (savedProf && typeof savedProf === 'object') {
+            managerProfile = { ...DEFAULT_PROFILE, ...savedProf };
+        }
+    } catch(e) {}
+
+    function applyManagerProfileUI() {
+        const displayName = managerProfile.alias
+            ? `${managerProfile.fullName} (${managerProfile.alias})`
+            : managerProfile.fullName;
+        const initials = managerProfile.fullName
+            .split(' ')
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(w => w[0].toUpperCase())
+            .join('') || 'MF';
+
+        const setElText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+        const setElVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+
+        setElText('sidebarAvatarInitial', initials);
+        setElText('sidebarProfileName', displayName);
+        setElText('sidebarProfileRole', managerProfile.role);
+        setElText('sidebarBranchSubtitle', managerProfile.branch);
+        setElText('headerManagerBadge', managerProfile.alias || managerProfile.fullName);
+
+        setElText('profileBigAvatar', initials);
+        setElText('profileDisplayHeaderName', displayName);
+        const emailEl = document.getElementById('profileDisplayHeaderEmail');
+        if (emailEl) emailEl.innerHTML = `<i class="fa-solid fa-envelope text-blue-400 mr-1.5"></i>${managerProfile.email}`;
+        const branchEl = document.getElementById('profileDisplayHeaderBranch');
+        if (branchEl) branchEl.innerHTML = `<i class="fa-solid fa-location-dot text-red-400 mr-1.5"></i>${managerProfile.branch}`;
+
+        setElVal('profFullName', managerProfile.fullName);
+        setElVal('profAlias', managerProfile.alias);
+        setElVal('profEmail', managerProfile.email);
+        setElVal('profRole', managerProfile.role);
+        setElVal('profBranch', managerProfile.branch);
+        setElVal('profWhatsApp', managerProfile.whatsapp);
+
+        const autoSyncCb = document.getElementById('settingsAutoSyncToggle');
+        if (autoSyncCb) autoSyncCb.checked = managerProfile.autoSync !== false;
+
+        const hasCustomPass = !!localStorage.getItem('FTL_AUTH_PASSWORD');
+        const passBadge = document.getElementById('passwordStatusBadge');
+        if (passBadge) {
+            passBadge.innerText = hasCustomPass ? "Sandi Kustom Aktif" : "Sandi Default (admin123)";
+            passBadge.className = hasCustomPass
+                ? "bg-emerald-950/60 text-emerald-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-800"
+                : "bg-amber-950/60 text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-800";
+        }
+    }
+
+    function saveManagerProfile(e) {
+        e.preventDefault();
+        managerProfile = {
+            ...managerProfile,
+            fullName: document.getElementById('profFullName').value.trim(),
+            alias: document.getElementById('profAlias').value.trim(),
+            email: document.getElementById('profEmail').value.trim(),
+            role: document.getElementById('profRole').value.trim(),
+            branch: document.getElementById('profBranch').value.trim(),
+            whatsapp: document.getElementById('profWhatsApp').value.trim()
+        };
+        localStorage.setItem('FTL_MANAGER_PROFILE', JSON.stringify(managerProfile));
+        applyManagerProfileUI();
+        alert("Profil Manager berhasil diperbarui!");
+    }
+
+    function saveAutoSyncPref() {
+        const autoSyncCb = document.getElementById('settingsAutoSyncToggle');
+        managerProfile.autoSync = autoSyncCb ? autoSyncCb.checked : true;
+        localStorage.setItem('FTL_MANAGER_PROFILE', JSON.stringify(managerProfile));
+    }
+
+    function togglePassVisibility(inputId) {
+        const inp = document.getElementById(inputId);
+        if (!inp) return;
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    function handleUpdatePassword(e) {
+        e.preventDefault();
+        const currentInput = document.getElementById('currentPassInput').value;
+        const newPass = document.getElementById('newPassInput').value;
+        const confirmPass = document.getElementById('confirmNewPassInput').value;
+
+        const savedPass = localStorage.getItem('FTL_AUTH_PASSWORD') || "admin123";
+
+        // Jika sudah pernah set sandi kustom, wajib cocokkan sandi saat ini
+        if (localStorage.getItem('FTL_AUTH_PASSWORD') && currentInput !== savedPass) {
+            alert("Kata sandi saat ini tidak sesuai!");
+            return;
+        }
+        // Jika masih default dan user mengisi currentInput, pastikan cocok dengan admin123
+        if (!localStorage.getItem('FTL_AUTH_PASSWORD') && currentInput && currentInput !== "admin123") {
+            alert("Kata sandi default saat ini adalah 'admin123' (atau kosongkan kolom kata sandi saat ini).");
+            return;
+        }
+
+        if (newPass.length < 4) {
+            alert("Kata sandi baru minimal harus 4 karakter!");
+            return;
+        }
+
+        if (newPass !== confirmPass) {
+            alert("Konfirmasi kata sandi baru tidak cocok!");
+            return;
+        }
+
+        localStorage.setItem('FTL_AUTH_PASSWORD', newPass);
+        e.target.reset();
+        applyManagerProfileUI();
+        alert("Kata sandi berhasil diperbarui! Semua data Anda tetap aman.");
+    }
+
+    function resetPasswordFromLogin(e) {
+        if (e) e.preventDefault();
+        const currentSaved = localStorage.getItem('FTL_AUTH_PASSWORD');
+        if (!currentSaved) {
+            alert("Anda masih menggunakan kata sandi default.\nSilakan login dengan kata sandi: admin123");
+            return;
+        }
+        if (confirm("Reset kata sandi login kembali ke default (admin123)?\n(Data aktivitas & client Anda TIDAK akan terhapus)")) {
+            localStorage.removeItem('FTL_AUTH_PASSWORD');
+            alert("Kata sandi berhasil direset ke: admin123\nSilakan masuk menggunakan kata sandi tersebut.");
+        }
+    }
+
+    // --- 2. DAFTAR TRAINER DINAMIS ---
+    const DEFAULT_TRAINER_LIST = [
         "Arini Permata Pahwandi",
         "Bima Aminulah",
         "Caraka Vira Satriya",
@@ -1100,9 +1373,150 @@
         "Manager"
     ];
 
+    let trainerList = [...DEFAULT_TRAINER_LIST];
+    try {
+        const savedTrainers = JSON.parse(localStorage.getItem('FTL_TRAINER_LIST'));
+        if (Array.isArray(savedTrainers) && savedTrainers.length > 0) {
+            trainerList = savedTrainers;
+        }
+    } catch(e) {}
+
+    function refreshAllTrainerUI() {
+        // Populate dropdown input
+        document.querySelectorAll('.trainer-dropdown').forEach(sel => {
+            const prev = sel.value;
+            sel.innerHTML = `<option value="">-- Pilih Trainer --</option>` +
+                trainerList.map(t => `<option value="${t}">${t}</option>`).join('');
+            if (prev && trainerList.includes(prev)) sel.value = prev;
+        });
+
+        // Populate dropdown filter
+        document.querySelectorAll('.trainer-filter-dropdown').forEach(sel => {
+            const prev = sel.value;
+            sel.innerHTML = `<option value="all">Semua Trainer</option>` +
+                trainerList.map(t => `<option value="${t}">${t}</option>`).join('');
+            if (prev && (prev === 'all' || trainerList.includes(prev))) sel.value = prev;
+        });
+
+        // Render list di tab Pengaturan
+        const listEl = document.getElementById('settingsTrainerListContainer');
+        const badgeEl = document.getElementById('settingsTrainerBadge');
+        if (badgeEl) badgeEl.innerText = `${trainerList.length} Anggota`;
+        if (listEl) {
+            listEl.innerHTML = trainerList.map((t, idx) => `
+                <li class="flex items-center justify-between px-3.5 py-2.5 text-xs hover:bg-gray-800/40 transition">
+                    <span class="font-semibold ${t === 'Manager' ? 'text-amber-400 font-bold' : 'text-gray-200'}">
+                        <i class="fa-solid ${t === 'Manager' ? 'fa-user-shield text-amber-400' : 'fa-user text-gray-500'} mr-2"></i>${t}
+                    </span>
+                    ${t !== 'Manager' ? `
+                        <button type="button" onclick="removeTrainerFromSettings(${idx})" class="text-gray-500 hover:text-red-400 p-1 transition" title="Hapus dari daftar">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    ` : '<span class="text-[10px] text-gray-500">Default</span>'}
+                </li>
+            `).join('');
+        }
+    }
+
+    function addNewTrainerFromSettings(e) {
+        e.preventDefault();
+        const inp = document.getElementById('settingsNewTrainerName');
+        const name = inp.value.trim();
+        if (!name) return;
+        if (trainerList.some(t => t.toLowerCase() === name.toLowerCase())) {
+            alert("Nama trainer sudah terdaftar!");
+            return;
+        }
+        trainerList.push(name);
+        localStorage.setItem('FTL_TRAINER_LIST', JSON.stringify(trainerList));
+        inp.value = '';
+        refreshAllTrainerUI();
+        renderDashboard();
+    }
+
+    function removeTrainerFromSettings(index) {
+        const name = trainerList[index];
+        if (!name) return;
+        if (confirm(`Hapus "${name}" dari daftar trainer aktif?\n(Catatan riwayat lama di database tetap tersimpan)`)) {
+            trainerList.splice(index, 1);
+            localStorage.setItem('FTL_TRAINER_LIST', JSON.stringify(trainerList));
+            refreshAllTrainerUI();
+            renderDashboard();
+        }
+    }
+
+    // --- 3. BACKUP & RESTORE FULL JSON ---
+    function exportFullBackupJSON() {
+        const backupPayload = {
+            version: "FTL_BLUE_V1",
+            exportedAt: new Date().toISOString(),
+            trainerData: appData,
+            clientData: clientData,
+            trainerList: trainerList,
+            managerProfile: managerProfile,
+            targets: {
+                division: DIVISION_TARGET,
+                individual: INDIVIDUAL_SOB_TARGET
+            }
+        };
+        const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Backup_Lengkap_FTL_Blue_${localDateStr()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    function importFullBackupJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                if (Array.isArray(parsed.trainerData)) {
+                    appData = parsed.trainerData;
+                    localStorage.setItem('trainerData', JSON.stringify(appData));
+                }
+                if (Array.isArray(parsed.clientData)) {
+                    clientData = parsed.clientData;
+                    localStorage.setItem('clientData', JSON.stringify(clientData));
+                }
+                if (Array.isArray(parsed.trainerList) && parsed.trainerList.length > 0) {
+                    trainerList = parsed.trainerList;
+                    localStorage.setItem('FTL_TRAINER_LIST', JSON.stringify(trainerList));
+                }
+                if (parsed.managerProfile) {
+                    managerProfile = { ...DEFAULT_PROFILE, ...parsed.managerProfile };
+                    localStorage.setItem('FTL_MANAGER_PROFILE', JSON.stringify(managerProfile));
+                }
+                if (parsed.targets) {
+                    DIVISION_TARGET = parseFloat(parsed.targets.division) || DEFAULT_DIVISION_TARGET;
+                    INDIVIDUAL_SOB_TARGET = parseFloat(parsed.targets.individual) || DEFAULT_INDIVIDUAL_TARGET;
+                    localStorage.setItem('FTL_TARGET_DIVISION', DIVISION_TARGET);
+                    localStorage.setItem('FTL_TARGET_INDIVIDUAL', INDIVIDUAL_SOB_TARGET);
+                }
+                applyManagerProfileUI();
+                refreshAllTrainerUI();
+                renderRecentTable();
+                renderClientTable();
+                renderDashboard();
+                renderAnalytics();
+                alert("Backup berhasil dipulihkan seluruhnya!");
+            } catch (err) {
+                alert("File backup tidak valid atau rusak.");
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
     // VARIABEL UNTUK PAGINATION PUSAT DATA TERINPUT
     let currentRecentPage = 1;
-    let recentRowsPerPage = 25; // Default limit per halaman
+    let recentRowsPerPage = 25;
 
     function calculateCommission(points, conduct) {
         let feePerSession = 0;
@@ -1289,6 +1703,25 @@
         alert('Target berhasil diperbarui!');
     }
 
+    function saveSettingsPageTargets() {
+        const newDiv = parseFloat(document.getElementById('settingsDivTargetInput').value);
+        const newInd = parseFloat(document.getElementById('settingsIndTargetInput').value);
+
+        if (!newDiv || newDiv <= 0 || !newInd || newInd <= 0) {
+            alert('Target harus berupa angka lebih dari 0!');
+            return;
+        }
+
+        DIVISION_TARGET = newDiv;
+        INDIVIDUAL_SOB_TARGET = newInd;
+        localStorage.setItem('FTL_TARGET_DIVISION', newDiv);
+        localStorage.setItem('FTL_TARGET_INDIVIDUAL', newInd);
+
+        renderDashboard();
+        renderAnalytics();
+        alert('Parameter target berhasil disimpan!');
+    }
+
     function resetTargetSettings() {
         if (!confirm('Kembalikan target ke nilai default (' + DEFAULT_DIVISION_TARGET.toLocaleString('id-ID') + ' & ' + DEFAULT_INDIVIDUAL_TARGET.toLocaleString('id-ID') + ')?')) return;
         DIVISION_TARGET = DEFAULT_DIVISION_TARGET;
@@ -1313,6 +1746,11 @@
             ? `Periode berjalan: ${monthName} (pencapaian dihitung dari data bulan ini)`
             : `Periode terpilih: ${monthName} (pencapaian dihitung dari data bulan tersebut)`;
         document.getElementById('chartTargetTitle').innerText = `Pencapaian Poin vs Target SOB (${fmt(INDIVIDUAL_SOB_TARGET)} Poin)`;
+
+        const setDivInp = document.getElementById('settingsDivTargetInput');
+        const setIndInp = document.getElementById('settingsIndTargetInput');
+        if (setDivInp) setDivInp.value = DIVISION_TARGET;
+        if (setIndInp) setIndInp.value = INDIVIDUAL_SOB_TARGET;
 
         const podiumLabel = document.getElementById('podiumMonthLabel');
         if (podiumLabel) podiumLabel.innerText = isCurrent ? 'BULAN INI' : monthName.toUpperCase();
@@ -1759,17 +2197,36 @@
     }, 1000);
 
     function switchTab(tab) {
-        ['input', 'client', 'dashboard', 'analytics'].forEach(t => {
-            document.getElementById(`tab-${t}`).classList.add('hidden');
-            document.getElementById(`btn-tab-${t}`).className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800/60 transition";
+        ['input', 'client', 'dashboard', 'analytics', 'settings'].forEach(t => {
+            const sec = document.getElementById(`tab-${t}`);
+            const btn = document.getElementById(`btn-tab-${t}`);
+            if (sec) sec.classList.add('hidden');
+            if (btn) btn.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800/60 transition";
         });
 
-        document.getElementById(`tab-${tab}`).classList.remove('hidden');
-        document.getElementById(`btn-tab-${tab}`).className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition bg-blue-600 text-white shadow-lg shadow-blue-600/20";
+        const activeSec = document.getElementById(`tab-${tab}`);
+        const activeBtn = document.getElementById(`btn-tab-${tab}`);
+        if (activeSec) activeSec.classList.remove('hidden');
+        if (activeBtn) activeBtn.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition bg-blue-600 text-white shadow-lg shadow-blue-600/20";
+
+        const headerTitles = {
+            dashboard: 'Dashboard Gerencial',
+            input: 'Input Aktivitas Harian',
+            client: 'Monitoring Sesi Client',
+            analytics: 'Analisis & Coaching Trainer',
+            settings: 'Pengaturan & Profil Manager'
+        };
+        const titleEl = document.getElementById('topHeaderTitle');
+        if (titleEl && headerTitles[tab]) titleEl.innerText = headerTitles[tab];
 
         if (tab === 'dashboard') renderDashboard();
         if (tab === 'analytics') renderAnalytics();
         if (tab === 'client') renderClientTable();
+        if (tab === 'settings') {
+            applyManagerProfileUI();
+            refreshAllTrainerUI();
+            updateTargetLabels();
+        }
     }
 
     document.getElementById('activityForm').addEventListener('submit', async function(e) {
@@ -1820,7 +2277,6 @@
         renderDashboard();
     });
 
-    // FUNGSI LOGIKA PAGINATION PUSAT DATA TERINPUT
     function changeRecentLimit(val) {
         recentRowsPerPage = val === 'all' ? 'all' : parseInt(val);
         currentRecentPage = 1;
@@ -1868,7 +2324,6 @@
             return;
         }
 
-        // TENTUKAN DATA SLICE SESUAI LIMIT DAN PAGINATION
         let paginatedData = [...filteredData].reverse();
         let startIndex = 0;
         let endIndex = totalRecords;
@@ -2412,7 +2867,7 @@
 
             const cells = stats.map(s => {
                 const t = s.perTrainer[tIdx];
-                if (!t.hasData) return `<td class="p-3 text-center text-gray-600">-</td>`;
+                if (!t || !t.hasData) return `<td class="p-3 text-center text-gray-600">-</td>`;
                 total += t.points;
                 monthsWithData++;
                 const ratio = t.points / INDIVIDUAL_SOB_TARGET;
@@ -2428,7 +2883,7 @@
             if (stats.length >= 2) {
                 const last = stats[stats.length - 1].perTrainer[tIdx];
                 const before = stats[stats.length - 2].perTrainer[tIdx];
-                if (last.hasData && before.hasData) trend = deltaBadge(last.points, before.points);
+                if (last && before && last.hasData && before.hasData) trend = deltaBadge(last.points, before.points);
             }
 
             body.innerHTML += `
@@ -2623,7 +3078,7 @@
         document.getElementById('coachingBadgeCount').innerText = `${underPerformanceCount} Trainer Under Performance (W${selectedWeek})`;
     }
 
-    // --- PERBAIKAN LOGIKA SESI LOGIN (AUTH PERSISTENCE) ---
+    // --- SESI LOGIN (AUTH PERSISTENCE & VALIDASI KATA SANDI KUSTOM) ---
     function checkAuthStatus() {
         const overlay = document.getElementById('authModalOverlay');
         const isLoggedIn = localStorage.getItem('FTL_LOGGED_IN') === 'true';
@@ -2676,10 +3131,16 @@
                 overlay.style.display = 'none';
             }, 500);
         }
+        if (managerProfile.autoSync !== false) {
+            syncCloudToManager();
+        }
     }
 
     function handleAuthSignIn(e) {
         e.preventDefault();
+        const passwordVal = document.getElementById('signInPassword').value;
+        const customPass = localStorage.getItem('FTL_AUTH_PASSWORD');
+
         const btn = document.getElementById('btnSignIn');
         if (btn) {
             btn.disabled = true;
@@ -2691,8 +3152,13 @@
                 btn.disabled = false;
                 btn.innerHTML = `<span>Masuk Dashboard</span><i class="fa-solid fa-arrow-right text-xs"></i>`;
             }
+            // Jika user sudah mengatur sandi kustom, wajib cocok. Jika belum, sandi default 'admin123' (atau bebas saat setup awal)
+            if (customPass && passwordVal !== customPass) {
+                alert("Kata sandi salah! Periksa kembali kata sandi Anda atau klik 'Lupa Password?' untuk reset ke admin123.");
+                return;
+            }
             unlockDashboard();
-        }, 1000);
+        }, 700);
     }
 
     function handleAuthSignUp(e) {
@@ -2702,7 +3168,7 @@
         
         alert(`Pengajuan akun untuk ${name} (${email}) berhasil dikirim!\n\nSistem akan mengarahkan Anda ke WhatsApp Manager untuk verifikasi.`);
         
-        const targetWA = "6285240201806"; 
+        const targetWA = managerProfile.whatsapp || "6285240201806"; 
         const message = `*PENGAJUAN AKUN BARU FTL BLUE*\n\nHalo Manager, ada pengajuan akun baru:\n• *Nama:* ${name}\n• *Email:* ${email}\n\nMohon untuk memverifikasi dan menyetujui akun ini ke dalam sistem.`;
         
         window.open(`https://wa.me/${targetWA}?text=${encodeURIComponent(message)}`, '_blank');
@@ -2792,8 +3258,12 @@
     }
 
     // Inisialisasi awal saat aplikasi dibuka
+    applyManagerProfileUI();
+    refreshAllTrainerUI();
     checkAuthStatus();
-    syncCloudToManager();
+    if (managerProfile.autoSync !== false) {
+        syncCloudToManager();
+    }
     renderRecentTable();
     renderDashboard();
     renderClientTable();
