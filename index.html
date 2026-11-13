@@ -187,6 +187,22 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- KIRIM REKAP KE WHATSAPP PRIBADI (OPSI 2) -->
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500 px-3 block mb-2">REKAP WHATSAPP SAYA</span>
+                    <div class="space-y-2 px-1">
+                        <button onclick="sendPersonalDailyRecapWA()" class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-600/40 flex items-center justify-between transition shadow-sm">
+                            <span class="flex items-center"><i class="fa-brands fa-whatsapp text-sm mr-2 text-emerald-400"></i><span>Rekap Harian</span></span>
+                            <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-extrabold">1-Klik</span>
+                        </button>
+
+                        <button onclick="sendPersonalWeeklyRecapWA()" class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-sky-600/20 hover:bg-sky-600/35 text-sky-300 border border-sky-600/40 flex items-center justify-between transition shadow-sm">
+                            <span class="flex items-center"><i class="fa-brands fa-whatsapp text-sm mr-2 text-sky-400"></i><span>Rekap Mingguan</span></span>
+                            <span class="text-[9px] bg-sky-500/20 text-sky-300 px-1.5 py-0.5 rounded font-extrabold">1-Klik</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1215,7 +1231,7 @@
     let DIVISION_TARGET = parseFloat(localStorage.getItem('FTL_TARGET_DIVISION')) || DEFAULT_DIVISION_TARGET;
     let INDIVIDUAL_SOB_TARGET = parseFloat(localStorage.getItem('FTL_TARGET_INDIVIDUAL')) || DEFAULT_INDIVIDUAL_TARGET;
 
-    // --- 1. PROFIL & PENGATURAN MANAGER (AMAN & TIDAK MENGGANGGU DATA LAMA) ---
+    // --- 1. PROFIL & PENGATURAN MANAGER ---
     const DEFAULT_PROFILE = {
         fullName: "M. Fatihin",
         alias: "Fathir",
@@ -1317,12 +1333,10 @@
 
         const savedPass = localStorage.getItem('FTL_AUTH_PASSWORD') || "admin123";
 
-        // Jika sudah pernah set sandi kustom, wajib cocokkan sandi saat ini
         if (localStorage.getItem('FTL_AUTH_PASSWORD') && currentInput !== savedPass) {
             alert("Kata sandi saat ini tidak sesuai!");
             return;
         }
-        // Jika masih default dan user mengisi currentInput, pastikan cocok dengan admin123
         if (!localStorage.getItem('FTL_AUTH_PASSWORD') && currentInput && currentInput !== "admin123") {
             alert("Kata sandi default saat ini adalah 'admin123' (atau kosongkan kolom kata sandi saat ini).");
             return;
@@ -1382,7 +1396,6 @@
     } catch(e) {}
 
     function refreshAllTrainerUI() {
-        // Populate dropdown input
         document.querySelectorAll('.trainer-dropdown').forEach(sel => {
             const prev = sel.value;
             sel.innerHTML = `<option value="">-- Pilih Trainer --</option>` +
@@ -1390,7 +1403,6 @@
             if (prev && trainerList.includes(prev)) sel.value = prev;
         });
 
-        // Populate dropdown filter
         document.querySelectorAll('.trainer-filter-dropdown').forEach(sel => {
             const prev = sel.value;
             sel.innerHTML = `<option value="all">Semua Trainer</option>` +
@@ -1398,7 +1410,6 @@
             if (prev && (prev === 'all' || trainerList.includes(prev))) sel.value = prev;
         });
 
-        // Render list di tab Pengaturan
         const listEl = document.getElementById('settingsTrainerListContainer');
         const badgeEl = document.getElementById('settingsTrainerBadge');
         if (badgeEl) badgeEl.innerText = `${trainerList.length} Anggota`;
@@ -1512,6 +1523,156 @@
         };
         reader.readAsText(file);
         event.target.value = '';
+    }
+
+    // --- FITUR OPSI 2: KIRIM REKAP HARIAN & MINGGUAN KE WHATSAPP PRIBADI (1 KLIK) ---
+    function getFormattedManagerWA() {
+        let raw = String(managerProfile.whatsapp || "").replace(/\D/g, '');
+        if (!raw) return "";
+        if (raw.startsWith('0')) raw = '62' + raw.slice(1);
+        return raw;
+    }
+
+    function sendPersonalDailyRecapWA() {
+        const waNumber = getFormattedManagerWA();
+        if (!waNumber) {
+            alert("Nomor WhatsApp Manager belum diisi! Silakan isi di menu Pengaturan & Profil terlebih dahulu.");
+            switchTab('settings');
+            return;
+        }
+
+        const now = new Date();
+        const todayStr = localDateStr(now);
+        const dateFormatted = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+        const todayLogs = appData.filter(d => String(d.date || '').split('T')[0] === todayStr);
+        const todayPoints = todayLogs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+        const todayBundling = todayLogs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+        const todayConduct = todayLogs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+        const todayAvgRA = todayLogs.length
+            ? (todayLogs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0) / todayLogs.length).toFixed(1)
+            : "0";
+
+        const reportedTrainers = [];
+        const notReportedTrainers = [];
+
+        trainerList.forEach(t => {
+            const log = todayLogs.find(d => d.trainer === t);
+            if (log) {
+                const pts = parseFloat(log.points) || 0;
+                const bdl = parseInt(log.bundling) || 0;
+                const cnd = parseInt(log.conduct) || 0;
+                const ra = parseInt(log.ra) || 0;
+                reportedTrainers.push(`✅ ${t}: *${pts.toLocaleString('id-ID')} Poin* | ${bdl} Bdl | ${cnd} Sesi | ${ra} RA`);
+            } else {
+                notReportedTrainers.push(`❌ ${t}`);
+            }
+        });
+
+        const curMonthLogs = appData.filter(d => String(d.date || '').startsWith(currentMonthKey()));
+        const mtdPoints = curMonthLogs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+        const mtdPct = ((mtdPoints / DIVISION_TARGET) * 100).toFixed(1);
+
+        const message =
+            `*REKAP HARIAN OPERASIONAL - ${managerProfile.branch.toUpperCase()}*\n` +
+            `📅 *Tanggal:* ${dateFormatted}\n` +
+            `👤 *Manager:* ${managerProfile.fullName} (${managerProfile.alias})\n` +
+            `------------------------------------------\n` +
+            `📊 *RINGKASAN HARI INI:*\n` +
+            `• Total Poin Harian: *${todayPoints.toLocaleString('id-ID')} Poin*\n` +
+            `• Unit Bundling: *${todayBundling} Unit*\n` +
+            `• Total Conduct: *${todayConduct} Sesi*\n` +
+            `• Rata-Rata RA: *${todayAvgRA} / 20 RA*\n` +
+            `• Kepatuhan Lapor: *${reportedTrainers.length}/${trainerList.length} Trainer*\n\n` +
+            `📈 *AKUMULASI BULAN BERJALAN (MTD):*\n` +
+            `• Capaian Divisi: *${mtdPoints.toLocaleString('id-ID')} / ${DIVISION_TARGET.toLocaleString('id-ID')} Poin (${mtdPct}%)*\n\n` +
+            `✅ *SUDAH LAPOR HARI INI (${reportedTrainers.length}):*\n` +
+            (reportedTrainers.length ? reportedTrainers.join('\n') : '_Belum ada laporan masuk hari ini_') + `\n\n` +
+            `🚨 *BELUM LAPOR HARI INI (${notReportedTrainers.length}):*\n` +
+            (notReportedTrainers.length ? notReportedTrainers.join('\n') : '_Semua trainer sudah melapor! 🎉_') + `\n\n` +
+            `_Dikirim otomatis dari FTL Blue Manager Portal_`;
+
+        window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`, '_blank');
+    }
+
+    function sendPersonalWeeklyRecapWA() {
+        const waNumber = getFormattedManagerWA();
+        if (!waNumber) {
+            alert("Nomor WhatsApp Manager belum diisi! Silakan isi di menu Pengaturan & Profil terlebih dahulu.");
+            switchTab('settings');
+            return;
+        }
+
+        const now = new Date();
+        const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const start7 = new Date(today0);
+        start7.setDate(today0.getDate() - 6);
+
+        const rangeLabel = `${start7.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })} - ${today0.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+
+        const weeklyLogs = appData.filter(item => {
+            if (!item.date) return false;
+            const p = String(item.date).split('T')[0].split('-').map(Number);
+            const itemDate = new Date(p[0], (p[1] || 1) - 1, p[2] || 1);
+            const diffDays = Math.round((today0 - itemDate) / (1000 * 60 * 60 * 24));
+            return diffDays >= 0 && diffDays < 7;
+        });
+
+        const wPoints = weeklyLogs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+        const wBundling = weeklyLogs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+        const wConduct = weeklyLogs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+        const wAvgRA = weeklyLogs.length
+            ? (weeklyLogs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0) / weeklyLogs.length).toFixed(1)
+            : "0";
+
+        // Hitung ranking 7 hari terakhir & status run-rate bulan ini
+        const currentWeekNum = Math.min(Math.ceil(now.getDate() / 7), 5);
+        const targetRunRate = Math.min(currentWeekNum * (INDIVIDUAL_SOB_TARGET / 5), INDIVIDUAL_SOB_TARGET);
+        const minSafeRunRate = targetRunRate * 0.8;
+        const curMonthLogs = appData.filter(d => String(d.date || '').startsWith(currentMonthKey()));
+
+        const weeklyRanking = trainerList.map(t => {
+            const wTLogs = weeklyLogs.filter(d => d.trainer === t);
+            const mTLogs = curMonthLogs.filter(d => d.trainer === t);
+            const pts7d = wTLogs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+            const bdl7d = wTLogs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+            const cnd7d = wTLogs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+            const mtdPts = mTLogs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+            return { name: t, pts7d, bdl7d, cnd7d, mtdPts };
+        }).sort((a, b) => b.pts7d - a.pts7d);
+
+        const top3Weekly = weeklyRanking.slice(0, 3).map((t, idx) =>
+            `${idx + 1}. *${t.name}* — ${t.pts7d.toLocaleString('id-ID')} Poin (${t.bdl7d} Bdl | ${t.cnd7d} Sesi)`
+        );
+
+        const underPerfList = weeklyRanking
+            .filter(t => t.name !== 'Manager' && t.mtdPts < minSafeRunRate)
+            .sort((a, b) => a.mtdPts - b.mtdPts)
+            .map(t => `⚠️ ${t.name}: MTD *${t.mtdPts.toLocaleString('id-ID')}* / ${targetRunRate.toLocaleString('id-ID')} Poin`);
+
+        const mtdTotal = curMonthLogs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+        const mtdPct = ((mtdTotal / DIVISION_TARGET) * 100).toFixed(1);
+
+        const message =
+            `*REKAP MINGGUAN (7 HARI TERAKHIR) - ${managerProfile.branch.toUpperCase()}*\n` +
+            `📆 *Periode:* ${rangeLabel} (Minggu ke-${currentWeekNum})\n` +
+            `👤 *Manager:* ${managerProfile.fullName} (${managerProfile.alias})\n` +
+            `------------------------------------------\n` +
+            `📊 *PERFORMA DIVISI 7 HARI TERAKHIR:*\n` +
+            `• Poin 7 Hari: *${wPoints.toLocaleString('id-ID')} Poin*\n` +
+            `• Unit Bundling: *${wBundling} Unit*\n` +
+            `• Total Conduct: *${wConduct} Sesi*\n` +
+            `• Rata-Rata RA: *${wAvgRA} / 20 RA*\n\n` +
+            `🏆 *TOP 3 TRAINER MINGGU INI:*\n` +
+            (top3Weekly.length ? top3Weekly.join('\n') : '_Belum ada data minggu ini_') + `\n\n` +
+            `📈 *STATUS BULAN BERJALAN (MTD):*\n` +
+            `• Total Divisi: *${mtdTotal.toLocaleString('id-ID')} / ${DIVISION_TARGET.toLocaleString('id-ID')} Poin (${mtdPct}%)*\n` +
+            `• Target Run-Rate W${currentWeekNum}: *${targetRunRate.toLocaleString('id-ID')} Poin / Trainer*\n\n` +
+            `🚨 *PERLU COACHING / UNDER PACE W${currentWeekNum} (${underPerfList.length}):*\n` +
+            (underPerfList.length ? underPerfList.join('\n') : '_Semua trainer berada pada jalur Good Pace! 🔥_') + `\n\n` +
+            `_Dikirim otomatis dari FTL Blue Manager Portal_`;
+
+        window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`, '_blank');
     }
 
     // VARIABEL UNTUK PAGINATION PUSAT DATA TERINPUT
@@ -2741,7 +2902,7 @@
                 ]
             },
             options: { 
-                responsive: true,
+                responsive: true, 
                 maintainAspectRatio: false
             }
         });
@@ -2948,6 +3109,19 @@
         URL.revokeObjectURL(url);
     }
 
+    function generateExecutivePDF(event) {
+        const element = document.getElementById('monthlyEvaluationSection');
+        if (!element) return;
+        const opt = {
+            margin: 8,
+            filename: `Laporan_Eksekutif_FTL_Blue_${selectedMonth}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, backgroundColor: '#111827' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+
     function renderAnalytics() {
         const tbody = document.getElementById('analyticsTableBody');
         const coachingList = document.getElementById('coachingList');
@@ -3079,6 +3253,62 @@
     }
 
     // --- SESI LOGIN (AUTH PERSISTENCE & VALIDASI KATA SANDI KUSTOM) ---
+    function toggleAuthForm(mode) {
+        const signInBox = document.getElementById('signInContainer');
+        const signUpBox = document.getElementById('signUpContainer');
+        if (mode === 'signUp') {
+            signInBox.classList.add('hidden');
+            signUpBox.classList.remove('hidden');
+        } else {
+            signUpBox.classList.add('hidden');
+            signInBox.classList.remove('hidden');
+        }
+    }
+
+    function handleAuthSignIn(e) {
+        e.preventDefault();
+        const emailVal = document.getElementById('signInEmail').value.trim();
+        const passVal = document.getElementById('signInPassword').value;
+        const savedPass = localStorage.getItem('FTL_AUTH_PASSWORD') || "admin123";
+
+        if (passVal !== savedPass) {
+            alert("Kata sandi salah! Silakan periksa kembali.");
+            return;
+        }
+
+        localStorage.setItem('FTL_LOGGED_IN', 'true');
+        if (emailVal) {
+            managerProfile.email = emailVal;
+            localStorage.setItem('FTL_MANAGER_PROFILE', JSON.stringify(managerProfile));
+        }
+        checkAuthStatus();
+        applyManagerProfileUI();
+        if (managerProfile.autoSync !== false) syncCloudToManager();
+    }
+
+    function handleAuthSignUp(e) {
+        e.preventDefault();
+        const nameVal = document.getElementById('signUpName').value.trim();
+        const emailVal = document.getElementById('signUpEmail').value.trim();
+        const passVal = document.getElementById('signUpPassword').value;
+
+        const msg = `*PENGAJUAN AKUN PORTAL FTL BLUE*\n` +
+                    `Nama: ${nameVal}\n` +
+                    `Email: ${emailVal}\n` +
+                    `Mohon persetujuan akses Dashboard Manager.`;
+        const waNumber = getFormattedManagerWA() || "6285240201806";
+        window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+        alert("Permintaan verifikasi diarahkan ke WhatsApp Manager.");
+        toggleAuthForm('signIn');
+    }
+
+    function showLogoutConfirmation() {
+        if (confirm("Keluar dari Portal Manager FTL Blue?")) {
+            localStorage.removeItem('FTL_LOGGED_IN');
+            checkAuthStatus();
+        }
+    }
+
     function checkAuthStatus() {
         const overlay = document.getElementById('authModalOverlay');
         const isLoggedIn = localStorage.getItem('FTL_LOGGED_IN') === 'true';
@@ -3108,167 +3338,23 @@
         if (clockElem) clockElem.innerText = timeString;
     }
 
-    function toggleAuthForm(mode) {
-        const signInBox = document.getElementById('signInContainer');
-        const signUpBox = document.getElementById('signUpContainer');
+    // --- INISIALISASI HALAMAN ---
+    window.addEventListener('DOMContentLoaded', () => {
+        checkAuthStatus();
+        applyManagerProfileUI();
+        refreshAllTrainerUI();
+        populateMonthSelects();
+        renderRecentTable();
+        renderClientTable();
+        renderDashboard();
+        renderAnalytics();
+        updateRealtimeClock();
+        setInterval(updateRealtimeClock, 1000);
 
-        if (mode === 'signUp') {
-            signInBox.classList.add('hidden');
-            signUpBox.classList.remove('hidden');
-        } else {
-            signUpBox.classList.add('hidden');
-            signInBox.classList.remove('hidden');
-        }
-    }
-
-    function unlockDashboard() {
-        localStorage.setItem('FTL_LOGGED_IN', 'true');
-        const overlay = document.getElementById('authModalOverlay');
-        if (overlay) {
-            overlay.style.opacity = '0';
-            overlay.style.transition = 'opacity 0.5s ease';
-            setTimeout(() => {
-                overlay.style.display = 'none';
-            }, 500);
-        }
-        if (managerProfile.autoSync !== false) {
+        if (localStorage.getItem('FTL_LOGGED_IN') === 'true' && managerProfile.autoSync !== false) {
             syncCloudToManager();
         }
-    }
-
-    function handleAuthSignIn(e) {
-        e.preventDefault();
-        const passwordVal = document.getElementById('signInPassword').value;
-        const customPass = localStorage.getItem('FTL_AUTH_PASSWORD');
-
-        const btn = document.getElementById('btnSignIn');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memverifikasi Hak Akses...`;
-        }
-
-        setTimeout(() => {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = `<span>Masuk Dashboard</span><i class="fa-solid fa-arrow-right text-xs"></i>`;
-            }
-            // Jika user sudah mengatur sandi kustom, wajib cocok. Jika belum, sandi default 'admin123' (atau bebas saat setup awal)
-            if (customPass && passwordVal !== customPass) {
-                alert("Kata sandi salah! Periksa kembali kata sandi Anda atau klik 'Lupa Password?' untuk reset ke admin123.");
-                return;
-            }
-            unlockDashboard();
-        }, 700);
-    }
-
-    function handleAuthSignUp(e) {
-        e.preventDefault();
-        const name = document.getElementById('signUpName').value;
-        const email = document.getElementById('signUpEmail').value;
-        
-        alert(`Pengajuan akun untuk ${name} (${email}) berhasil dikirim!\n\nSistem akan mengarahkan Anda ke WhatsApp Manager untuk verifikasi.`);
-        
-        const targetWA = managerProfile.whatsapp || "6285240201806"; 
-        const message = `*PENGAJUAN AKUN BARU FTL BLUE*\n\nHalo Manager, ada pengajuan akun baru:\n• *Nama:* ${name}\n• *Email:* ${email}\n\nMohon untuk memverifikasi dan menyetujui akun ini ke dalam sistem.`;
-        
-        window.open(`https://wa.me/${targetWA}?text=${encodeURIComponent(message)}`, '_blank');
-        
-        if(document.getElementById('signUpForm')) document.getElementById('signUpForm').reset();
-        toggleAuthForm('signIn');
-    }
-
-    function showLogoutConfirmation() {
-        if (confirm("Apakah Anda yakin ingin keluar dan mengunci kembali Dashboard Manager?")) {
-            localStorage.removeItem('FTL_LOGGED_IN');
-            const overlay = document.getElementById('authModalOverlay');
-            if (overlay) {
-                overlay.style.display = 'flex';
-                overlay.style.opacity = '1';
-                overlay.style.visibility = 'visible';
-                const signInForm = document.getElementById('signInForm');
-                if (signInForm) signInForm.reset();
-            } else {
-                location.reload();
-            }
-        }
-    }
-
-    async function generateExecutivePDF(event) {
-        const element = document.getElementById('monthlyEvaluationSection');
-        if (!element) return alert("Elemen #monthlyEvaluationSection tidak ditemukan!");
-
-        const btn = event ? (event.currentTarget || event.target) : null;
-        const originalText = btn ? btn.innerHTML : '';
-        if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
-
-        const currentScrollY = window.scrollY;
-
-        const chartCanvases = element.querySelectorAll('canvas');
-        const tempImages = [];
-
-        chartCanvases.forEach(canvas => {
-            try {
-                const img = document.createElement('img');
-                img.src = canvas.toDataURL('image/png');
-                img.style.width = (canvas.offsetWidth || canvas.clientWidth || 600) + 'px';
-                img.style.height = (canvas.offsetHeight || canvas.clientHeight || 250) + 'px';
-                img.className = 'temp-pdf-chart';
-                
-                canvas.style.display = 'none';
-                canvas.parentNode.insertBefore(img, canvas);
-                tempImages.push({ canvas, img });
-            } catch (e) {
-                console.warn("Gagal konversi canvas chart:", e);
-            }
-        });
-
-        try {
-            window.scrollTo(0, 0);
-            await new Promise(resolve => setTimeout(resolve, 300));
-
-            const opt = {
-                margin: [8, 8, 8, 8],
-                filename: `Laporan_Eksekutif_FTL_Depok.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#111827',
-                    scrollX: 0,
-                    scrollY: 0,
-                    logging: false
-                },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            };
-
-            await html2pdf().set(opt).from(element).save();
-
-        } catch (err) {
-            console.error("Gagal export PDF:", err);
-            alert("Gagal mengunduh PDF. Silakan coba lagi.");
-        } finally {
-            tempImages.forEach(item => {
-                item.canvas.style.display = '';
-                if (item.img.parentNode) item.img.parentNode.removeChild(item.img);
-            });
-            window.scrollTo(0, currentScrollY);
-            if (btn) btn.innerHTML = originalText;
-        }
-    }
-
-    // Inisialisasi awal saat aplikasi dibuka
-    applyManagerProfileUI();
-    refreshAllTrainerUI();
-    checkAuthStatus();
-    if (managerProfile.autoSync !== false) {
-        syncCloudToManager();
-    }
-    renderRecentTable();
-    renderDashboard();
-    renderClientTable();
-    updateRealtimeClock();
-    setInterval(updateRealtimeClock, 1000);
+    });
 </script>
 </body>
 </html>
