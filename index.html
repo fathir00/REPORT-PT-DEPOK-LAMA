@@ -504,378 +504,364 @@
                 </div>
             </section>
 
-            <!-- TAB 2: DASHBOARD MONITORING & TARGET -->
-            <section id="tab-dashboard" class="space-y-6">
+            <!-- TAB 2: DASHBOARD MONITORING & TARGET (COMPACT SUB-TABS) -->
+            <section id="tab-dashboard" class="space-y-4">
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">TOTAL POIN TERKUMPUL</p>
-                                <h3 id="cardTotalPoints" class="text-2xl font-black text-white mt-1">0 Poin</h3>
-                            </div>
-                            <div class="p-2.5 bg-blue-950/60 border border-blue-800/40 rounded-xl text-blue-400">
-                                <i class="fa-solid fa-coins text-lg"></i>
-                            </div>
+                <!-- 4 KARTU METRIK UTAMA (COMPACT) -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-lg flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">TOTAL POIN TERKUMPUL</p>
+                            <h3 id="cardTotalPoints" class="text-xl sm:text-2xl font-black text-white mt-0.5">0 Poin</h3>
+                        </div>
+                        <div class="p-2.5 bg-blue-950/60 border border-blue-800/40 rounded-xl text-blue-400">
+                            <i class="fa-solid fa-coins text-base"></i>
                         </div>
                     </div>
 
-                    <div class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">TOTAL UNIT BUNDLING</p>
-                                <h3 id="cardTotalBundling" class="text-2xl font-black text-emerald-400 mt-1">0 Unit</h3>
-                            </div>
-                            <div class="p-2.5 bg-emerald-950/60 border border-emerald-800/40 rounded-xl text-emerald-400">
-                                <i class="fa-solid fa-box-open text-lg"></i>
-                            </div>
+                    <div class="bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-lg flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">TOTAL UNIT BUNDLING</p>
+                            <h3 id="cardTotalBundling" class="text-xl sm:text-2xl font-black text-emerald-400 mt-0.5">0 Unit</h3>
+                        </div>
+                        <div class="p-2.5 bg-emerald-950/60 border border-emerald-800/40 rounded-xl text-emerald-400">
+                            <i class="fa-solid fa-box-open text-base"></i>
                         </div>
                     </div>
 
-                    <div class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">TOTAL CONDUCT (SESI)</p>
-                                <h3 id="cardTotalConduct" class="text-2xl font-black text-sky-400 mt-1">0 Sesi</h3>
-                            </div>
-                            <div class="p-2.5 bg-sky-950/60 border border-sky-800/40 rounded-xl text-sky-400">
-                                <i class="fa-solid fa-dumbbell text-lg"></i>
-                            </div>
+                    <div class="bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-lg flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">TOTAL CONDUCT (SESI)</p>
+                            <h3 id="cardTotalConduct" class="text-xl sm:text-2xl font-black text-sky-400 mt-0.5">0 Sesi</h3>
+                        </div>
+                        <div class="p-2.5 bg-sky-950/60 border border-sky-800/40 rounded-xl text-sky-400">
+                            <i class="fa-solid fa-dumbbell text-base"></i>
                         </div>
                     </div>
 
-                    <div class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">RATA-RATA RA DONE</p>
-                                <h3 id="cardAvgRA" class="text-2xl font-black text-purple-400 mt-1">0 / 20 RA</h3>
-                            </div>
-                            <div class="p-2.5 bg-purple-950/60 border border-purple-800/40 rounded-xl text-purple-400">
-                                <i class="fa-solid fa-clipboard-list text-lg"></i>
-                            </div>
+                    <div class="bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-lg flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">RATA-RATA RA DONE</p>
+                            <h3 id="cardAvgRA" class="text-xl sm:text-2xl font-black text-purple-400 mt-0.5">0 / 20 RA</h3>
+                        </div>
+                        <div class="p-2.5 bg-purple-950/60 border border-purple-800/40 rounded-xl text-purple-400">
+                            <i class="fa-solid fa-clipboard-list text-base"></i>
                         </div>
                     </div>
                 </div>
 
-                <!-- PEMILIH BULAN -->
-                <div class="bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-xl flex flex-wrap justify-between items-center gap-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="bg-blue-600/20 border border-blue-500/30 w-10 h-10 rounded-xl flex items-center justify-center text-blue-400">
-                            <i class="fa-solid fa-calendar-days text-lg"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-extrabold text-sm text-white">Periode Bulan Dashboard</h3>
-                            <p class="text-[11px] text-gray-400">Pilih bulan untuk melihat target, podium, peringkat, dan analisis dari bulan tersebut.</p>
-                        </div>
+                <!-- BAR KONTROL PERIODE & SUB-TAB NAVIGASI CEPAT -->
+                <div class="bg-[#111827] p-3.5 rounded-2xl border border-gray-800 shadow-lg flex flex-wrap justify-between items-center gap-3">
+                    <!-- SUB-TABS DASHBOARD -->
+                    <div class="flex flex-wrap items-center gap-1.5 bg-[#0b0f19] p-1 rounded-xl border border-gray-800">
+                        <button type="button" onclick="switchDashSubTab('overview')" id="dash-subbtn-overview" class="px-3.5 py-2 rounded-lg text-xs font-extrabold transition bg-blue-600 text-white shadow flex items-center space-x-1.5">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                            <span>Audit Harian & Target</span>
+                        </button>
+                        <button type="button" onclick="switchDashSubTab('podium')" id="dash-subbtn-podium" class="px-3.5 py-2 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white hover:bg-gray-800/60 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-trophy text-yellow-400"></i>
+                            <span>Podium & Grafik</span>
+                        </button>
+                        <button type="button" onclick="switchDashSubTab('monthly')" id="dash-subbtn-monthly" class="px-3.5 py-2 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white hover:bg-gray-800/60 flex items-center space-x-1.5">
+                            <i class="fa-solid fa-table-cells text-emerald-400"></i>
+                            <span>Poin per Trainer & Evaluasi</span>
+                        </button>
                     </div>
+
+                    <!-- PEMILIH BULAN -->
                     <div class="flex items-center space-x-2">
-                        <button type="button" onclick="shiftMonth(-1)" title="Bulan sebelumnya" class="bg-[#0b0f19] hover:bg-gray-800 border border-gray-800 text-gray-300 w-9 h-9 rounded-xl transition flex items-center justify-center">
+                        <button type="button" onclick="shiftMonth(-1)" title="Bulan sebelumnya" class="bg-[#0b0f19] hover:bg-gray-800 border border-gray-800 text-gray-300 w-8 h-8 rounded-lg transition flex items-center justify-center text-xs">
                             <i class="fa-solid fa-chevron-left"></i>
                         </button>
-                        <select id="filterMonth" onchange="onMonthChange(this.value)" class="month-select bg-[#0b0f19] text-yellow-400 border border-gray-800 rounded-xl px-3 py-2 text-sm font-extrabold focus:border-blue-500 focus:outline-none min-w-[170px]">
+                        <select id="filterMonth" onchange="onMonthChange(this.value)" class="month-select bg-[#0b0f19] text-yellow-400 border border-gray-800 rounded-lg px-3 py-1.5 text-xs font-extrabold focus:border-blue-500 focus:outline-none min-w-[150px]">
                         </select>
-                        <button type="button" onclick="shiftMonth(1)" title="Bulan berikutnya" class="bg-[#0b0f19] hover:bg-gray-800 border border-gray-800 text-gray-300 w-9 h-9 rounded-xl transition flex items-center justify-center">
+                        <button type="button" onclick="shiftMonth(1)" title="Bulan berikutnya" class="bg-[#0b0f19] hover:bg-gray-800 border border-gray-800 text-gray-300 w-8 h-8 rounded-lg transition flex items-center justify-center text-xs">
                             <i class="fa-solid fa-chevron-right"></i>
                         </button>
-                        <button type="button" onclick="goToCurrentMonth()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition shadow">
+                        <button type="button" onclick="goToCurrentMonth()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow">
                             Bulan Ini
                         </button>
                     </div>
                 </div>
 
-                <!-- STATUS AUDIT LAPORAN HARIAN -->
-                <div class="bg-[#111827] p-6 rounded-2xl border border-gray-800 shadow-xl space-y-4">
-                    <div class="flex flex-wrap justify-between items-center border-b border-gray-800 pb-3">
-                        <div>
-                            <h2 class="text-base font-black text-white flex items-center">
-                                <i class="fa-solid fa-clipboard-check text-blue-500 text-xl mr-2"></i> STATUS AUDIT LAPORAN HARIAN TRAINER
-                            </h2>
-                            <p class="text-xs text-gray-400 mt-0.5">Pantau real-time trainer mana saja yang sudah atau belum menginput laporan hari ini (<strong id="dailyAuditDateText" class="text-blue-400"></strong>).</p>
-                        </div>
-                        <div class="flex items-center space-x-2 mt-2 sm:mt-0">
-                            <span id="badgeReportedCount" class="bg-emerald-950/60 text-emerald-400 text-xs font-black px-3 py-1 rounded-full border border-emerald-800">
-                                0/12 Sudah Lapor
-                            </span>
-                            <span id="badgeNotReportedCount" class="bg-red-950/60 text-red-400 text-xs font-black px-3 py-1 rounded-full border border-red-800">
-                                0/12 Belum Lapor
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="overflow-x-auto rounded-xl border border-gray-800">
-                        <table class="w-full text-left text-xs sm:text-sm">
-                            <thead class="bg-[#0b0f19] text-gray-400 border-b border-gray-800 uppercase">
-                                <tr>
-                                    <th class="p-3">Nama Trainer</th>
-                                    <th class="p-3">Status Laporan Hari Ini</th>
-                                    <th class="p-3">Poin Hari Ini</th>
-                                    <th class="p-3">Unit Bundling</th>
-                                    <th class="p-3">Conduct Sesi</th>
-                                    <th class="p-3">RA Done</th>
-                                    <th class="p-3 text-center">Aksi / Follow-Up WA</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dailyAuditTableBody" class="divide-y divide-gray-800/60 bg-[#111827]">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- PODIUM BEST PERFORMANCE -->
-                <div class="bg-[#111827] p-6 rounded-2xl border border-gray-800 shadow-xl space-y-6">
-                    <div class="flex flex-wrap justify-between items-center border-b border-gray-800 pb-3">
-                        <div>
-                            <h2 class="text-lg font-black text-white flex items-center">
-                                <i class="fa-solid fa-trophy text-yellow-500 text-xl mr-2"></i> APRESIASI BEST PERFORMANCE TRAINER&nbsp;<span id="podiumMonthLabel">BULAN INI</span>
-                            </h2>
-                            <p class="text-xs text-gray-400 mt-0.5">Penghargaan untuk trainer dengan capaian poin terbanyak di periode bulan terpilih.</p>
-                        </div>
-                        <span class="bg-amber-950/60 text-amber-400 font-extrabold text-xs px-3 py-1 rounded-full border border-amber-800 flex items-center">
-                            <i class="fa-solid fa-crown text-yellow-500 mr-1"></i> Top Performers
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-end">
-                        <div class="lg:col-span-2 bg-[#0b0f19] p-6 rounded-2xl border border-gray-800 shadow-inner flex justify-center items-end space-x-2 sm:space-x-4 min-h-[260px]">
-                            <div class="flex flex-col items-center w-1/3">
-                                <div class="text-center mb-2">
-                                    <span class="bg-gray-800 text-gray-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Juara 2</span>
-                                    <h4 id="podium2Name" class="font-extrabold text-xs sm:text-sm text-gray-200 mt-1 truncate max-w-[100px] sm:max-w-[140px]">-</h4>
-                                    <p id="podium2Points" class="text-xs font-bold text-yellow-400">0 Poin</p>
+                <!-- ========================================================= -->
+                <!-- SUB-TAB 1: AUDIT HARIAN & TARGET DIVISI                   -->
+                <!-- ========================================================= -->
+                <div id="dash-sub-overview" class="space-y-4">
+                    <!-- TARGET DIVISI TRAINER BAR (COMPACT) -->
+                    <div class="bg-[#111827] text-white p-4 rounded-2xl border border-gray-800 shadow-lg space-y-3">
+                        <div class="flex flex-wrap justify-between items-center gap-3">
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="bg-blue-600 text-white font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Target Divisi</span>
+                                    <button onclick="openTargetModal()" class="bg-[#0b0f19] hover:bg-gray-800 text-yellow-400 border border-gray-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full transition">
+                                        <i class="fa-solid fa-gear mr-1"></i> Atur Target
+                                    </button>
                                 </div>
-                                <div class="w-full bg-gradient-to-t from-gray-800 to-gray-700 rounded-t-xl h-28 flex flex-col items-center justify-center border-t-2 border-gray-400 shadow-lg">
-                                    <i class="fa-solid fa-medal text-2xl text-gray-300 mb-1"></i>
-                                    <span class="font-black text-xl text-white">2</span>
-                                </div>
+                                <h2 id="labelDivTarget" class="text-lg sm:text-xl font-black mt-1 text-white">TARGET BULANAN DIVISI: 34.500 POIN</h2>
+                                <p id="labelIndTarget" class="text-[11px] text-gray-400"><i class="fa-solid fa-bullseye text-blue-400 mr-1"></i> Target SOB Individual: <strong>3.000 Poin / Trainer</strong></p>
+                                <p id="labelTargetPeriod" class="hidden"></p>
                             </div>
 
-                            <div class="flex flex-col items-center w-1/3 -mt-6">
-                                <div class="text-center mb-2">
-                                    <i class="fa-solid fa-crown text-yellow-400 text-xl animate-bounce"></i>
-                                    <span class="bg-yellow-500 text-black text-[10px] font-black px-2 py-0.5 rounded-full uppercase block w-fit mx-auto">Juara 1</span>
-                                    <h4 id="podium1Name" class="font-black text-sm sm:text-base text-yellow-300 mt-1 truncate max-w-[110px] sm:max-w-[150px]">-</h4>
-                                    <p id="podium1Points" class="text-sm font-black text-yellow-400">0 Poin</p>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                                <div class="bg-[#0b0f19] px-3 py-2 rounded-xl border border-gray-800">
+                                    <p class="text-[10px] text-gray-400">Capaian</p>
+                                    <p id="targetPointsAchieved" class="text-sm font-black text-yellow-400">0 Poin</p>
+                                    <p id="statPercent" class="text-[10px] font-bold text-emerald-400">0%</p>
                                 </div>
-                                <div class="w-full bg-gradient-to-t from-yellow-600 via-yellow-500 to-yellow-400 rounded-t-xl h-36 flex flex-col items-center justify-center border-t-2 border-yellow-200 shadow-2xl">
-                                    <i class="fa-solid fa-trophy text-3xl text-black mb-1"></i>
-                                    <span class="font-black text-2xl text-black">1</span>
+                                <div class="bg-[#0b0f19] px-3 py-2 rounded-xl border border-gray-800">
+                                    <p class="text-[10px] text-gray-400">Sisa Divisi</p>
+                                    <p id="statRemainingPoints" class="text-sm font-black text-red-400">34.500 Poin</p>
                                 </div>
-                            </div>
-
-                            <div class="flex flex-col items-center w-1/3">
-                                <div class="text-center mb-2">
-                                    <span class="bg-amber-900 text-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Juara 3</span>
-                                    <h4 id="podium3Name" class="font-extrabold text-xs sm:text-sm text-gray-200 mt-1 truncate max-w-[100px] sm:max-w-[140px]">-</h4>
-                                    <p id="podium3Points" class="text-xs font-bold text-yellow-400">0 Poin</p>
+                                <div class="bg-[#0b0f19] px-3 py-2 rounded-xl border border-gray-800">
+                                    <p class="text-[10px] text-gray-400">Butuh / Hari</p>
+                                    <p id="statDailyNeeded" class="text-sm font-black text-emerald-400">0 Poin/Hari</p>
                                 </div>
-                                <div class="w-full bg-gradient-to-t from-amber-900 to-amber-800 rounded-t-xl h-20 flex flex-col items-center justify-center border-t-2 border-amber-500 shadow-lg">
-                                    <i class="fa-solid fa-award text-xl text-amber-300 mb-1"></i>
-                                    <span class="font-black text-lg text-white">3</span>
+                                <div class="bg-[#0b0f19] px-3 py-2 rounded-xl border border-gray-800">
+                                    <p class="text-[10px] text-gray-400">Rata-Rata / PT</p>
+                                    <p id="statAvgPerTrainer" class="text-sm font-black text-white">0 Poin</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="bg-[#0b0f19] p-4 rounded-2xl border border-gray-800 space-y-3">
-                            <h3 class="font-bold text-xs text-gray-300 uppercase tracking-wider flex items-center">
-                                <i class="fa-solid fa-list-ol text-blue-400 mr-2"></i> Peringkat Capaian SOB & Estimasi Komisi
-                            </h3>
-                            <div id="leaderboardList" class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                        <div class="w-full bg-[#0b0f19] rounded-full h-3.5 p-0.5 border border-gray-800">
+                            <div id="targetProgressBar" class="bg-gradient-to-r from-blue-600 to-sky-400 h-2.5 rounded-full transition-all duration-500 flex items-center justify-end pr-2 text-[8px] font-black text-black" style="width: 0%">
+                                <span id="targetPercentText">0%</span>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- HIGH & LOW CONDUCT -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-xl space-y-3">
-                        <div class="flex justify-between items-center border-b border-gray-800 pb-2">
-                            <h3 class="font-black text-white text-sm sm:text-base flex items-center">
-                                <i class="fa-solid fa-dumbbell text-blue-400 mr-2 text-lg"></i> Top Conduct Terbanyak
-                            </h3>
-                            <span class="bg-blue-950/60 text-blue-400 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase border border-blue-800">Terajin Melatih</span>
-                        </div>
-                        <div id="highConductList" class="space-y-2">
-                        </div>
+                        <span id="targetPercentBadge" class="hidden"></span>
                     </div>
 
-                    <div class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-xl space-y-3">
-                        <div class="flex justify-between items-center border-b border-gray-800 pb-2">
-                            <h3 class="font-black text-white text-sm sm:text-base flex items-center">
-                                <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-2 text-lg"></i> Conduct Terendah
-                            </h3>
-                            <span class="bg-amber-950/60 text-amber-400 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase border border-amber-800">Butuh Evaluasi</span>
-                        </div>
-                        <div id="lowConductList" class="space-y-2">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TARGET DIVISI TRAINER BAR -->
-                <div class="bg-[#111827] text-white p-6 rounded-2xl border border-gray-800 shadow-xl space-y-4">
-                    <div class="flex flex-wrap justify-between items-start gap-4">
-                        <div>
-                            <span class="bg-blue-600 text-white font-extrabold text-xs px-3 py-1 rounded-full uppercase tracking-wider">Target Divisi Trainer</span>
-                            <button onclick="openTargetModal()" class="ml-2 bg-[#0b0f19] hover:bg-gray-800 text-yellow-400 border border-gray-700 text-xs font-bold px-3 py-1 rounded-full transition">
-                                <i class="fa-solid fa-gear mr-1"></i> Atur Target
-                            </button>
-                            <h2 id="labelDivTarget" class="text-2xl font-black mt-2 text-white">TARGET BULANAN DIVISI: 34.500 POIN</h2>
-                            <p id="labelIndTarget" class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-bullseye text-blue-400 mr-1"></i> Target SOB Individual: <strong>3.000 Poin / Trainer</strong> (11 Trainer)</p>
-                            <p id="labelTargetPeriod" class="text-[11px] text-gray-500 mt-1"></p>
+                    <!-- STATUS AUDIT LAPORAN HARIAN (COMPACT TABLE) -->
+                    <div class="bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-lg space-y-3">
+                        <div class="flex flex-wrap justify-between items-center border-b border-gray-800 pb-2.5">
+                            <div>
+                                <h2 class="text-sm font-black text-white flex items-center">
+                                    <i class="fa-solid fa-clipboard-check text-blue-500 text-base mr-2"></i> STATUS AUDIT LAPORAN HARIAN TRAINER (<span id="dailyAuditDateText" class="text-blue-400 ml-1"></span>)
+                                </h2>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span id="badgeReportedCount" class="bg-emerald-950/60 text-emerald-400 text-[11px] font-black px-2.5 py-0.5 rounded-full border border-emerald-800">0/12 Sudah Lapor</span>
+                                <span id="badgeNotReportedCount" class="bg-red-950/60 text-red-400 text-[11px] font-black px-2.5 py-0.5 rounded-full border border-red-800">0/12 Belum Lapor</span>
+                            </div>
                         </div>
 
-                        <div class="bg-[#0b0f19] border border-gray-800 p-4 rounded-2xl text-right min-w-[220px]">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">TOTAL PENCAPAIAN POIN</p>
-                            <h3 id="targetPointsAchieved" class="text-3xl font-black text-yellow-400 mt-0.5">0 Poin</h3>
-                            <p id="targetPercentBadge" class="text-xs font-extrabold text-emerald-400 mt-1">0% dari Target 34.500 Poin</p>
-                        </div>
-                    </div>
-
-                    <div class="w-full bg-[#0b0f19] rounded-full h-5 p-1 border border-gray-800 shadow-inner">
-                        <div id="targetProgressBar" class="bg-gradient-to-r from-blue-600 to-sky-400 h-3 rounded-full transition-all duration-500 flex items-center justify-end pr-2 text-[9px] font-black text-black" style="width: 0%">
-                            <span id="targetPercentText">0%</span>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-center border-t border-gray-800/80 pt-4">
-                        <div class="bg-[#0b0f19] p-3 rounded-xl border border-gray-800">
-                            <p class="text-[11px] text-gray-400 font-medium">Persentase Capaian</p>
-                            <p id="statPercent" class="text-xl font-extrabold text-yellow-400">0%</p>
-                        </div>
-                        <div class="bg-[#0b0f19] p-3 rounded-xl border border-gray-800">
-                            <p class="text-[11px] text-gray-400 font-medium">Sisa Kekurangan Divisi</p>
-                            <p id="statRemainingPoints" class="text-xl font-extrabold text-red-400">34.500 Poin</p>
-                        </div>
-                        <div class="bg-[#0b0f19] p-3 rounded-xl border border-gray-800">
-                            <p class="text-[11px] text-gray-400 font-medium">Sisa Target Divisi / Hari</p>
-                            <p id="statDailyNeeded" class="text-xl font-extrabold text-emerald-400">0 Poin/Hari</p>
-                        </div>
-                        <div class="bg-[#0b0f19] p-3 rounded-xl border border-gray-800">
-                            <p class="text-[11px] text-gray-400 font-medium">Rata-Rata Poin / Trainer</p>
-                            <p id="statAvgPerTrainer" class="text-xl font-extrabold text-white">0 Poin</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- FILTER MONITORING -->
-                <div class="bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-xl flex flex-wrap gap-4 items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-filter text-blue-400"></i>
-                        <span class="font-bold text-xs uppercase tracking-wider text-gray-300">Filter Monitoring:</span>
-                    </div>
-                    <div class="flex flex-wrap gap-3">
-                        <select id="filterPeriod" onchange="renderDashboard()" class="bg-[#0b0f19] border border-gray-800 rounded-xl p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
-                            <option value="all">Semua Periode</option>
-                            <option value="daily">Harian (Hari Ini)</option>
-                            <option value="weekly">7 Hari Terakhir (Mingguan)</option>
-                            <option value="monthly" selected>Bulanan (Sesuai Bulan Terpilih)</option>
-                        </select>
-                        <select id="filterTrainer" onchange="renderDashboard()" class="trainer-filter-dropdown bg-[#0b0f19] border border-gray-800 rounded-xl p-2 text-xs text-white focus:border-blue-500 focus:outline-none">
-                        </select>
-                    </div>
-                </div>
-
-                <!-- GRAFIK TREN & COMPARISON -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-xl">
-                        <h3 class="font-bold text-xs uppercase tracking-wider text-gray-300 mb-4">Tren Perolehan Poin & Conduct</h3>
-                        <div class="relative h-64">
-                            <canvas id="trendChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-xl">
-                        <h3 id="chartTargetTitle" class="font-bold text-xs uppercase tracking-wider text-gray-300 mb-4">Pencapaian Poin vs Target SOB (3.000 Poin)</h3>
-                        <div class="relative h-64">
-                            <canvas id="trainerComparisonChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- EVALUASI PENCAPAIAN BULAN SEBELUMNYA -->
-                <div id="monthlyEvaluationSection" class="bg-[#111827] p-6 rounded-2xl border border-gray-800 shadow-xl space-y-6">
-                    <div class="flex flex-wrap justify-between items-center gap-3 border-b border-gray-800 pb-3">
-                        <div>
-                            <h2 class="text-base font-black text-white flex items-center">
-                                <i class="fa-solid fa-clock-rotate-left text-blue-400 mr-2"></i> EVALUASI PENCAPAIAN BULAN SEBELUMNYA
-                            </h2>
-                            <p class="text-xs text-gray-400 mt-0.5">Bandingkan hasil divisi dan tiap trainer antarbulan untuk kebutuhan evaluasi.</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <label class="text-xs font-bold text-gray-400">Tampilkan:</label>
-                            <select id="evalRange" onchange="renderMonthlyEvaluation()" class="bg-[#0b0f19] border border-gray-800 rounded-xl p-2 text-xs font-bold text-white focus:border-blue-500 focus:outline-none">
-                                <option value="3">3 bulan terakhir</option>
-                                <option value="6" selected>6 bulan terakhir</option>
-                                <option value="12">12 bulan terakhir</option>
-                            </select>
-                            <button type="button" onclick="exportEvaluationCSV()" class="bg-emerald-900/40 hover:bg-emerald-900/70 text-emerald-300 border border-emerald-800 font-bold px-3 py-2 rounded-xl text-xs transition shadow">
-                                <i class="fa-solid fa-file-excel mr-1"></i> Download Rekap CSV
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 class="font-bold text-xs uppercase tracking-wider text-gray-300 mb-3">Total Poin Divisi per Bulan vs Target Divisi</h3>
-                        <div class="relative h-64">
-                            <canvas id="monthlyTrendChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 class="font-bold text-xs uppercase tracking-wider text-gray-300 mb-3"><i class="fa-solid fa-table-list text-blue-400 mr-1"></i> Ringkasan Divisi per Bulan</h3>
-                        <div class="overflow-x-auto rounded-xl border border-gray-800">
-                            <table class="w-full text-left text-xs sm:text-sm">
-                                <thead class="bg-[#0b0f19] text-gray-400 border-b border-gray-800 uppercase text-[10px]">
+                        <div class="overflow-x-auto max-h-[340px] overflow-y-auto rounded-xl border border-gray-800">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-[#0b0f19] text-gray-400 border-b border-gray-800 uppercase sticky top-0 z-10">
                                     <tr>
-                                        <th class="p-3">Bulan</th>
-                                        <th class="p-3">Total Poin</th>
-                                        <th class="p-3">% Target Divisi</th>
-                                        <th class="p-3">vs Bulan Lalu</th>
-                                        <th class="p-3">Unit Bundling</th>
-                                        <th class="p-3">Total Conduct</th>
-                                        <th class="p-3">Rata-Rata RA</th>
-                                        <th class="p-3">Capai Target SOB</th>
-                                        <th class="p-3">Trainer Terbaik</th>
-                                        <th class="p-3 text-center">Aksi</th>
+                                        <th class="py-2 px-3">Nama Trainer</th>
+                                        <th class="py-2 px-3">Status Laporan</th>
+                                        <th class="py-2 px-3">Poin</th>
+                                        <th class="py-2 px-3">Bundling</th>
+                                        <th class="py-2 px-3">Conduct</th>
+                                        <th class="py-2 px-3">RA</th>
+                                        <th class="py-2 px-3 text-center">Follow-Up WA</th>
                                     </tr>
                                 </thead>
-                                <tbody id="evalSummaryBody" class="divide-y divide-gray-800/60 bg-[#111827]">
+                                <tbody id="dailyAuditTableBody" class="divide-y divide-gray-800/60 bg-[#111827]">
                                 </tbody>
                             </table>
                         </div>
                     </div>
-
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-4 border-t border-gray-800">
-                        <div>
-                            <h3 class="font-bold text-xs uppercase tracking-wider text-gray-300 mb-1">
-                                <i class="fa-solid fa-users-viewfinder text-blue-400 mr-1"></i> Poin per Trainer per Bulan
-                            </h3>
-                            <p class="text-[11px] text-gray-400">
-                                Warna sel: 
-                                <span class="inline-block bg-emerald-950 text-emerald-400 font-bold px-1.5 rounded border border-emerald-800">hijau</span> capai target SOB, 
-                                <span class="inline-block bg-amber-950 text-amber-400 font-bold px-1.5 rounded border border-amber-800">kuning</span> 80% atau lebih, 
-                                <span class="inline-block bg-red-950 text-red-400 font-bold px-1.5 rounded border border-red-800">merah</span> di bawah 80%.
-                            </p>
-                        </div>
-                    
-                        <button type="button" onclick="generateExecutivePDF(event)" class="bg-red-900/60 hover:bg-red-800 border border-red-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition shadow flex items-center space-x-1.5 shrink-0">
-                            <i class="fa-solid fa-file-pdf"></i>
-                            <span>Download PDF Eksekutif</span>
-                        </button>
-                    </div>
-
-                    <div class="overflow-x-auto rounded-xl border border-gray-800">
-                        <table class="w-full text-left text-xs sm:text-sm">
-                            <thead id="evalMatrixHead" class="bg-[#0b0f19] text-gray-400 border-b border-gray-800 uppercase text-[10px]">
-                            </thead>
-                            <tbody id="evalMatrixBody" class="divide-y divide-gray-800/60 bg-[#111827]">
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <p class="text-[11px] text-gray-400 bg-[#0b0f19] border border-gray-800 rounded-xl p-3">
-                        <i class="fa-solid fa-circle-info text-blue-400 mr-1"></i>
-                        Persentase dan warna dihitung dari target yang aktif saat ini. Bulan berjalan masih berlangsung, jadi angkanya belum final.
-                    </p>
                 </div>
+
+                <!-- ========================================================= -->
+                <!-- SUB-TAB 2: PODIUM, CONDUCT & GRAFIK TREN                  -->
+                <!-- ========================================================= -->
+                <div id="dash-sub-podium" class="space-y-4 hidden">
+                    <!-- PODIUM & LEADERBOARD -->
+                    <div class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-lg space-y-4">
+                        <div class="flex flex-wrap justify-between items-center border-b border-gray-800 pb-2.5">
+                            <h2 class="text-sm font-black text-white flex items-center">
+                                <i class="fa-solid fa-trophy text-yellow-500 text-base mr-2"></i> APRESIASI BEST PERFORMANCE TRAINER&nbsp;<span id="podiumMonthLabel">BULAN INI</span>
+                            </h2>
+                            <span class="bg-amber-950/60 text-amber-400 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full border border-amber-800">
+                                <i class="fa-solid fa-crown text-yellow-500 mr-1"></i> Top Performers
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+                            <div class="lg:col-span-2 bg-[#0b0f19] p-4 rounded-2xl border border-gray-800 flex justify-center items-end space-x-3 min-h-[210px]">
+                                <div class="flex flex-col items-center w-1/3">
+                                    <div class="text-center mb-1.5">
+                                        <span class="bg-gray-800 text-gray-300 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">Juara 2</span>
+                                        <h4 id="podium2Name" class="font-extrabold text-xs text-gray-200 mt-1 truncate max-w-[110px]">-</h4>
+                                        <p id="podium2Points" class="text-[11px] font-bold text-yellow-400">0 Poin</p>
+                                    </div>
+                                    <div class="w-full bg-gradient-to-t from-gray-800 to-gray-700 rounded-t-xl h-20 flex flex-col items-center justify-center border-t-2 border-gray-400">
+                                        <span class="font-black text-lg text-white">2</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col items-center w-1/3">
+                                    <div class="text-center mb-1.5">
+                                        <span class="bg-yellow-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Juara 1</span>
+                                        <h4 id="podium1Name" class="font-black text-sm text-yellow-300 mt-1 truncate max-w-[120px]">-</h4>
+                                        <p id="podium1Points" class="text-xs font-black text-yellow-400">0 Poin</p>
+                                    </div>
+                                    <div class="w-full bg-gradient-to-t from-yellow-600 via-yellow-500 to-yellow-400 rounded-t-xl h-28 flex flex-col items-center justify-center border-t-2 border-yellow-200">
+                                        <i class="fa-solid fa-trophy text-xl text-black"></i>
+                                        <span class="font-black text-xl text-black">1</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col items-center w-1/3">
+                                    <div class="text-center mb-1.5">
+                                        <span class="bg-amber-900 text-amber-200 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">Juara 3</span>
+                                        <h4 id="podium3Name" class="font-extrabold text-xs text-gray-200 mt-1 truncate max-w-[110px]">-</h4>
+                                        <p id="podium3Points" class="text-[11px] font-bold text-yellow-400">0 Poin</p>
+                                    </div>
+                                    <div class="w-full bg-gradient-to-t from-amber-900 to-amber-800 rounded-t-xl h-16 flex flex-col items-center justify-center border-t-2 border-amber-500">
+                                        <span class="font-black text-base text-white">3</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#0b0f19] p-3.5 rounded-2xl border border-gray-800 space-y-2">
+                                <h3 class="font-bold text-[11px] text-gray-300 uppercase tracking-wider flex items-center">
+                                    <i class="fa-solid fa-list-ol text-blue-400 mr-1.5"></i> Top 5 Capaian SOB & Komisi
+                                </h3>
+                                <div id="leaderboardList" class="space-y-1.5 max-h-[180px] overflow-y-auto pr-1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HIGH & LOW CONDUCT -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-lg space-y-2.5">
+                            <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                                <h3 class="font-black text-white text-xs sm:text-sm flex items-center">
+                                    <i class="fa-solid fa-dumbbell text-blue-400 mr-2"></i> Top Conduct Terbanyak
+                                </h3>
+                                <span class="bg-blue-950/60 text-blue-400 text-[10px] font-black px-2 py-0.5 rounded-full border border-blue-800">Terajin Melatih</span>
+                            </div>
+                            <div id="highConductList" class="space-y-1.5"></div>
+                        </div>
+
+                        <div class="bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-lg space-y-2.5">
+                            <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                                <h3 class="font-black text-white text-xs sm:text-sm flex items-center">
+                                    <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-2"></i> Conduct Terendah
+                                </h3>
+                                <span class="bg-amber-950/60 text-amber-400 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-800">Butuh Evaluasi</span>
+                            </div>
+                            <div id="lowConductList" class="space-y-1.5"></div>
+                        </div>
+                    </div>
+
+                    <!-- FILTER & GRAFIK TREN -->
+                    <div class="bg-[#111827] p-4 rounded-2xl border border-gray-800 shadow-lg space-y-3">
+                        <div class="flex flex-wrap gap-3 items-center justify-between border-b border-gray-800 pb-2.5">
+                            <span class="font-bold text-xs uppercase tracking-wider text-gray-300"><i class="fa-solid fa-chart-area text-blue-400 mr-1.5"></i> Visualisasi Tren & Target</span>
+                            <div class="flex flex-wrap gap-2">
+                                <select id="filterPeriod" onchange="renderDashboard()" class="bg-[#0b0f19] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                    <option value="all">Semua Periode</option>
+                                    <option value="daily">Harian (Hari Ini)</option>
+                                    <option value="weekly">7 Hari Terakhir</option>
+                                    <option value="monthly" selected>Bulanan (Terpilih)</option>
+                                </select>
+                                <select id="filterTrainer" onchange="renderDashboard()" class="trainer-filter-dropdown bg-[#0b0f19] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-blue-500 focus:outline-none">
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div class="bg-[#0b0f19] p-3.5 rounded-xl border border-gray-800">
+                                <h3 class="font-bold text-[11px] uppercase tracking-wider text-gray-400 mb-2">Tren Perolehan Poin & Conduct</h3>
+                                <div class="relative h-52">
+                                    <canvas id="trendChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="bg-[#0b0f19] p-3.5 rounded-xl border border-gray-800">
+                                <h3 id="chartTargetTitle" class="font-bold text-[11px] uppercase tracking-wider text-gray-400 mb-2">Pencapaian Poin vs Target SOB (3.000 Poin)</h3>
+                                <div class="relative h-52">
+                                    <canvas id="trainerComparisonChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- SUB-TAB 3: POIN PER TRAINER & EVALUASI BULANAN (LANGSUNG) -->
+                <!-- ========================================================= -->
+                <div id="dash-sub-monthly" class="space-y-4 hidden">
+                    <div id="monthlyEvaluationSection" class="bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-lg space-y-5">
+                        <!-- HEADER KONTROL -->
+                        <div class="flex flex-wrap justify-between items-center gap-3 border-b border-gray-800 pb-3">
+                            <div>
+                                <h2 class="text-base font-black text-white flex items-center">
+                                    <i class="fa-solid fa-users-viewfinder text-blue-400 mr-2"></i> POIN PER TRAINER PER BULAN & EVALUASI DIVISI
+                                </h2>
+                                <p class="text-[11px] text-gray-400 mt-0.5">
+                                    Indikator sel:
+                                    <span class="inline-block bg-emerald-950 text-emerald-400 font-bold px-1.5 rounded border border-emerald-800">Hijau</span> &ge; 100% SOB,
+                                    <span class="inline-block bg-amber-950 text-amber-400 font-bold px-1.5 rounded border border-amber-800">Kuning</span> 80%–99%,
+                                    <span class="inline-block bg-red-950 text-red-400 font-bold px-1.5 rounded border border-red-800">Merah</span> &lt; 80%.
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <select id="evalRange" onchange="renderMonthlyEvaluation()" class="bg-[#0b0f19] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:border-blue-500 focus:outline-none">
+                                    <option value="3">3 Bulan Terakhir</option>
+                                    <option value="6" selected>6 Bulan Terakhir</option>
+                                    <option value="12">12 Bulan Terakhir</option>
+                                </select>
+                                <button type="button" onclick="exportEvaluationCSV()" class="bg-emerald-900/40 hover:bg-emerald-900/70 text-emerald-300 border border-emerald-800 font-bold px-3 py-1.5 rounded-lg text-xs transition shadow">
+                                    <i class="fa-solid fa-file-excel mr-1"></i> CSV
+                                </button>
+                                <button type="button" onclick="generateExecutivePDF(event)" class="bg-red-900/60 hover:bg-red-800 border border-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow flex items-center space-x-1">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                    <span>PDF Eksekutif</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 1. TABEL UTAMA: POIN PER TRAINER PER BULAN (LANGSUNG DI ATAS!) -->
+                        <div class="overflow-x-auto rounded-xl border border-gray-800">
+                            <table class="w-full text-left text-xs">
+                                <thead id="evalMatrixHead" class="bg-[#0b0f19] text-gray-400 border-b border-gray-800 uppercase text-[10px]">
+                                </thead>
+                                <tbody id="evalMatrixBody" class="divide-y divide-gray-800/60 bg-[#111827]">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 2. RINGKASAN DIVISI & GRAFIK PERBANDINGAN BULANAN -->
+                        <div class="grid grid-cols-1 xl:grid-cols-5 gap-4 pt-2 border-t border-gray-800">
+                            <div class="xl:col-span-3 space-y-2">
+                                <h3 class="font-bold text-xs uppercase tracking-wider text-gray-300"><i class="fa-solid fa-table-list text-blue-400 mr-1"></i> Ringkasan Divisi per Bulan</h3>
+                                <div class="overflow-x-auto rounded-xl border border-gray-800">
+                                    <table class="w-full text-left text-xs">
+                                        <thead class="bg-[#0b0f19] text-gray-400 border-b border-gray-800 uppercase text-[10px]">
+                                            <tr>
+                                                <th class="p-2.5">Bulan</th>
+                                                <th class="p-2.5">Total Poin</th>
+                                                <th class="p-2.5">% Target</th>
+                                                <th class="p-2.5">vs Lalu</th>
+                                                <th class="p-2.5">Bundling</th>
+                                                <th class="p-2.5">Conduct</th>
+                                                <th class="p-2.5">Capai SOB</th>
+                                                <th class="p-2.5 text-center">Detail</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="evalSummaryBody" class="divide-y divide-gray-800/60 bg-[#111827]">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="xl:col-span-2 bg-[#0b0f19] p-3.5 rounded-xl border border-gray-800 flex flex-col justify-between">
+                                <h3 class="font-bold text-[11px] uppercase tracking-wider text-gray-400 mb-2">Total Poin Divisi vs Target</h3>
+                                <div class="relative h-56">
+                                    <canvas id="monthlyTrendChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </section>
 
             <!-- TAB 3: ANALISIS & COACHING -->
@@ -2357,6 +2343,26 @@
         }
     }, 1000);
 
+    function switchDashSubTab(sub) {
+        ['overview', 'podium', 'monthly'].forEach(s => {
+            const pane = document.getElementById(`dash-sub-${s}`);
+            const btn = document.getElementById(`dash-subbtn-${s}`);
+            if (pane) pane.classList.add('hidden');
+            if (btn) btn.className = "px-3.5 py-2 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white hover:bg-gray-800/60 flex items-center space-x-1.5";
+        });
+
+        const activePane = document.getElementById(`dash-sub-${sub}`);
+        const activeBtn = document.getElementById(`dash-subbtn-${sub}`);
+        if (activePane) activePane.classList.remove('hidden');
+        if (activeBtn) activeBtn.className = "px-3.5 py-2 rounded-lg text-xs font-extrabold transition bg-blue-600 text-white shadow flex items-center space-x-1.5";
+
+        if (sub === 'podium') {
+            renderDashboard();
+        } else if (sub === 'monthly' && typeof renderMonthlyEvaluation === 'function') {
+            renderMonthlyEvaluation();
+        }
+    }
+
     function switchTab(tab) {
         ['input', 'client', 'dashboard', 'analytics', 'settings'].forEach(t => {
             const sec = document.getElementById(`tab-${t}`);
@@ -2959,6 +2965,7 @@
 
     function openMonthFromEval(key) {
         onMonthChange(key);
+        switchDashSubTab('overview');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -2990,21 +2997,19 @@
 
             summaryBody.innerHTML += `
                 <tr class="${isSelected ? 'bg-blue-950/30' : 'hover:bg-gray-800/40'} transition">
-                    <td class="p-3 font-bold text-white">
+                    <td class="p-2.5 font-bold text-white whitespace-nowrap">
                         ${s.label}
-                        ${isCurrent ? '<span class="ml-1 bg-blue-900 text-blue-300 text-[10px] font-black px-1.5 py-0.5 rounded-full border border-blue-700">Berjalan</span>' : ''}
+                        ${isCurrent ? '<span class="ml-1 bg-blue-900 text-blue-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">Aktif</span>' : ''}
                     </td>
-                    <td class="p-3 font-extrabold text-blue-400">${s.points.toLocaleString('id-ID')} Poin</td>
-                    <td class="p-3 font-black ${pctClass}">${pct.toFixed(1)}%</td>
-                    <td class="p-3">${deltaBadge(s.points, prev ? prev.points : null)}</td>
-                    <td class="p-3 font-bold text-emerald-400">${s.bundling} Unit</td>
-                    <td class="p-3 font-bold text-gray-200">${s.conduct} Sesi</td>
-                    <td class="p-3 font-bold text-gray-200">${s.avgRA.toFixed(1)}/20</td>
-                    <td class="p-3 font-bold text-gray-200">${s.reachedSOB} / ${trainerList.length} trainer</td>
-                    <td class="p-3 font-semibold text-gray-300">${s.best ? s.best.name.split(' ')[0] + ' (' + s.best.points.toLocaleString('id-ID') + ')' : '-'}</td>
-                    <td class="p-3 text-center">
-                        <button type="button" onclick="openMonthFromEval('${s.key}')" class="bg-gray-800 hover:bg-black text-white font-bold px-2.5 py-1 rounded-lg text-xs whitespace-nowrap">
-                            Buka Detail
+                    <td class="p-2.5 font-extrabold text-blue-400 whitespace-nowrap">${s.points.toLocaleString('id-ID')}</td>
+                    <td class="p-2.5 font-black ${pctClass}">${pct.toFixed(1)}%</td>
+                    <td class="p-2.5 whitespace-nowrap">${deltaBadge(s.points, prev ? prev.points : null)}</td>
+                    <td class="p-2.5 font-bold text-emerald-400">${s.bundling}</td>
+                    <td class="p-2.5 font-bold text-gray-200">${s.conduct}</td>
+                    <td class="p-2.5 font-bold text-gray-200">${s.reachedSOB}/${trainerList.length}</td>
+                    <td class="p-2.5 text-center">
+                        <button type="button" onclick="openMonthFromEval('${s.key}')" class="bg-gray-800 hover:bg-blue-600 text-white font-bold px-2 py-1 rounded text-[11px] transition">
+                            Lihat
                         </button>
                     </td>
                 </tr>
