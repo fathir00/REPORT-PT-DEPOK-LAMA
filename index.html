@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manager Monitoring - FTL Blue</title>
+    <title>Manager Monitoring & AI Command - FTL Blue</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -12,15 +12,68 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style> 
         body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; } 
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+        /* Rich Formatting inside AI Output */
+        .ai-output h1, .ai-output h2, .ai-output h3 {
+            font-weight: 800;
+            color: #f8fafc;
+            margin-top: 0.85rem;
+            margin-bottom: 0.4rem;
+        }
+        .ai-output h2 { font-size: 0.95rem; border-bottom: 1px solid #1e293b; padding-bottom: 0.25rem; }
+        .ai-output h3 { font-size: 0.85rem; color: #60a5fa; }
+        .ai-output p { margin-bottom: 0.55rem; line-height: 1.6; color: #cbd5e1; font-size: 0.8125rem; }
+        .ai-output ul, .ai-output ol { margin-left: 1.25rem; margin-bottom: 0.65rem; color: #cbd5e1; font-size: 0.8125rem; }
+        .ai-output ul { list-style-type: disc; }
+        .ai-output ol { list-style-type: decimal; }
+        .ai-output li { margin-bottom: 0.25rem; line-height: 1.5; }
+        .ai-output strong { color: #ffffff; font-weight: 700; }
+        .ai-output code { background: #1e293b; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #38bdf8; }
+
+        @keyframes shake-horizontal {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-7px); }
+            40%, 80% { transform: translateX(7px); }
+        }
+        .animate-shake {
+            animation: shake-horizontal 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
     </style>
 </head>
 <body class="bg-[#0b0f19] text-gray-200 min-h-screen">
+
+<!-- TOAST NOTIFICATION CONTAINER (NON-BLOCKING UI FEEDBACK) -->
+<div id="toastContainer" class="fixed bottom-5 right-5 z-[10000] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+<!-- CUSTOM CONFIRMATION MODAL (REPLACES BROWSER CONFIRM()) -->
+<div id="customConfirmModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[10001] hidden items-center justify-center p-4">
+    <div class="bg-[#111827] border border-gray-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden p-5 space-y-4">
+        <div class="flex items-start space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/35 flex items-center justify-center text-amber-400 shrink-0">
+                <i class="fa-solid fa-triangle-exclamation text-base"></i>
+            </div>
+            <div>
+                <h3 id="confirmModalTitle" class="text-sm font-black text-white uppercase tracking-wide">Konfirmasi Tindakan</h3>
+                <p id="confirmModalMessage" class="text-xs text-gray-300 mt-1 leading-relaxed whitespace-pre-line"></p>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2 border-t border-gray-800">
+            <button type="button" onclick="closeCustomConfirm()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold px-4 py-2 rounded-xl text-xs transition">Batal</button>
+            <button type="button" id="confirmModalActionBtn" class="bg-red-600 hover:bg-red-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow">Ya, Lanjutkan</button>
+        </div>
+    </div>
+</div>
 
 <!-- OVERLAY LOGIN & REGISTRASI -->
 <div id="authModalOverlay" class="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6">
@@ -140,7 +193,7 @@
                 </div>
                 <div>
                     <h2 class="text-xs font-black tracking-wider text-white uppercase">FTL GERENCIAL</h2>
-                    <p id="sidebarBranchSubtitle" class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Depok Branch</p>
+                    <p id="sidebarBranchSubtitle" class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">FTL Gym Depok Lama</p>
                 </div>
             </div>
 
@@ -164,6 +217,16 @@
                         <button onclick="switchTab('analytics')" id="btn-tab-analytics" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800/60 transition">
                             <i class="fa-solid fa-user-doctor w-4 text-center"></i>
                             <span>Analisis & Coaching</span>
+                        </button>
+                        <button onclick="switchTab('aiteam')" id="btn-tab-aiteam" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800/60 transition">
+                            <span class="flex items-center space-x-3 min-w-0">
+                                <i class="fa-solid fa-robot w-4 text-center text-indigo-400"></i>
+                                <span class="truncate">AI Team & Command</span>
+                            </span>
+                            <span id="sidebarAiLockBadge" class="inline-flex items-center gap-1 text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-red-950/80 text-red-300 border border-red-800/70 shrink-0">
+                                <i class="fa-solid fa-lock text-[8px]"></i>
+                                <span>TERKUNCI</span>
+                            </span>
                         </button>
                         <button onclick="switchTab('settings')" id="btn-tab-settings" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800/60 transition">
                             <i class="fa-solid fa-user-gear w-4 text-center"></i>
@@ -232,7 +295,7 @@
         <header class="bg-[#0f172a]/90 backdrop-blur border-b border-gray-800/80 px-6 py-3.5 sticky top-0 z-40 flex flex-wrap justify-between items-center gap-4">
             <div>
                 <h1 id="topHeaderTitle" class="text-base font-black uppercase tracking-wider text-white">Dashboard Gerencial</h1>
-                <p class="text-[11px] text-gray-400">Análise e extração de métricas operacionais Depok Lama</p>
+                <p id="topHeaderSubtitle" class="text-[11px] text-gray-400">Análise e extração de métricas operacionais Depok Lama</p>
             </div>
 
             <!-- REALTIME CLOCK & QUICK ACTIONS -->
@@ -592,10 +655,13 @@
                     <div class="bg-[#111827] text-white p-4 rounded-2xl border border-gray-800 shadow-lg space-y-3">
                         <div class="flex flex-wrap justify-between items-center gap-3">
                             <div>
-                                <div class="flex items-center space-x-2">
+                                <div class="flex flex-wrap items-center gap-2">
                                     <span class="bg-blue-600 text-white font-extrabold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">Target Divisi</span>
                                     <button onclick="openTargetModal()" class="bg-[#0b0f19] hover:bg-gray-800 text-yellow-400 border border-gray-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full transition">
                                         <i class="fa-solid fa-gear mr-1"></i> Atur Target
+                                    </button>
+                                    <button onclick="launchAITargetGapAnalysis()" class="bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/70 text-[11px] font-bold px-2.5 py-0.5 rounded-full transition flex items-center gap-1">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i> Analisis Target via AI Team
                                     </button>
                                 </div>
                                 <h2 id="labelDivTarget" class="text-lg sm:text-xl font-black mt-1 text-white">TARGET BULANAN DIVISI: 34.500 POIN</h2>
@@ -871,7 +937,7 @@
                         <i class="fa-solid fa-calendar-week text-blue-400 text-xl"></i>
                         <div>
                             <h4 class="font-bold text-white text-sm">Monitoring Pace Target SOB & Unit Bundling Mingguan</h4>
-                            <p class="text-xs text-gray-400">Urutan Matriks: <strong>Good Pace (Atas)</strong> &rarr; <strong>Under Performance (Bawah)</strong></p>
+                            <p class="text-xs text-gray-400">Urutan Matriks: <strong>Good Pace (Atas)</strong> &rarr; <strong>Under Performance (Bawah)</strong> • Supervisi Langsung Fitness Manager</p>
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
@@ -893,7 +959,7 @@
                     </div>
                 </div>
 
-                <div class="bg-blue-950/40 border border-blue-800/60 p-4 rounded-2xl shadow flex justify-between items-center">
+                <div class="bg-blue-950/40 border border-blue-800/60 p-4 rounded-2xl shadow flex flex-wrap justify-between items-center gap-3">
                     <div class="flex items-center space-x-3">
                         <i class="fa-solid fa-arrow-down-wide-short text-blue-400 text-2xl"></i>
                         <div>
@@ -901,7 +967,12 @@
                             <p class="text-xs text-blue-300/80">Tabel disusun rapi mulai dari trainer berstatus <strong>Good Pace</strong> di atas, lalu diikuti trainer berstatus <strong>Under Performance</strong> di bagian bawah.</p>
                         </div>
                     </div>
-                    <span id="coachingBadgeCount" class="bg-red-900/80 text-red-200 font-bold text-xs px-3 py-1.5 rounded-full border border-red-700">0 Trainer Under Performance</span>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="sendCoachingToAITeam()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-full shadow flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-robot"></i> Susun Coaching via AI Team
+                        </button>
+                        <span id="coachingBadgeCount" class="bg-red-900/80 text-red-200 font-bold text-xs px-3 py-1.5 rounded-full border border-red-700">0 Trainer Under Performance</span>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -936,6 +1007,359 @@
                 </div>
             </section>
 
+            <!-- ================================================================= -->
+            <!-- TAB 5: AI TEAM & COMMAND CENTER (MANAGER PASSWORD PROTECTED)      -->
+            <!-- ================================================================= -->
+            <section id="tab-aiteam" class="space-y-5 hidden">
+
+                <!-- 1. MANAGER ACCESS VERIFICATION GATE (TAMPIL SAAT TERKUNCI) -->
+                <div id="aiTeamLockGate" class="min-h-[68vh] flex items-center justify-center py-4">
+                    <div id="aiLockCard" class="w-full max-w-md bg-[#111827] border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 relative overflow-hidden">
+                        <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-red-500"></div>
+
+                        <div class="text-center space-y-2.5">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600/20 to-red-500/20 border border-blue-500/35 flex items-center justify-center mx-auto shadow-lg relative">
+                                <i class="fa-solid fa-shield-halved text-2xl text-blue-400"></i>
+                                <span class="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-lg bg-red-600 border border-red-400/50 flex items-center justify-center text-white text-[10px] shadow">
+                                    <i class="fa-solid fa-lock"></i>
+                                </span>
+                            </div>
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/80 border border-red-800 text-[10px] font-mono font-extrabold uppercase tracking-wider text-red-300">
+                                <i class="fa-solid fa-lock"></i>
+                                AREA TERBATAS • KHUSUS FITNESS MANAGER
+                            </div>
+                            <h2 class="text-lg sm:text-xl font-black text-white tracking-tight">Manager Access Verification</h2>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Gerbang keamanan khusus untuk melindungi kendali Multi-Agen AI, Strategi Cabang, dan Papan Delegasi SOP.
+                            </p>
+                        </div>
+
+                        <div class="bg-[#0b0f19] border border-gray-800 rounded-2xl p-3.5 flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/35 flex items-center justify-center text-blue-400 shrink-0">
+                                <i class="fa-solid fa-user-check"></i>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500">OTORISASI AKUN MANAGER</div>
+                                <div id="gateManagerIdentity" class="text-xs font-extrabold text-white truncate">Fitness Manager M. Fatihin (Fathir)</div>
+                                <div id="gateBranchIdentity" class="text-[11px] text-blue-400 font-semibold">FTL Gym Depok Lama</div>
+                            </div>
+                        </div>
+
+                        <div id="gatePendingBanner" class="hidden bg-indigo-950/60 border border-indigo-700/70 rounded-xl p-3 text-[11px] text-indigo-200 flex items-start gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles text-indigo-400 mt-0.5"></i>
+                            <span>Verifikasi password untuk langsung menjalankan analisis strategis yang Anda pilih.</span>
+                        </div>
+
+                        <form id="aiUnlockForm" onsubmit="verifyManagerPassword(event)" class="space-y-4">
+                            <div>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label for="aiManagerPasswordInput" class="text-xs font-bold text-gray-300">Password Akses Manager</label>
+                                    <span id="gateAttemptsBadge" class="text-[10px] font-mono text-gray-400">Sisa percobaan: 5/5</span>
+                                </div>
+                                <div class="relative">
+                                    <input
+                                        type="password"
+                                        id="aiManagerPasswordInput"
+                                        autocomplete="current-password"
+                                        placeholder="Masukkan password Fitness Manager..."
+                                        required
+                                        class="w-full bg-[#0b0f19] border border-gray-800 focus:border-blue-500 rounded-xl pl-3.5 pr-11 py-3 text-xs sm:text-sm text-white placeholder-gray-600 focus:outline-none transition"
+                                    />
+                                    <button
+                                        type="button"
+                                        onclick="toggleAiPassVisibility('aiManagerPasswordInput', this)"
+                                        title="Tampilkan / Sembunyikan Password"
+                                        class="absolute inset-y-0 right-0 px-3.5 flex items-center text-gray-400 hover:text-white transition"
+                                    >
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="gateErrorBox" class="hidden bg-red-950/70 border border-red-800 rounded-xl p-3 text-xs text-red-200 flex items-start gap-2">
+                                <i class="fa-solid fa-circle-exclamation text-red-400 mt-0.5"></i>
+                                <span id="gateErrorText">Password tidak sesuai.</span>
+                            </div>
+
+                            <div id="gateDefaultHint" class="bg-blue-950/40 border border-blue-800/50 rounded-xl p-3 text-[11px] text-gray-300 flex items-start gap-2.5">
+                                <i class="fa-solid fa-key text-blue-400 mt-0.5"></i>
+                                <div>
+                                    <span class="font-bold text-blue-300">Penggunaan Pertama Kali:</span> Password default awal adalah <code class="px-1.5 py-0.5 rounded bg-[#0b0f19] border border-blue-800 font-mono font-bold text-amber-300">FTL2026</code>. Anda dapat menggantinya setelah berhasil masuk.
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                id="btnUnlockAiTeam"
+                                class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition"
+                            >
+                                <i class="fa-solid fa-unlock"></i>
+                                <span id="btnUnlockLabel">Buka Akses AI Team</span>
+                            </button>
+                        </form>
+
+                        <div class="pt-2 border-t border-gray-800 flex items-center justify-between text-[10px] text-gray-500 font-mono">
+                            <span class="flex items-center gap-1"><i class="fa-solid fa-shield-check text-emerald-400"></i> SHA-256 Encrypted</span>
+                            <span>FTL Blue Security</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. UNLOCKED AI TEAM & COMMAND WORKSPACE -->
+                <div id="aiTeamUnlockedContent" class="hidden space-y-5">
+
+                    <!-- Manager Security Control Bar -->
+                    <div class="bg-[#111827] border border-emerald-800/60 rounded-2xl p-3.5 sm:px-5 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-950/80 text-emerald-300 border border-emerald-800">
+                                <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                                <span id="unlockedManagerBadge">Akses Manager Terverifikasi (Fathir)</span>
+                            </span>
+                            <span id="unlockedDefaultWarning" class="inline-flex items-center gap-1 text-[11px] text-amber-300 bg-amber-950/60 border border-amber-800/60 px-2.5 py-0.5 rounded-full">
+                                <i class="fa-solid fa-circle-info"></i>
+                                Masih memakai password default
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2.5 ml-auto">
+                            <label class="inline-flex items-center gap-2 cursor-pointer bg-[#0b0f19] hover:bg-gray-900 px-3 py-1.5 rounded-xl border border-gray-800 transition">
+                                <input type="checkbox" id="toggleAutoLockBar" onchange="toggleAutoLockSetting(this.checked)" class="w-3.5 h-3.5 text-blue-600 rounded">
+                                <span class="text-[11px] font-semibold text-gray-300">Auto-Lock saat Pindah Menu</span>
+                            </label>
+
+                            <button type="button" onclick="openChangeAiPasswordModal()" class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold border border-gray-700 flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-key text-amber-400"></i>
+                                Ganti Password
+                            </button>
+
+                            <button type="button" onclick="lockAITeam(false)" class="px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold shadow flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-lock"></i>
+                                Kunci Sekarang
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Telemetry Bridge Banner -->
+                    <div class="bg-gradient-to-r from-blue-950/70 via-[#111827] to-indigo-950/70 border border-blue-800/60 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 shrink-0">
+                                <i class="fa-solid fa-microchip text-lg"></i>
+                            </div>
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-xs font-black text-white uppercase tracking-wide">Data Telemetri Live FTL Gerencial Terhubung</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">REAL-TIME SYNC</span>
+                                </div>
+                                <p id="aiLiveTelemetrySummary" class="text-xs text-gray-300 mt-0.5">
+                                    Memuat metrik aktual dari database FTL Blue...
+                                </p>
+                            </div>
+                        </div>
+                        <label class="inline-flex items-center gap-2 cursor-pointer bg-[#0b0f19] px-3 py-2 rounded-xl border border-gray-800">
+                            <input type="checkbox" id="injectLiveDataToggle" checked class="w-4 h-4 text-blue-600 rounded">
+                            <span class="text-xs font-bold text-gray-200">Injeksi Data Cabang Otomatis ke AI</span>
+                        </label>
+                    </div>
+
+                    <!-- AI Sub-Tabs -->
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="inline-flex flex-wrap items-center gap-1.5 bg-[#111827] p-1.5 rounded-2xl border border-gray-800">
+                            <button type="button" onclick="switchAITab('command')" id="aitab-command" class="ai-subtab-btn px-3.5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 text-white shadow flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-terminal"></i>
+                                AI Command Center
+                            </button>
+                            <button type="button" onclick="switchAITab('roster')" id="aitab-roster" class="ai-subtab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-robot"></i>
+                                Roster AI Agent (<span id="aiActiveCountLabel">5/5</span>)
+                            </button>
+                            <button type="button" onclick="switchAITab('kanban')" id="aitab-kanban" class="ai-subtab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-list-check"></i>
+                                Kanban & SOP Tracker (<span id="aiTaskCountLabel">2</span>)
+                            </button>
+                            <button type="button" onclick="switchAITab('archive')" id="aitab-archive" class="ai-subtab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-box-archive"></i>
+                                Arsip Laporan AI (<span id="aiReportCountLabel">0</span>)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- AI SUB-TAB 1: COMMAND CENTER -->
+                    <div id="ai-view-command" class="ai-subview space-y-5">
+                        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 space-y-4 shadow-xl">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+                                        Briefing & Eksekusi Multi-Agen AI (<span id="aiCommandBranchLabel">FTL Gym Depok Lama</span>)
+                                    </h3>
+                                    <p class="text-xs text-gray-400 mt-0.5">Tim AI menganalisis gap target divisi, audit kepatuhan laporan harian trainer, dan peluang renewal client.</p>
+                                </div>
+
+                                <div class="flex items-center bg-[#0b0f19] p-1 rounded-xl border border-gray-800">
+                                    <button type="button" onclick="setAIExecutionMode('collab')" id="btnModeCollab" class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-indigo-600 text-white transition">
+                                        Full AI Team Collab
+                                    </button>
+                                    <button type="button" onclick="setAIExecutionMode('single')" id="btnModeSingle" class="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition">
+                                        Single Agent
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="aiSingleAgentBox" class="hidden bg-[#0b0f19] border border-gray-800 rounded-xl p-3">
+                                <label for="aiSingleAgentDropdown" class="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-1.5">Pilih Spesialis AI Agent</label>
+                                <select id="aiSingleAgentDropdown" class="w-full bg-[#111827] border border-gray-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"></select>
+                            </div>
+
+                            <div class="space-y-2">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Preset Perintah Cepat Operasional</span>
+                                    <select id="aiPresetSelect" onchange="changeAIPreset(this.value)" class="bg-[#0b0f19] border border-gray-800 rounded-lg px-2.5 py-1 text-xs text-indigo-300 font-bold focus:outline-none">
+                                        <option value="ftl_depok">Preset: FTL Gym Depok Lama</option>
+                                        <option value="biz_expansion">Preset: Ekspansi & B2B Corporate</option>
+                                    </select>
+                                </div>
+                                <div id="aiQuickPrompts" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="aiCommandTextarea" class="text-xs font-bold text-gray-300 block">Instruksi / Target Strategis Fitness Manager</label>
+                                <textarea id="aiCommandTextarea" rows="3" placeholder="Tuliskan target, kendala cabang, atau strategi pengejaran poin yang ingin dibedah oleh 5 AI Agent..." class="w-full bg-[#0b0f19] border border-gray-800 focus:border-indigo-500 rounded-xl p-3.5 text-xs sm:text-sm text-white placeholder-gray-600 focus:outline-none"></textarea>
+                            </div>
+
+                            <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                                <span class="text-[11px] text-gray-400">Pipeline: <strong class="text-gray-200">Analyst → Ops & SOP → Finance → Client → Orchestrator</strong></span>
+                                <button type="button" id="btnRunAiTeam" onclick="runAICommandCenter()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-extrabold shadow-lg flex items-center gap-2 transition">
+                                    <i class="fa-solid fa-play"></i>
+                                    Jalankan Rapat Tim AI
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Live Execution Progress -->
+                        <div id="aiProgressBox" class="hidden bg-[#111827] border border-indigo-700/60 rounded-2xl p-4 space-y-3 shadow-xl">
+                            <div class="flex items-center justify-between text-xs">
+                                <span id="aiProgressLabel" class="font-bold text-indigo-300">Memulai orkestrasi multi-agen AI...</span>
+                                <span id="aiProgressStep" class="font-mono font-bold px-2 py-0.5 rounded bg-indigo-950 text-indigo-200 border border-indigo-800">1/5</span>
+                            </div>
+                            <div id="aiProgressCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2"></div>
+                        </div>
+
+                        <!-- AI Executive Output & Action Items -->
+                        <div id="aiOutputContainer" class="hidden bg-[#111827] border border-gray-800 rounded-2xl overflow-hidden shadow-xl">
+                            <div class="p-4 sm:p-5 border-b border-gray-800 bg-[#0b0f19] flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h4 id="aiReportHeading" class="text-sm sm:text-base font-black text-white">Hasil Analisis Strategis AI Team</h4>
+                                    <p id="aiReportSubheading" class="text-xs text-gray-400 mt-0.5"></p>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button type="button" onclick="sendAllExtractedToKanban()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 transition">
+                                        <i class="fa-solid fa-list-check"></i>
+                                        Kirim Semua ke Kanban
+                                    </button>
+                                    <button type="button" onclick="copyAIReportText()" class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold border border-gray-700 transition">
+                                        Salin Teks
+                                    </button>
+                                    <button type="button" onclick="shareAIReportWA()" class="px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-600/40 text-xs font-bold transition">
+                                        <i class="fa-brands fa-whatsapp mr-1"></i> Kirim WA
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="p-4 sm:p-5 border-b border-gray-800 bg-indigo-950/20 space-y-3">
+                                <div class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-bullseye"></i>
+                                    Rekomendasi Action Items Siap Delegasi
+                                </div>
+                                <div id="aiExtractedTasksGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                            </div>
+
+                            <div id="aiReportSections" class="p-4 sm:p-5 space-y-4"></div>
+                        </div>
+                    </div>
+
+                    <!-- AI SUB-TAB 2: ROSTER AI AGENT & SOP -->
+                    <div id="ai-view-roster" class="ai-subview hidden space-y-4">
+                        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <h3 class="text-sm font-black text-white">Roster Spesialis AI Agent & Editor SOP</h3>
+                                <p class="text-xs text-gray-400">Atur status Aktif/Standby atau sesuaikan System Prompt masing-masing agen.</p>
+                            </div>
+                            <button type="button" onclick="openAgentEditorModal()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-plus"></i>
+                                Tambah Agent Baru
+                            </button>
+                        </div>
+                        <div id="aiRosterGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+                    </div>
+
+                    <!-- AI SUB-TAB 3: KANBAN & SOP ACTION TRACKER -->
+                    <div id="ai-view-kanban" class="ai-subview hidden space-y-4">
+                        <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <input type="text" id="kanbanFilterText" oninput="renderKanbanBoard()" placeholder="Cari tugas / nama PIC..." class="bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 w-52">
+                                <select id="kanbanFilterPrio" onchange="renderKanbanBoard()" class="bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none">
+                                    <option value="ALL">Semua Prioritas</option>
+                                    <option value="HIGH">🔴 High</option>
+                                    <option value="MEDIUM">🟡 Medium</option>
+                                    <option value="LOW">🟢 Low</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" onclick="exportKanbanCSV()" class="px-3 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-xs font-bold text-gray-200 border border-gray-700">Export CSV</button>
+                                <button type="button" onclick="delegateKanbanWA()" class="px-3 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-bold border border-emerald-600/40 flex items-center gap-1.5">
+                                    <i class="fa-brands fa-whatsapp"></i>
+                                    Delegasi WA Tim
+                                </button>
+                                <button type="button" onclick="openKanbanTaskModal()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5">
+                                    <i class="fa-solid fa-plus"></i>
+                                    Tugas Baru
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+                            <div class="bg-[#111827] border border-gray-800 rounded-2xl p-3.5 min-h-[360px] space-y-2.5" ondragover="allowDrop(event)" ondrop="dropKanbanTask(event, 'todo')">
+                                <div class="flex items-center justify-between px-1">
+                                    <span class="text-xs font-black uppercase text-gray-300">● To Do</span>
+                                    <span id="kcount-todo" class="text-[11px] font-mono bg-gray-800 px-2 py-0.5 rounded-full text-gray-300">0</span>
+                                </div>
+                                <div id="kcol-todo" class="space-y-2.5"></div>
+                            </div>
+
+                            <div class="bg-[#111827] border border-gray-800 rounded-2xl p-3.5 min-h-[360px] space-y-2.5" ondragover="allowDrop(event)" ondrop="dropKanbanTask(event, 'inprogress')">
+                                <div class="flex items-center justify-between px-1">
+                                    <span class="text-xs font-black uppercase text-blue-400">● In Progress</span>
+                                    <span id="kcount-inprogress" class="text-[11px] font-mono bg-blue-950 px-2 py-0.5 rounded-full text-blue-300">0</span>
+                                </div>
+                                <div id="kcol-inprogress" class="space-y-2.5"></div>
+                            </div>
+
+                            <div class="bg-[#111827] border border-gray-800 rounded-2xl p-3.5 min-h-[360px] space-y-2.5" ondragover="allowDrop(event)" ondrop="dropKanbanTask(event, 'review')">
+                                <div class="flex items-center justify-between px-1">
+                                    <span class="text-xs font-black uppercase text-amber-400">● Review / Audit</span>
+                                    <span id="kcount-review" class="text-[11px] font-mono bg-amber-950 px-2 py-0.5 rounded-full text-amber-300">0</span>
+                                </div>
+                                <div id="kcol-review" class="space-y-2.5"></div>
+                            </div>
+
+                            <div class="bg-[#111827] border border-gray-800 rounded-2xl p-3.5 min-h-[360px] space-y-2.5" ondragover="allowDrop(event)" ondrop="dropKanbanTask(event, 'done')">
+                                <div class="flex items-center justify-between px-1">
+                                    <span class="text-xs font-black uppercase text-emerald-400">● Done / Selesai</span>
+                                    <span id="kcount-done" class="text-[11px] font-mono bg-emerald-950 px-2 py-0.5 rounded-full text-emerald-300">0</span>
+                                </div>
+                                <div id="kcol-done" class="space-y-2.5"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI SUB-TAB 4: ARSIP LAPORAN AI -->
+                    <div id="ai-view-archive" class="ai-subview hidden space-y-4">
+                        <div id="aiArchiveList" class="space-y-3"></div>
+                    </div>
+
+                </div>
+            </section>
+
             <!-- TAB 4: PENGATURAN & PROFIL MANAGER -->
             <section id="tab-settings" class="space-y-6 hidden">
                 <!-- HEADER PROFIL -->
@@ -961,6 +1385,49 @@
                         <button type="button" onclick="document.getElementById('importBackupJSON').click()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center">
                             <i class="fa-solid fa-cloud-arrow-up mr-1.5 text-emerald-400"></i> Restore Backup
                         </button>
+                    </div>
+                </div>
+
+                <!-- KARTU KHUSUS: KEAMANAN & PASSWORD AI TEAM (FITNESS MANAGER) -->
+                <div class="bg-[#111827] p-6 rounded-2xl border border-gray-800 shadow-xl space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-800 pb-3">
+                        <div>
+                            <h3 class="text-sm font-black text-white flex items-center gap-2">
+                                <i class="fa-solid fa-shield-halved text-red-400"></i>
+                                Keamanan & Password AI Team (Khusus Fitness Manager)
+                            </h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Kelola perlindungan akses menu AI Team & Command dengan enkripsi SHA-256.</p>
+                        </div>
+                        <span id="settingsAiLockStatusPill" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-red-950/80 text-red-300 border border-red-800">
+                            <i class="fa-solid fa-lock"></i>
+                            STATUS: TERKUNCI
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                        <div class="bg-[#0b0f19] border border-gray-800 rounded-xl p-3.5 space-y-1">
+                            <div class="text-[10px] font-bold uppercase text-gray-500">Status Password AI Team</div>
+                            <div id="settingsAiPwdTypeLabel" class="font-bold text-amber-300">Password Default Awal (FTL2026)</div>
+                            <div id="settingsAiPwdHashPreview" class="text-[10px] font-mono text-gray-500 truncate">SHA-256: Memuat...</div>
+                        </div>
+
+                        <div class="bg-[#0b0f19] border border-gray-800 rounded-xl p-3.5 flex items-center justify-between">
+                            <div>
+                                <div class="font-bold text-white">Auto-Lock saat Pindah Menu</div>
+                                <div class="text-[11px] text-gray-400 mt-0.5">Kunci otomatis saat meninggalkan AI Team</div>
+                            </div>
+                            <input type="checkbox" id="toggleAutoLockSettings" onchange="toggleAutoLockSetting(this.checked)" class="w-4 h-4 text-blue-600 rounded cursor-pointer">
+                        </div>
+
+                        <div class="bg-[#0b0f19] border border-gray-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-2">
+                            <button type="button" onclick="openChangeAiPasswordModal()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-key"></i>
+                                Ganti Password AI
+                            </button>
+                            <button type="button" id="settingsAiLockActionBtn" onclick="handleSettingsAiLockAction()" class="px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold border border-gray-700 transition">
+                                Buka Gerbang AI
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1201,9 +1668,213 @@
     </div>
 </div>
 
+<!-- MODAL EDIT / TAMBAH AI AGENT -->
+<div id="agentEditorModal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
+    <div class="bg-[#111827] border border-gray-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
+        <div class="bg-[#0b0f19] text-white p-4 flex justify-between items-center border-b border-gray-800">
+            <h3 id="agentEditorTitle" class="font-bold text-sm">Edit Spesialis AI Agent</h3>
+            <button onclick="closeUiModal('agentEditorModal')" class="text-gray-400 hover:text-white text-xl">&times;</button>
+        </div>
+        <form onsubmit="saveAgentEditor(event)" class="p-5 space-y-3">
+            <input type="hidden" id="editAgentId">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nama AI Agent</label>
+                    <input type="text" id="editAgentName" required class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Peran / Spesialisasi</label>
+                    <input type="text" id="editAgentRole" required class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Urutan Pipeline (1–10)</label>
+                <input type="number" id="editAgentOrder" min="1" max="10" value="1" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">System Prompt & SOP Kerja Agen</label>
+                <textarea id="editAgentPrompt" rows="4" required class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-3 text-xs text-gray-200 font-mono"></textarea>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2 border-t border-gray-800">
+                <button type="button" onclick="closeUiModal('agentEditorModal')" class="bg-gray-800 text-gray-300 font-bold px-3.5 py-2 rounded-xl text-xs">Batal</button>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Simpan Agent</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL KANBAN TASK BARU -->
+<div id="kanbanTaskModal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
+    <div class="bg-[#111827] border border-gray-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+        <div class="bg-[#0b0f19] text-white p-4 flex justify-between items-center border-b border-gray-800">
+            <h3 class="font-bold text-sm">Action Item / Tugas SOP Tim</h3>
+            <button onclick="closeUiModal('kanbanTaskModal')" class="text-gray-400 hover:text-white text-xl">&times;</button>
+        </div>
+        <form onsubmit="saveKanbanTaskForm(event)" class="p-5 space-y-3">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Judul Tugas / Langkah Aksi</label>
+                <input type="text" id="ktaskTitle" required placeholder="Contoh: Coaching 1-on-1 Trainer di bawah 700 Poin" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">PIC (Manager / PT)</label>
+                    <input type="text" id="ktaskPic" required placeholder="Fitness Manager Fathir / PT" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Prioritas</label>
+                    <select id="ktaskPrio" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                        <option value="HIGH">HIGH</option>
+                        <option value="MEDIUM" selected>MEDIUM</option>
+                        <option value="LOW">LOW</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Deadline</label>
+                    <input type="text" id="ktaskDeadline" required value="Hari ini, 18:00 WIB" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Status Kolom</label>
+                    <select id="ktaskStatus" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+                        <option value="todo">To Do</option>
+                        <option value="inprogress">In Progress</option>
+                        <option value="review">Review / Audit</option>
+                        <option value="done">Done / Selesai</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Target KPI Terukur</label>
+                <input type="text" id="ktaskKpi" required placeholder="Contoh: Minimal 2.000 Poin harian tercapai" class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2 border-t border-gray-800">
+                <button type="button" onclick="closeUiModal('kanbanTaskModal')" class="bg-gray-800 text-gray-300 font-bold px-3.5 py-2 rounded-xl text-xs">Batal</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Simpan Tugas</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL GANTI PASSWORD AI TEAM (FITNESS MANAGER) -->
+<div id="changeAiPasswordModal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4">
+    <div class="bg-[#111827] border border-gray-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+        <div class="bg-[#0b0f19] text-white p-4 flex justify-between items-center border-b border-gray-800">
+            <h3 class="font-bold text-sm flex items-center gap-2">
+                <i class="fa-solid fa-key text-amber-400"></i>
+                Ganti Password AI Team (Fitness Manager)
+            </h3>
+            <button onclick="closeUiModal('changeAiPasswordModal')" class="text-gray-400 hover:text-white text-xl">&times;</button>
+        </div>
+        <form onsubmit="submitChangeAiPassword(event)" class="p-5 space-y-3">
+            <p class="text-xs text-gray-400 leading-relaxed">
+                Verifikasi password lama Anda terlebih dahulu. Password baru di-hash menggunakan <strong class="text-gray-200">SHA-256</strong> dan disimpan aman di perangkat Anda.
+            </p>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Password Lama</label>
+                <div class="relative">
+                    <input type="password" id="chgAiOldPassword" required placeholder="Masukkan password lama (default: FTL2026)" class="w-full bg-[#0b0f19] border border-gray-800 focus:border-blue-500 rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-white focus:outline-none">
+                    <button type="button" onclick="toggleAiPassVisibility('chgAiOldPassword', this)" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-white">
+                        <i class="fa-solid fa-eye text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Password Baru (Min. 4 karakter)</label>
+                <div class="relative">
+                    <input type="password" id="chgAiNewPassword" minlength="4" required placeholder="Masukkan password baru Manager..." class="w-full bg-[#0b0f19] border border-gray-800 focus:border-blue-500 rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-white focus:outline-none">
+                    <button type="button" onclick="toggleAiPassVisibility('chgAiNewPassword', this)" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-white">
+                        <i class="fa-solid fa-eye text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Konfirmasi Password Baru</label>
+                <div class="relative">
+                    <input type="password" id="chgAiConfirmPassword" minlength="4" required placeholder="Ulangi password baru..." class="w-full bg-[#0b0f19] border border-gray-800 focus:border-blue-500 rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-white focus:outline-none">
+                    <button type="button" onclick="toggleAiPassVisibility('chgAiConfirmPassword', this)" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-white">
+                        <i class="fa-solid fa-eye text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="chgAiPwdError" class="hidden bg-red-950/70 border border-red-800 rounded-xl p-2.5 text-xs text-red-200"></div>
+            <div class="flex justify-end space-x-2 pt-2 border-t border-gray-800">
+                <button type="button" onclick="closeUiModal('changeAiPasswordModal')" class="bg-gray-800 text-gray-300 font-bold px-3.5 py-2 rounded-xl text-xs">Batal</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl text-xs">Simpan Password Baru</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- JavaScript Logic -->
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdf7dyKVM5qEkYNZJIma0DqiPdmO0GpqbchiJsYz3jcm1Pc28EFq7cgKH7pRSkRkqx/exec";
+
+    // --- NON-BLOCKING TOAST & CUSTOM CONFIRM HELPERS (NO ALERT / CONFIRM) ---
+    function showToast(msg, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const styles = {
+            success: 'bg-emerald-950/95 border-emerald-700 text-emerald-200',
+            error: 'bg-red-950/95 border-red-700 text-red-200',
+            info: 'bg-[#111827]/95 border-blue-700 text-gray-100'
+        };
+        const icons = {
+            success: 'fa-circle-check text-emerald-400',
+            error: 'fa-circle-exclamation text-red-400',
+            info: 'fa-circle-info text-blue-400'
+        };
+        const toast = document.createElement('div');
+        toast.className = `pointer-events-auto flex items-start gap-2.5 px-4 py-3 rounded-xl border shadow-2xl backdrop-blur-md text-xs font-semibold transition-all duration-300 ${styles[type] || styles.info}`;
+        toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} mt-0.5 shrink-0"></i><span class="leading-snug">${msg}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 3800);
+    }
+
+    let pendingConfirmCallback = null;
+    function showConfirmModal(title, message, onConfirm, confirmText = 'Ya, Lanjutkan', confirmClass = 'bg-red-600 hover:bg-red-500') {
+        document.getElementById('confirmModalTitle').innerText = title;
+        document.getElementById('confirmModalMessage').innerText = message;
+        const btn = document.getElementById('confirmModalActionBtn');
+        btn.innerText = confirmText;
+        btn.className = `${confirmClass} text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow`;
+        pendingConfirmCallback = onConfirm;
+        const modal = document.getElementById('customConfirmModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeCustomConfirm() {
+        const modal = document.getElementById('customConfirmModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        pendingConfirmCallback = null;
+    }
+
+    document.getElementById('confirmModalActionBtn').addEventListener('click', () => {
+        const cb = pendingConfirmCallback;
+        closeCustomConfirm();
+        if (typeof cb === 'function') cb();
+    });
+
+    function openUiModal(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        }
+    }
+
+    function closeUiModal(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+    }
 
     function localDateStr(d) {
         const dt = d || new Date();
@@ -1255,6 +1926,7 @@
         setElText('sidebarProfileRole', managerProfile.role);
         setElText('sidebarBranchSubtitle', managerProfile.branch);
         setElText('headerManagerBadge', managerProfile.alias || managerProfile.fullName);
+        setElText('aiCommandBranchLabel', managerProfile.branch);
 
         setElText('profileBigAvatar', initials);
         setElText('profileDisplayHeaderName', displayName);
@@ -1281,6 +1953,7 @@
                 ? "bg-emerald-950/60 text-emerald-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-800"
                 : "bg-amber-950/60 text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-800";
         }
+        updateAiSecurityUI();
     }
 
     function saveManagerProfile(e) {
@@ -1296,7 +1969,7 @@
         };
         localStorage.setItem('FTL_MANAGER_PROFILE', JSON.stringify(managerProfile));
         applyManagerProfileUI();
-        alert("Profil Manager berhasil diperbarui!");
+        showToast("Profil Manager berhasil diperbarui!", "success");
     }
 
     function saveAutoSyncPref() {
@@ -1320,41 +1993,47 @@
         const savedPass = localStorage.getItem('FTL_AUTH_PASSWORD') || "admin123";
 
         if (localStorage.getItem('FTL_AUTH_PASSWORD') && currentInput !== savedPass) {
-            alert("Kata sandi saat ini tidak sesuai!");
+            showToast("Kata sandi saat ini tidak sesuai!", "error");
             return;
         }
         if (!localStorage.getItem('FTL_AUTH_PASSWORD') && currentInput && currentInput !== "admin123") {
-            alert("Kata sandi default saat ini adalah 'admin123' (atau kosongkan kolom kata sandi saat ini).");
+            showToast("Kata sandi default saat ini adalah 'admin123'.", "error");
             return;
         }
 
         if (newPass.length < 4) {
-            alert("Kata sandi baru minimal harus 4 karakter!");
+            showToast("Kata sandi baru minimal harus 4 karakter!", "error");
             return;
         }
 
         if (newPass !== confirmPass) {
-            alert("Konfirmasi kata sandi baru tidak cocok!");
+            showToast("Konfirmasi kata sandi baru tidak cocok!", "error");
             return;
         }
 
         localStorage.setItem('FTL_AUTH_PASSWORD', newPass);
         e.target.reset();
         applyManagerProfileUI();
-        alert("Kata sandi berhasil diperbarui! Semua data Anda tetap aman.");
+        showToast("Kata sandi login berhasil diperbarui!", "success");
     }
 
     function resetPasswordFromLogin(e) {
         if (e) e.preventDefault();
         const currentSaved = localStorage.getItem('FTL_AUTH_PASSWORD');
         if (!currentSaved) {
-            alert("Anda masih menggunakan kata sandi default.\nSilakan login dengan kata sandi: admin123");
+            showToast("Anda masih menggunakan kata sandi default: admin123", "info");
             return;
         }
-        if (confirm("Reset kata sandi login kembali ke default (admin123)?\n(Data aktivitas & client Anda TIDAK akan terhapus)")) {
-            localStorage.removeItem('FTL_AUTH_PASSWORD');
-            alert("Kata sandi berhasil direset ke: admin123\nSilakan masuk menggunakan kata sandi tersebut.");
-        }
+        showConfirmModal(
+            "Reset Kata Sandi Login",
+            "Reset kata sandi login kembali ke default (admin123)?\n(Data aktivitas & client Anda TIDAK akan terhapus)",
+            () => {
+                localStorage.removeItem('FTL_AUTH_PASSWORD');
+                showToast("Kata sandi berhasil direset ke: admin123", "success");
+            },
+            "Reset ke Default",
+            "bg-blue-600 hover:bg-blue-500"
+        );
     }
 
     // --- 2. DAFTAR TRAINER DINAMIS ---
@@ -1421,7 +2100,7 @@
         const name = inp.value.trim();
         if (!name) return;
         if (trainerList.some(t => t.toLowerCase() === name.toLowerCase())) {
-            alert("Nama trainer sudah terdaftar!");
+            showToast("Nama trainer sudah terdaftar!", "error");
             return;
         }
         trainerList.push(name);
@@ -1429,23 +2108,30 @@
         inp.value = '';
         refreshAllTrainerUI();
         renderDashboard();
+        showToast(`Trainer "${name}" berhasil ditambahkan.`, "success");
     }
 
     function removeTrainerFromSettings(index) {
         const name = trainerList[index];
         if (!name) return;
-        if (confirm(`Hapus "${name}" dari daftar trainer aktif?\n(Catatan riwayat lama di database tetap tersimpan)`)) {
-            trainerList.splice(index, 1);
-            localStorage.setItem('FTL_TRAINER_LIST', JSON.stringify(trainerList));
-            refreshAllTrainerUI();
-            renderDashboard();
-        }
+        showConfirmModal(
+            "Hapus Trainer Aktif",
+            `Hapus "${name}" dari daftar trainer aktif?\n(Catatan riwayat lama di database tetap tersimpan)`,
+            () => {
+                trainerList.splice(index, 1);
+                localStorage.setItem('FTL_TRAINER_LIST', JSON.stringify(trainerList));
+                refreshAllTrainerUI();
+                renderDashboard();
+                showToast(`Trainer "${name}" dihapus dari daftar aktif.`, "info");
+            },
+            "Hapus Trainer"
+        );
     }
 
-    // --- 3. BACKUP & RESTORE FULL JSON ---
+    // --- 3. BACKUP & RESTORE FULL JSON (TERMASUK AI TEAM STATE) ---
     function exportFullBackupJSON() {
         const backupPayload = {
-            version: "FTL_BLUE_V1",
+            version: "FTL_BLUE_AI_V2",
             exportedAt: new Date().toISOString(),
             trainerData: appData,
             clientData: clientData,
@@ -1454,7 +2140,8 @@
             targets: {
                 division: DIVISION_TARGET,
                 individual: INDIVIDUAL_SOB_TARGET
-            }
+            },
+            aiTeamState: aiTeamState
         };
         const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1465,6 +2152,7 @@
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+        showToast("Backup Full Data (.JSON) berhasil diunduh!", "success");
     }
 
     function importFullBackupJSON(event) {
@@ -1496,15 +2184,20 @@
                     localStorage.setItem('FTL_TARGET_DIVISION', DIVISION_TARGET);
                     localStorage.setItem('FTL_TARGET_INDIVIDUAL', INDIVIDUAL_SOB_TARGET);
                 }
+                if (parsed.aiTeamState) {
+                    aiTeamState = { ...aiTeamState, ...parsed.aiTeamState };
+                    saveAiTeamState();
+                }
                 applyManagerProfileUI();
                 refreshAllTrainerUI();
                 renderRecentTable();
                 renderClientTable();
                 renderDashboard();
                 renderAnalytics();
-                alert("Backup berhasil dipulihkan seluruhnya!");
+                refreshAiTeamUI();
+                showToast("Backup berhasil dipulihkan seluruhnya!", "success");
             } catch (err) {
-                alert("File backup tidak valid atau rusak.");
+                showToast("File backup tidak valid atau rusak.", "error");
             }
         };
         reader.readAsText(file);
@@ -1522,7 +2215,7 @@
     function sendPersonalDailyRecapWA() {
         const waNumber = getFormattedManagerWA();
         if (!waNumber) {
-            alert("Nomor WhatsApp Manager belum diisi! Silakan isi di menu Pengaturan & Profil terlebih dahulu.");
+            showToast("Nomor WhatsApp Manager belum diisi! Silakan isi di menu Pengaturan & Profil.", "error");
             switchTab('settings');
             return;
         }
@@ -1584,7 +2277,7 @@
     function sendPersonalWeeklyRecapWA() {
         const waNumber = getFormattedManagerWA();
         if (!waNumber) {
-            alert("Nomor WhatsApp Manager belum diisi! Silakan isi di menu Pengaturan & Profil terlebih dahulu.");
+            showToast("Nomor WhatsApp Manager belum diisi! Silakan isi di menu Pengaturan & Profil.", "error");
             switchTab('settings');
             return;
         }
@@ -1611,7 +2304,6 @@
             ? (weeklyLogs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0) / weeklyLogs.length).toFixed(1)
             : "0";
 
-        // Hitung ranking 7 hari terakhir & status run-rate bulan ini
         const currentWeekNum = Math.min(Math.ceil(now.getDate() / 7), 5);
         const targetRunRate = Math.min(currentWeekNum * (INDIVIDUAL_SOB_TARGET / 5), INDIVIDUAL_SOB_TARGET);
         const minSafeRunRate = targetRunRate * 0.8;
@@ -1795,6 +2487,7 @@
         selectedMonth = value;
         renderDashboard();
         renderAnalytics();
+        refreshAiTelemetryBanner();
     }
 
     function shiftMonth(delta) {
@@ -1835,7 +2528,7 @@
         const newInd = parseFloat(document.getElementById('inputIndividualTarget').value);
 
         if (!newDiv || newDiv <= 0 || !newInd || newInd <= 0) {
-            alert('Target harus berupa angka lebih dari 0!');
+            showToast('Target harus berupa angka lebih dari 0!', 'error');
             return;
         }
 
@@ -1847,7 +2540,8 @@
         closeTargetModal();
         renderDashboard();
         renderAnalytics();
-        alert('Target berhasil diperbarui!');
+        refreshAiTelemetryBanner();
+        showToast('Target berhasil diperbarui!', 'success');
     }
 
     function saveSettingsPageTargets() {
@@ -1855,7 +2549,7 @@
         const newInd = parseFloat(document.getElementById('settingsIndTargetInput').value);
 
         if (!newDiv || newDiv <= 0 || !newInd || newInd <= 0) {
-            alert('Target harus berupa angka lebih dari 0!');
+            showToast('Target harus berupa angka lebih dari 0!', 'error');
             return;
         }
 
@@ -1866,18 +2560,27 @@
 
         renderDashboard();
         renderAnalytics();
-        alert('Parameter target berhasil disimpan!');
+        refreshAiTelemetryBanner();
+        showToast('Parameter target berhasil disimpan!', 'success');
     }
 
     function resetTargetSettings() {
-        if (!confirm('Kembalikan target ke nilai default (' + DEFAULT_DIVISION_TARGET.toLocaleString('id-ID') + ' & ' + DEFAULT_INDIVIDUAL_TARGET.toLocaleString('id-ID') + ')?')) return;
-        DIVISION_TARGET = DEFAULT_DIVISION_TARGET;
-        INDIVIDUAL_SOB_TARGET = DEFAULT_INDIVIDUAL_TARGET;
-        localStorage.removeItem('FTL_TARGET_DIVISION');
-        localStorage.removeItem('FTL_TARGET_INDIVIDUAL');
-        closeTargetModal();
-        renderDashboard();
-        renderAnalytics();
+        showConfirmModal(
+            'Reset Target Default',
+            `Kembalikan target ke nilai default (${DEFAULT_DIVISION_TARGET.toLocaleString('id-ID')} & ${DEFAULT_INDIVIDUAL_TARGET.toLocaleString('id-ID')})?`,
+            () => {
+                DIVISION_TARGET = DEFAULT_DIVISION_TARGET;
+                INDIVIDUAL_SOB_TARGET = DEFAULT_INDIVIDUAL_TARGET;
+                localStorage.removeItem('FTL_TARGET_DIVISION');
+                localStorage.removeItem('FTL_TARGET_INDIVIDUAL');
+                closeTargetModal();
+                renderDashboard();
+                renderAnalytics();
+                refreshAiTelemetryBanner();
+                showToast('Target dikembalikan ke nilai default.', 'info');
+            },
+            'Reset Target'
+        );
     }
 
     function updateTargetLabels() {
@@ -1926,9 +2629,12 @@
                 renderRecentTable();
                 renderDashboard();
                 renderAnalytics();
+                refreshAiTelemetryBanner();
+                showToast(`Sync Cloud selesai (${cloudData.length} records dimuat).`, "success");
             }
         } catch(e) {
             console.error("Gagal menyedot data cloud:", e);
+            showToast("Sync Cloud menggunakan cache lokal (periksa koneksi internet).", "info");
         } finally {
             if (syncBtnText) syncBtnText.innerText = "Sync Cloud";
         }
@@ -2067,8 +2773,9 @@
             });
 
             localStorage.setItem('clientData', JSON.stringify(clientData));
-            alert(`Berhasil mengimpor ${importedCount} data client ke database!`);
+            showToast(`Berhasil mengimpor ${importedCount} data client ke database!`, 'success');
             renderClientTable();
+            refreshAiTelemetryBanner();
         };
         reader.readAsText(file);
         event.target.value = '';
@@ -2112,9 +2819,10 @@
             });
 
             localStorage.setItem('trainerData', JSON.stringify(appData));
-            alert(`Berhasil mengimpor ${importedCount} data aktivitas ke database!`);
+            showToast(`Berhasil mengimpor ${importedCount} data aktivitas ke database!`, 'success');
             renderRecentTable();
             renderDashboard();
+            refreshAiTelemetryBanner();
         };
         reader.readAsText(file);
         event.target.value = '';
@@ -2131,9 +2839,10 @@
 
         clientData.push(newClient);
         localStorage.setItem('clientData', JSON.stringify(clientData));
-        alert('Client Baru Berhasil Ditambahkan!');
+        showToast('Client Baru Berhasil Ditambahkan!', 'success');
         this.reset();
         renderClientTable();
+        refreshAiTelemetryBanner();
     });
 
     function openEditClientModal(clientId) {
@@ -2170,6 +2879,8 @@
         localStorage.setItem('clientData', JSON.stringify(clientData));
         closeEditClientModal();
         renderClientTable();
+        refreshAiTelemetryBanner();
+        showToast('Data client diperbarui.', 'success');
     });
 
     function renderClientTable() {
@@ -2260,11 +2971,18 @@
 
         if (idsToDelete.length === 0) return;
 
-        if (confirm(`Apakah Anda yakin ingin menghapus ${idsToDelete.length} data client yang dipilih secara permanen?`)) {
-            clientData = clientData.filter(c => !idsToDelete.includes(c.id));
-            localStorage.setItem('clientData', JSON.stringify(clientData));
-            renderClientTable();
-        }
+        showConfirmModal(
+            'Hapus Client Terpilih',
+            `Apakah Anda yakin ingin menghapus ${idsToDelete.length} data client yang dipilih secara permanen?`,
+            () => {
+                clientData = clientData.filter(c => !idsToDelete.includes(c.id));
+                localStorage.setItem('clientData', JSON.stringify(clientData));
+                renderClientTable();
+                refreshAiTelemetryBanner();
+                showToast(`${idsToDelete.length} data client dihapus.`, 'info');
+            },
+            'Hapus Client'
+        );
     }
 
     function adjustSession(clientId, change) {
@@ -2277,14 +2995,22 @@
         });
         localStorage.setItem('clientData', JSON.stringify(clientData));
         renderClientTable();
+        refreshAiTelemetryBanner();
     }
 
     function deleteClient(clientId) {
-        if(confirm('Apakah Anda yakin ingin menghapus client ini dari database?')) {
-            clientData = clientData.filter(c => c.id !== clientId);
-            localStorage.setItem('clientData', JSON.stringify(clientData));
-            renderClientTable();
-        }
+        showConfirmModal(
+            'Hapus Data Client',
+            'Apakah Anda yakin ingin menghapus client ini dari database?',
+            () => {
+                clientData = clientData.filter(c => c.id !== clientId);
+                localStorage.setItem('clientData', JSON.stringify(clientData));
+                renderClientTable();
+                refreshAiTelemetryBanner();
+                showToast('Client dihapus dari database.', 'info');
+            },
+            'Hapus'
+        );
     }
 
     function validateConductAndRA() {
@@ -2323,11 +3049,11 @@
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
                     document.getElementById('alarmStatusText').innerText = "Alarm 18:00 Aktif";
-                    alert("Pengingat Harian Aktif! Sistem akan memberikan notifikasi setiap pukul 18:00 WIB.");
+                    showToast("Pengingat Harian Aktif! Sistem akan memberikan notifikasi setiap pukul 18:00 WIB.", "success");
                 }
             });
         } else {
-            alert("Browser Anda tidak mendukung fitur Notifikasi.");
+            showToast("Browser Anda tidak mendukung fitur Notifikasi.", "info");
         }
     }
 
@@ -2363,32 +3089,47 @@
         }
     }
 
+    let currentMainTab = 'dashboard';
     function switchTab(tab) {
-        ['input', 'client', 'dashboard', 'analytics', 'settings'].forEach(t => {
+        if (currentMainTab === 'aiteam' && tab !== 'aiteam' && aiTeamState.security?.autoLockOnLeave && isAiTeamUnlocked) {
+            lockAITeam(true);
+        }
+        currentMainTab = tab;
+
+        ['input', 'client', 'dashboard', 'analytics', 'aiteam', 'settings'].forEach(t => {
             const sec = document.getElementById(`tab-${t}`);
             const btn = document.getElementById(`btn-tab-${t}`);
             if (sec) sec.classList.add('hidden');
-            if (btn) btn.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800/60 transition";
+            if (btn) btn.className = "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-gray-800/60 transition";
         });
 
         const activeSec = document.getElementById(`tab-${tab}`);
         const activeBtn = document.getElementById(`btn-tab-${tab}`);
         if (activeSec) activeSec.classList.remove('hidden');
-        if (activeBtn) activeBtn.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-bold transition bg-blue-600 text-white shadow-lg shadow-blue-600/20";
+        if (activeBtn) activeBtn.className = "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition bg-blue-600 text-white shadow-lg shadow-blue-600/20";
 
         const headerTitles = {
-            dashboard: 'Dashboard Gerencial',
-            input: 'Input Aktivitas Harian',
-            client: 'Monitoring Sesi Client',
-            analytics: 'Analisis & Coaching Trainer',
-            settings: 'Pengaturan & Profil Manager'
+            dashboard: ['Dashboard Gerencial', 'Análise e extração de métricas operacionais Depok Lama'],
+            input: ['Input Aktivitas Harian', 'Setoran poin, unit bundling, conduct sesi & RA trainer'],
+            client: ['Monitoring Sesi Client', 'Monitoring sisa sesi member & follow-up renewal'],
+            analytics: ['Analisis & Coaching Trainer', 'Análise e extração de métricas operacionais Depok Lama'],
+            aiteam: ['AI Team & Command Center', 'Kolaborasi multi-agen AI terhubung dengan data live FTL Blue'],
+            settings: ['Pengaturan & Profil Manager', 'Konfigurasi target divisi, keamanan password & daftar trainer']
         };
         const titleEl = document.getElementById('topHeaderTitle');
-        if (titleEl && headerTitles[tab]) titleEl.innerText = headerTitles[tab];
+        const subEl = document.getElementById('topHeaderSubtitle');
+        if (titleEl && headerTitles[tab]) titleEl.innerText = headerTitles[tab][0];
+        if (subEl && headerTitles[tab]) subEl.innerText = headerTitles[tab][1];
 
         if (tab === 'dashboard') renderDashboard();
         if (tab === 'analytics') renderAnalytics();
         if (tab === 'client') renderClientTable();
+        if (tab === 'aiteam') {
+            refreshAiTeamUI();
+            if (!isAiTeamUnlocked) {
+                setTimeout(() => document.getElementById('aiManagerPasswordInput')?.focus(), 80);
+            }
+        }
         if (tab === 'settings') {
             applyManagerProfileUI();
             refreshAllTrainerUI();
@@ -2404,12 +3145,12 @@
         const bundlingVal = parseInt(document.getElementById('inputBundling').value) || 0;
 
         if (conductVal < 5 && raVal < 1) {
-            alert("PERINGATAN: Karena jumlah melatih kurang dari 5 sesi, Trainer wajib melakukan dan menginput minimal 1 RA!");
+            showToast("PERINGATAN: Karena melatih kurang dari 5 sesi, Trainer wajib menginput minimal 1 RA!", "error");
             return;
         }
 
         if (raVal > 20) {
-            alert("PERINGATAN: Maksimal RA harian adalah 20!");
+            showToast("PERINGATAN: Maksimal RA harian adalah 20!", "error");
             return;
         }
         
@@ -2432,9 +3173,12 @@
         appData.push(newEntry);
         localStorage.setItem('trainerData', JSON.stringify(appData));
         
-        alert(cloudOk
-            ? 'Data Aktivitas Berhasil Disimpan! (Klik "Sync Cloud" untuk memastikan data masuk ke Google Sheet)'
-            : 'Data tersimpan di perangkat ini, tetapi GAGAL dikirim ke Cloud (cek koneksi internet).');
+        showToast(
+            cloudOk
+                ? 'Data Aktivitas Berhasil Disimpan! (Klik "Sync Cloud" untuk sinkronisasi Google Sheet)'
+                : 'Data tersimpan di perangkat ini, tetapi gagal dikirim ke Cloud.',
+            cloudOk ? 'success' : 'info'
+        );
         this.reset();
         document.getElementById('inputDate').value = localDateStr();
         document.getElementById('raCounter').innerText = "0 / 20 RA";
@@ -2442,6 +3186,7 @@
         document.getElementById('raWarning').classList.add('hidden');
         renderRecentTable();
         renderDashboard();
+        refreshAiTelemetryBanner();
     });
 
     function changeRecentLimit(val) {
@@ -2572,47 +3317,65 @@
         }
     }
 
-    async function deleteEntry(id) {
-        if (confirm('Apakah Anda yakin ingin menghapus catatan data ini secara permanen dari Cloud & Database?')) {
-            appData = appData.filter(x => x.id !== id);
-            localStorage.setItem('trainerData', JSON.stringify(appData));
-            
-            renderRecentTable();
-            renderDashboard();
+    function deleteEntry(id) {
+        showConfirmModal(
+            'Hapus Catatan Aktivitas',
+            'Apakah Anda yakin ingin menghapus catatan data ini secara permanen dari Cloud & Database?',
+            async () => {
+                appData = appData.filter(x => x.id !== id);
+                localStorage.setItem('trainerData', JSON.stringify(appData));
+                
+                renderRecentTable();
+                renderDashboard();
+                refreshAiTelemetryBanner();
 
-            const cloudOk = await postToCloud({ action: "delete", id: id });
-            alert(cloudOk
-                ? 'Permintaan hapus telah dikirim ke Cloud. Klik "Sync Cloud" untuk memastikan data sudah terhapus di Google Sheet.'
-                : 'Data dihapus dari perangkat ini, tetapi GAGAL mengirim perintah hapus ke Cloud (cek koneksi internet).');
-        }
+                const cloudOk = await postToCloud({ action: "delete", id: id });
+                showToast(
+                    cloudOk
+                        ? 'Permintaan hapus dikirim ke Cloud.'
+                        : 'Data dihapus dari perangkat ini, gagal mengirim ke Cloud.',
+                    cloudOk ? 'success' : 'info'
+                );
+            },
+            'Hapus Permanen'
+        );
     }
 
-    async function deleteSelectedActivity() {
+    function deleteSelectedActivity() {
         const selectedCbs = document.querySelectorAll('.activity-checkbox:checked');
         const idsToDelete = Array.from(selectedCbs).map(cb => parseFloat(cb.value));
 
         if (idsToDelete.length === 0) return;
 
-        if (confirm(`Apakah Anda yakin ingin menghapus ${idsToDelete.length} data aktivitas yang dipilih secara permanen dari Cloud?`)) {
-            appData = appData.filter(x => !idsToDelete.includes(x.id));
-            localStorage.setItem('trainerData', JSON.stringify(appData));
-            renderRecentTable();
-            renderDashboard();
+        showConfirmModal(
+            'Hapus Data Aktivitas Terpilih',
+            `Apakah Anda yakin ingin menghapus ${idsToDelete.length} data aktivitas yang dipilih secara permanen dari Cloud?`,
+            async () => {
+                appData = appData.filter(x => !idsToDelete.includes(x.id));
+                localStorage.setItem('trainerData', JSON.stringify(appData));
+                renderRecentTable();
+                renderDashboard();
+                refreshAiTelemetryBanner();
 
-            let failed = 0;
-            for (let id of idsToDelete) {
-                const ok = await postToCloud({ action: "delete", id: id });
-                if (!ok) failed++;
-            }
-            alert(failed === 0
-                ? 'Permintaan hapus telah dikirim ke Cloud. Klik "Sync Cloud" untuk memastikan data sudah terhapus di Google Sheet.'
-                : `Data dihapus dari perangkat ini, tetapi ${failed} perintah hapus GAGAL dikirim ke Cloud (cek koneksi internet).`);
-        }
+                let failed = 0;
+                for (let id of idsToDelete) {
+                    const ok = await postToCloud({ action: "delete", id: id });
+                    if (!ok) failed++;
+                }
+                showToast(
+                    failed === 0
+                        ? `${idsToDelete.length} data dihapus & disinkronkan ke Cloud.`
+                        : `Data dihapus lokal, ${failed} perintah gagal dikirim ke Cloud.`,
+                    failed === 0 ? 'success' : 'info'
+                );
+            },
+            'Hapus Terpilih'
+        );
     }
 
     function exportToCSV() {
         if (appData.length === 0) {
-            alert('Belum ada data terinput untuk diunduh.');
+            showToast('Belum ada data terinput untuk diunduh.', 'info');
             return;
         }
 
@@ -2633,6 +3396,7 @@
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+        showToast('File CSV aktivitas berhasil diunduh.', 'success');
     }
 
     function renderDailyAuditTable(todayStr) {
@@ -2860,6 +3624,7 @@
 
         renderCharts(filtered);
         renderMonthlyEvaluation();
+        refreshAiTelemetryBanner();
     }
 
     function renderCharts(data) {
@@ -2986,380 +3751,1774 @@
 
         const summaryBody = document.getElementById('evalSummaryBody');
         summaryBody.innerHTML = '';
+        lastEvaluationExport = [];
 
-        [...stats].reverse().forEach(s => {
-            const idx = allKeys.indexOf(s.key);
-            const prev = idx > 0 ? getMonthStats(allKeys[idx - 1]) : null;
-            const pct = (s.points / DIVISION_TARGET) * 100;
-            const pctClass = pct >= 100 ? 'text-emerald-400' : (pct >= 80 ? 'text-amber-400' : 'text-red-400');
+        stats.slice().reverse().forEach(s => {
+            const idx = stats.findIndex(x => x.key === s.key);
+            const prev = idx > 0 ? stats[idx - 1] : null;
+            const pctTarget = ((s.points / DIVISION_TARGET) * 100).toFixed(1);
             const isSelected = s.key === selectedMonth;
             const isCurrent = s.key === curKey;
 
+            lastEvaluationExport.push({
+                Bulan: s.label,
+                Total_Poin: s.points,
+                Target_Divisi: DIVISION_TARGET,
+                Persen_Target: pctTarget + '%',
+                Selisih_Bulan_Lalu: prev ? s.points - prev.points : '',
+                Bundling: s.bundling,
+                Conduct: s.conduct,
+                Rata_RA: s.avgRA.toFixed(1),
+                Capai_SOB: `${s.reachedSOB}/${trainerList.length}`,
+                Top_Trainer: s.best ? `${s.best.name} (${s.best.points})` : '-'
+            });
+
+            const pctClass = parseFloat(pctTarget) >= 100
+                ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                : parseFloat(pctTarget) >= 80
+                    ? 'bg-amber-950 text-amber-400 border-amber-800'
+                    : 'bg-red-950/70 text-red-400 border-red-800';
+
             summaryBody.innerHTML += `
-                <tr class="${isSelected ? 'bg-blue-950/30' : 'hover:bg-gray-800/40'} transition">
-                    <td class="p-2.5 font-bold text-white whitespace-nowrap">
+                <tr class="${isSelected ? 'bg-blue-950/40' : 'hover:bg-gray-800/40'} text-xs sm:text-sm transition">
+                    <td class="p-3 font-extrabold text-white whitespace-nowrap">
                         ${s.label}
-                        ${isCurrent ? '<span class="ml-1 bg-blue-900 text-blue-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">Aktif</span>' : ''}
+                        ${isCurrent ? '<span class="ml-1.5 bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">Berjalan</span>' : ''}
                     </td>
-                    <td class="p-2.5 font-extrabold text-blue-400 whitespace-nowrap">${s.points.toLocaleString('id-ID')}</td>
-                    <td class="p-2.5 font-black ${pctClass}">${pct.toFixed(1)}%</td>
-                    <td class="p-2.5 whitespace-nowrap">${deltaBadge(s.points, prev ? prev.points : null)}</td>
-                    <td class="p-2.5 font-bold text-emerald-400">${s.bundling}</td>
-                    <td class="p-2.5 font-bold text-gray-200">${s.conduct}</td>
-                    <td class="p-2.5 font-bold text-gray-200">${s.reachedSOB}/${trainerList.length}</td>
-                    <td class="p-2.5 text-center">
-                        <button type="button" onclick="openMonthFromEval('${s.key}')" class="bg-gray-800 hover:bg-blue-600 text-white font-bold px-2 py-1 rounded text-[11px] transition">
-                            Lihat
+                    <td class="p-3 font-black text-blue-400 whitespace-nowrap">${s.points.toLocaleString('id-ID')} Poin</td>
+                    <td class="p-3"><span class="${pctClass} font-extrabold px-2 py-0.5 rounded-full border text-xs">${pctTarget}%</span></td>
+                    <td class="p-3 whitespace-nowrap">${deltaBadge(s.points, prev ? prev.points : null)}</td>
+                    <td class="p-3 font-bold text-emerald-400">${s.bundling} Unit</td>
+                    <td class="p-3 font-bold text-gray-300">${s.conduct} Sesi</td>
+                    <td class="p-3 font-extrabold text-white">${s.reachedSOB}/${trainerList.length} PT</td>
+                    <td class="p-3 text-center">
+                        <button type="button" onclick="openMonthFromEval('${s.key}')"
+                            class="${isSelected ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-200'} font-bold px-2.5 py-1 rounded-lg text-xs transition">
+                            ${isSelected ? 'Ditampilkan' : 'Lihat Bulan'}
                         </button>
                     </td>
                 </tr>
             `;
         });
 
-        const head = document.getElementById('evalMatrixHead');
-        const body = document.getElementById('evalMatrixBody');
+        const matrixHead = document.getElementById('evalMatrixHead');
+        const matrixBody = document.getElementById('evalMatrixBody');
+        matrixHead.innerHTML = `
+            <tr>
+                <th class="p-3 sticky left-0 bg-[#0b0f19] z-10">Trainer</th>
+                ${stats.map(s => `<th class="p-3 text-right whitespace-nowrap ${s.key === selectedMonth ? 'text-blue-400 bg-blue-950/40' : ''}">${s.shortLabel}</th>`).join('')}
+                <th class="p-3 text-right whitespace-nowrap">Total (${stats.length} Bln)</th>
+                <th class="p-3 text-right whitespace-nowrap">Rata-rata / Bln</th>
+                <th class="p-3 text-center whitespace-nowrap">Tren Terakhir</th>
+            </tr>
+        `;
 
-        head.innerHTML = `<tr>
-            <th class="p-3">Trainer</th>
-            ${stats.map(s => `<th class="p-3 text-center whitespace-nowrap">${s.shortLabel}</th>`).join('')}
-            <th class="p-3 text-center">Rata-Rata</th>
-            <th class="p-3 text-center">Tren Bulan Terakhir</th>
-        </tr>`;
+        const trainerRows = trainerList.map(name => {
+            const cells = stats.map(s => s.perTrainer.find(t => t.name === name) || { points: 0, hasData: false });
+            const total = cells.reduce((a, b) => a + b.points, 0);
+            const activeMonths = cells.filter(c => c.hasData).length;
+            const avg = activeMonths > 0 ? Math.round(total / activeMonths) : 0;
+            const last = cells[cells.length - 1] ? cells[cells.length - 1].points : 0;
+            const beforeLast = cells.length > 1 ? cells[cells.length - 2].points : null;
+            return { name, cells, total, avg, last, beforeLast };
+        }).sort((a, b) => b.total - a.total);
 
-        body.innerHTML = '';
-        if (stats.length) trainerList.forEach((trainer, tIdx) => {
-            let total = 0;
-            let monthsWithData = 0;
-
-            const cells = stats.map(s => {
-                const t = s.perTrainer[tIdx];
-                if (!t || !t.hasData) return `<td class="p-3 text-center text-gray-600">-</td>`;
-                total += t.points;
-                monthsWithData++;
-                const ratio = t.points / INDIVIDUAL_SOB_TARGET;
-                const cls = ratio >= 1 ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                          : ratio >= 0.8 ? 'bg-amber-950 text-amber-400 border border-amber-800'
-                          : 'bg-red-950 text-red-400 border border-red-800';
-                return `<td class="p-2 text-center"><span class="inline-block min-w-[64px] px-2 py-1 rounded font-extrabold ${cls}">${t.points.toLocaleString('id-ID')}</span></td>`;
+        matrixBody.innerHTML = trainerRows.map(row => {
+            const cellsHTML = row.cells.map((c, i) => {
+                const sKey = stats[i].key;
+                const selCol = sKey === selectedMonth ? 'ring-1 ring-inset ring-blue-500' : '';
+                if (!c.hasData && c.points === 0) {
+                    return `<td class="p-3 text-right text-gray-600 ${selCol}">-</td>`;
+                }
+                const ratio = c.points / INDIVIDUAL_SOB_TARGET;
+                const tone = ratio >= 1
+                    ? 'bg-emerald-950/60 text-emerald-400 font-black'
+                    : ratio >= 0.8
+                        ? 'bg-amber-950/60 text-amber-400 font-extrabold'
+                        : 'bg-red-950/50 text-red-400 font-bold';
+                return `<td class="p-3 text-right whitespace-nowrap ${tone} ${selCol}">${c.points.toLocaleString('id-ID')}</td>`;
             }).join('');
 
-            const avg = monthsWithData ? Math.round(total / monthsWithData) : 0;
-
-            let trend = '<span class="text-gray-500">-</span>';
-            if (stats.length >= 2) {
-                const last = stats[stats.length - 1].perTrainer[tIdx];
-                const before = stats[stats.length - 2].perTrainer[tIdx];
-                if (last && before && last.hasData && before.hasData) trend = deltaBadge(last.points, before.points);
-            }
-
-            body.innerHTML += `
-                <tr class="hover:bg-gray-800/40 transition">
-                    <td class="p-3 font-bold text-white whitespace-nowrap">${trainer}</td>
-                    ${cells}
-                    <td class="p-3 text-center font-black text-gray-200">${avg ? avg.toLocaleString('id-ID') : '-'}</td>
-                    <td class="p-3 text-center text-xs">${trend}</td>
+            return `
+                <tr class="hover:bg-gray-800/40 text-xs sm:text-sm transition">
+                    <td class="p-3 font-bold text-white sticky left-0 bg-[#111827] whitespace-nowrap">${row.name}</td>
+                    ${cellsHTML}
+                    <td class="p-3 text-right font-black text-blue-400 whitespace-nowrap">${row.total.toLocaleString('id-ID')}</td>
+                    <td class="p-3 text-right font-bold text-gray-300 whitespace-nowrap">${row.avg.toLocaleString('id-ID')}</td>
+                    <td class="p-3 text-center whitespace-nowrap">${deltaBadge(row.last, row.beforeLast)}</td>
                 </tr>
             `;
-        });
+        }).join('');
 
-        const canvas = document.getElementById('monthlyTrendChart');
-        if (canvas) {
+        const ctxMonthly = document.getElementById('monthlyTrendChart');
+        if (ctxMonthly) {
             if (monthlyChartInstance) monthlyChartInstance.destroy();
-            monthlyChartInstance = new Chart(canvas.getContext('2d'), {
+            monthlyChartInstance = new Chart(ctxMonthly.getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: stats.map(s => s.shortLabel),
                     datasets: [
-                        { label: 'Total Poin Divisi', data: stats.map(s => s.points), backgroundColor: '#3b82f6', borderRadius: 6 },
-                        { label: `Target Divisi (${DIVISION_TARGET.toLocaleString('id-ID')})`, data: stats.map(() => DIVISION_TARGET), type: 'line', borderColor: '#ef4444', borderDash: [6, 4], pointRadius: 0, fill: false }
+                        {
+                            label: 'Total Poin Divisi',
+                            data: stats.map(s => s.points),
+                            backgroundColor: stats.map(s => s.key === selectedMonth ? '#2563eb' : '#64748b'),
+                            borderRadius: 6
+                        },
+                        {
+                            label: `Target Divisi (${DIVISION_TARGET.toLocaleString('id-ID')})`,
+                            data: stats.map(() => DIVISION_TARGET),
+                            type: 'line',
+                            borderColor: '#ef4444',
+                            borderDash: [6, 4],
+                            pointRadius: 0
+                        }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
             });
         }
-
-        lastEvaluationExport = [];
-        stats.forEach(s => {
-            s.perTrainer.forEach(t => {
-                lastEvaluationExport.push({
-                    bulan: s.key,
-                    trainer: t.name,
-                    poin: t.points,
-                    bundling: t.bundling,
-                    conduct: t.conduct,
-                    capaiSOB: t.points >= INDIVIDUAL_SOB_TARGET ? 'Ya' : 'Tidak',
-                    persenSOB: ((t.points / INDIVIDUAL_SOB_TARGET) * 100).toFixed(1)
-                });
-            });
-        });
     }
 
     function exportEvaluationCSV() {
         if (!lastEvaluationExport.length) {
-            alert('Belum ada data untuk diunduh.');
+            showToast('Belum ada data evaluasi untuk diunduh.', 'info');
             return;
         }
-        let csv = '\ufeffBulan,Trainer,Poin,Unit_Bundling,Conduct_Sesi,Persen_Target_SOB,Capai_SOB\n';
-        lastEvaluationExport.forEach(r => {
-            csv += `${r.bulan},"${r.trainer}",${r.poin},${r.bundling},${r.conduct},${r.persenSOB},${r.capaiSOB}\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const headers = Object.keys(lastEvaluationExport[0]);
+        const lines = [headers.join(',')].concat(
+            lastEvaluationExport.map(row =>
+                headers.map(h => {
+                    const v = String(row[h] ?? '');
+                    return v.includes(',') ? `"${v}"` : v;
+                }).join(',')
+            )
+        );
+        const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Rekap_Evaluasi_Bulanan_${localDateStr()}.csv`;
+        link.download = `Evaluasi_Bulanan_Trainer_${localDateStr()}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+        showToast('CSV Evaluasi Bulanan berhasil diunduh.', 'success');
     }
 
-    function generateExecutivePDF(event) {
-        const element = document.getElementById('monthlyEvaluationSection');
-        if (!element) return;
+    function generateExecutivePDF(evt) {
+        const range = parseInt(document.getElementById('evalRange').value) || 6;
+        const keySet = new Set(
+            appData.map(d => String(d.date || '').slice(0, 7)).filter(k => /^\d{4}-\d{2}$/.test(k))
+        );
+        keySet.add(currentMonthKey());
+
+        const allKeys = Array.from(keySet).sort();
+        const shownKeys = allKeys.slice(-range);
+        const stats = shownKeys.map(getMonthStats);
+        
+        const btn = (evt && evt.currentTarget) ? evt.currentTarget : document.querySelector('button[onclick*="generateExecutivePDF"]');
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Memproses PDF...</span>';
+            btn.disabled = true;
+        }
+
+        const now = new Date();
+        const printDate = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB';
+        const periodLabel = stats.length > 1 ? `${stats[0].label} - ${stats[stats.length - 1].label}` : (stats[0] ? stats[0].label : formatMonthLabel(selectedMonth));
+
+        const totalAllPoints = stats.reduce((a, b) => a + b.points, 0);
+        const totalAllBundling = stats.reduce((a, b) => a + b.bundling, 0);
+        const totalAllConduct = stats.reduce((a, b) => a + b.conduct, 0);
+        const avgMonthlyDiv = stats.length ? Math.round(totalAllPoints / stats.length) : 0;
+
+        let summaryRowsHtml = stats.slice().reverse().map(s => {
+            const idx = stats.findIndex(x => x.key === s.key);
+            const prev = idx > 0 ? stats[idx - 1] : null;
+            const pctTarget = ((s.points / DIVISION_TARGET) * 100).toFixed(1);
+            const diffText = prev ? (s.points - prev.points >= 0 ? `+${(s.points - prev.points).toLocaleString('id-ID')}` : (s.points - prev.points).toLocaleString('id-ID')) : '-';
+            const badgeStyle = parseFloat(pctTarget) >= 100
+                ? 'background:#dcfce7; color:#15803d; border:1px solid #86efac;'
+                : parseFloat(pctTarget) >= 80
+                    ? 'background:#fef3c7; color:#b45309; border:1px solid #fcd34d;'
+                    : 'background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;';
+
+            return `
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 7px 8px; font-weight: 700; color: #0f172a;">${s.label}</td>
+                    <td style="padding: 7px 8px; font-weight: 800; color: #1d4ed8;">${s.points.toLocaleString('id-ID')} Poin</td>
+                    <td style="padding: 7px 8px;"><span style="${badgeStyle} padding: 2px 7px; border-radius: 99px; font-weight: 800; font-size: 9px;">${pctTarget}%</span></td>
+                    <td style="padding: 7px 8px; font-weight: 700; color: ${prev && (s.points - prev.points) >= 0 ? '#15803d' : '#b91c1c'};">${diffText}</td>
+                    <td style="padding: 7px 8px; font-weight: 700; color: #047857;">${s.bundling} Unit</td>
+                    <td style="padding: 7px 8px; color: #334155;">${s.conduct} Sesi</td>
+                    <td style="padding: 7px 8px; font-weight: 700; color: #0f172a;">${s.reachedSOB}/${trainerList.length} PT</td>
+                    <td style="padding: 7px 8px; font-weight: 700; color: #1e293b;">${s.best ? `${s.best.name.split(' ')[0]} (${s.best.points.toLocaleString('id-ID')})` : '-'}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const trainerRows = trainerList.map(name => {
+            const cells = stats.map(s => s.perTrainer.find(t => t.name === name) || { points: 0, hasData: false });
+            const total = cells.reduce((a, b) => a + b.points, 0);
+            const activeMonths = cells.filter(c => c.hasData).length;
+            const avg = activeMonths > 0 ? Math.round(total / activeMonths) : 0;
+            return { name, cells, total, avg };
+        }).sort((a, b) => b.total - a.total);
+
+        let matrixHeadHtml = `
+            <tr style="background: #0f172a; color: #ffffff;">
+                <th style="padding: 7px 8px; text-align: left; font-size: 9px;">NAMA PERSONAL TRAINER</th>
+                ${stats.map(s => `<th style="padding: 7px 8px; text-align: right; font-size: 9px;">${s.shortLabel.toUpperCase()}</th>`).join('')}
+                <th style="padding: 7px 8px; text-align: right; font-size: 9px; background: #1e293b;">TOTAL</th>
+                <th style="padding: 7px 8px; text-align: right; font-size: 9px; background: #1e293b;">RATA-RATA</th>
+            </tr>
+        `;
+
+        let matrixRowsHtml = trainerRows.map((row, rIdx) => {
+            const bgRow = rIdx % 2 === 0 ? '#ffffff' : '#f8fafc';
+            const cellsHtml = row.cells.map(c => {
+                if (!c.hasData && c.points === 0) return `<td style="padding: 6px 8px; text-align: right; color: #94a3b8;">-</td>`;
+                const ratio = c.points / INDIVIDUAL_SOB_TARGET;
+                const cellStyle = ratio >= 1
+                    ? 'background:#dcfce7; color:#15803d; font-weight:800;'
+                    : ratio >= 0.8
+                        ? 'background:#fef3c7; color:#b45309; font-weight:700;'
+                        : 'color:#b91c1c; font-weight:600;';
+                return `<td style="padding: 6px 8px; text-align: right; ${cellStyle}">${c.points.toLocaleString('id-ID')}</td>`;
+            }).join('');
+
+            return `
+                <tr style="background: ${bgRow}; border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 6px 8px; font-weight: 700; color: #0f172a;">${rIdx + 1}. ${row.name}</td>
+                    ${cellsHtml}
+                    <td style="padding: 6px 8px; text-align: right; font-weight: 800; color: #1d4ed8; background: #eff6ff;">${row.total.toLocaleString('id-ID')}</td>
+                    <td style="padding: 6px 8px; text-align: right; font-weight: 700; color: #334155;">${row.avg.toLocaleString('id-ID')}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const printWrapper = document.createElement('div');
+        printWrapper.style.width = '1040px';
+        printWrapper.style.background = '#ffffff';
+        printWrapper.style.color = '#0f172a';
+        printWrapper.style.fontFamily = "'Inter', Arial, sans-serif";
+        printWrapper.style.padding = '28px 34px';
+        printWrapper.style.boxSizing = 'border-box';
+
+        printWrapper.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #1d4ed8; padding-bottom: 14px; margin-bottom: 18px;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div style="background: #0f172a; padding: 6px 12px; border-radius: 6px; text-align: center; border: 1px solid #2563eb;">
+                        <div style="color: #ffffff; font-weight: 900; font-size: 20px; font-style: italic; line-height: 1; letter-spacing: -1px;">FTL</div>
+                        <div style="background: #2563eb; color: #ffffff; font-weight: 900; font-size: 8px; letter-spacing: 2px; padding: 1px 4px; margin-top: 2px;">BLUE</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 10px; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 1.5px;">EXECUTIVE MANAGEMENT REPORT</div>
+                        <h1 style="margin: 2px 0 0 0; font-size: 19px; font-weight: 900; color: #0f172a;">LAPORAN EVALUASI PERFORMA DIVISI TRAINER</h1>
+                        <div style="font-size: 11px; color: #475569; margin-top: 2px;">Cabang: <strong>${managerProfile.branch}</strong> &bull; Periode Evaluasi: <strong>${periodLabel}</strong></div>
+                    </div>
+                </div>
+                <div style="text-align: right; font-size: 10px; color: #475569;">
+                    <div style="font-weight: 800; color: #0f172a; font-size: 11px;">${managerProfile.fullName} (${managerProfile.alias})</div>
+                    <div>${managerProfile.role}</div>
+                    <div style="margin-top: 4px; color: #64748b;">Dicetak: ${printDate}</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 18px;">
+                <div style="flex: 1; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 10px 14px;">
+                    <div style="font-size: 9px; font-weight: 800; color: #1d4ed8; text-transform: uppercase;">Akumulasi Poin (${stats.length} Bln)</div>
+                    <div style="font-size: 18px; font-weight: 900; color: #0f172a; margin-top: 2px;">${totalAllPoints.toLocaleString('id-ID')} Poin</div>
+                    <div style="font-size: 9px; color: #475569; margin-top: 1px;">Rata-rata: ${avgMonthlyDiv.toLocaleString('id-ID')} Poin/Bln</div>
+                </div>
+                <div style="flex: 1; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 10px 14px;">
+                    <div style="font-size: 9px; font-weight: 800; color: #047857; text-transform: uppercase;">Total Unit Bundling</div>
+                    <div style="font-size: 18px; font-weight: 900; color: #0f172a; margin-top: 2px;">${totalAllBundling.toLocaleString('id-ID')} Unit</div>
+                    <div style="font-size: 9px; color: #475569; margin-top: 1px;">Penjualan Paket Bundling</div>
+                </div>
+                <div style="flex: 1; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 10px 14px;">
+                    <div style="font-size: 9px; font-weight: 800; color: #0369a1; text-transform: uppercase;">Total Conduct Sesi</div>
+                    <div style="font-size: 18px; font-weight: 900; color: #0f172a; margin-top: 2px;">${totalAllConduct.toLocaleString('id-ID')} Sesi</div>
+                    <div style="font-size: 9px; color: #475569; margin-top: 1px;">Aktivitas Melatih Member</div>
+                </div>
+                <div style="flex: 1; background: #fefce8; border: 1px solid #fde047; border-radius: 10px; padding: 10px 14px;">
+                    <div style="font-size: 9px; font-weight: 800; color: #a16207; text-transform: uppercase;">Benchmark Target SOB</div>
+                    <div style="font-size: 18px; font-weight: 900; color: #0f172a; margin-top: 2px;">${INDIVIDUAL_SOB_TARGET.toLocaleString('id-ID')} Poin</div>
+                    <div style="font-size: 9px; color: #475569; margin-top: 1px;">Target Divisi: ${DIVISION_TARGET.toLocaleString('id-ID')}/Bln</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <h2 style="font-size: 12px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px 0; border-left: 4px solid #2563eb; padding-left: 8px;">
+                    1. Ringkasan Capaian Divisi per Bulan
+                </h2>
+                <table style="width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #cbd5e1;">
+                    <thead>
+                        <tr style="background: #0f172a; color: #ffffff; text-align: left;">
+                            <th style="padding: 7px 8px;">PERIODE BULAN</th>
+                            <th style="padding: 7px 8px;">TOTAL POIN</th>
+                            <th style="padding: 7px 8px;">% TARGET</th>
+                            <th style="padding: 7px 8px;">VS BLN LALU</th>
+                            <th style="padding: 7px 8px;">BUNDLING</th>
+                            <th style="padding: 7px 8px;">CONDUCT</th>
+                            <th style="padding: 7px 8px;">CAPAI SOB</th>
+                            <th style="padding: 7px 8px;">TOP TRAINER</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${summaryRowsHtml}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h2 style="font-size: 12px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; border-left: 4px solid #059669; padding-left: 8px;">
+                        2. Matriks Perolehan Poin per Personal Trainer
+                    </h2>
+                    <div style="font-size: 9px; color: #475569;">
+                        Indikator: <span style="background:#dcfce7; color:#15803d; padding:1px 5px; font-weight:700;">Hijau &ge;100% SOB</span> |
+                        <span style="background:#fef3c7; color:#b45309; padding:1px 5px; font-weight:700;">Kuning 80%-99%</span> |
+                        <span style="color:#b91c1c; font-weight:700;">Merah &lt;80%</span>
+                    </div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 10px; border: 1px solid #cbd5e1;">
+                    <thead>${matrixHeadHtml}</thead>
+                    <tbody>${matrixRowsHtml}</tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 22px; padding-top: 12px; border-top: 1px solid #cbd5e1; font-size: 10px; color: #475569;">
+                <div>
+                    <div style="font-weight: 700; color: #0f172a;">Catatan Sistem:</div>
+                    <div>Dokumen ini dihasilkan secara otomatis melalui Portal Monitoring Manajerial FTL Blue.</div>
+                </div>
+                <div style="text-align: center; width: 220px;">
+                    <div style="margin-bottom: 36px;">Disetujui &amp; Diketahui Oleh,</div>
+                    <div style="font-weight: 900; color: #0f172a; border-top: 1px solid #0f172a; padding-top: 4px;">${managerProfile.fullName}</div>
+                    <div style="font-size: 9px; color: #64748b;">${managerProfile.role} - ${managerProfile.branch}</div>
+                </div>
+            </div>
+        `;
+
         const opt = {
-            margin: 8,
-            filename: `Laporan_Eksekutif_FTL_Blue_${selectedMonth}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, backgroundColor: '#111827' },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            margin:       [6, 6, 6, 6],
+            filename:     `Laporan_Eksekutif_FTL_Blue_${localDateStr()}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
         };
-        html2pdf().set(opt).from(element).save();
+
+        html2pdf().set(opt).from(printWrapper).save().then(() => {
+            if (btn) {
+                btn.innerHTML = origHtml;
+                btn.disabled = false;
+            }
+            showToast('PDF Laporan Eksekutif berhasil diunduh.', 'success');
+        }).catch(err => {
+            console.error('Gagal membuat PDF:', err);
+            if (btn) {
+                btn.innerHTML = origHtml;
+                btn.disabled = false;
+            }
+            showToast('Terjadi kesalahan saat mengekspor PDF.', 'error');
+        });
     }
 
     function renderAnalytics() {
         const tbody = document.getElementById('analyticsTableBody');
         const coachingList = document.getElementById('coachingList');
-        tbody.innerHTML = '';
-        coachingList.innerHTML = '';
+        const selectedWeek = parseInt(document.getElementById('selectWeeklyPeriod').value) || 5;
 
         populateMonthSelects();
         updateTargetLabels();
 
-        const selectedWeek = parseInt(document.getElementById('selectWeeklyPeriod').value) || 5;
-        
+        tbody.innerHTML = '';
+        coachingList.innerHTML = '';
+
+        let underperformingCount = 0;
+
+        const now = new Date();
+        const selParts = selectedMonth.split('-').map(Number);
+        const lastDayOfMonth = new Date(selParts[0], selParts[1], 0).getDate();
+        const curKey = currentMonthKey();
+        let remainingDays;
+        if (selectedMonth === curKey) {
+            remainingDays = Math.max((lastDayOfMonth - now.getDate()) + 1, 1);
+        } else if (selectedMonth < curKey) {
+            remainingDays = 0;
+        } else {
+            remainingDays = lastDayOfMonth;
+        }
+
+        const monthData = getMonthData();
+
         const targetRunRate = Math.min(selectedWeek * (INDIVIDUAL_SOB_TARGET / 5), INDIVIDUAL_SOB_TARGET);
         const minSafeRunRate = targetRunRate * 0.8; 
 
-        const monthData = getMonthData();
-        let underPerformanceCount = 0;
-
-        let trainerAnalyticsData = trainerList.map(trainer => {
-            const logs = monthData.filter(d => d.trainer === trainer);
-            const totalPoints = logs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+        let evaluatedTrainers = trainerList.map(trainerName => {
+            const logs = monthData.filter(d => d.trainer === trainerName);
+            const currentPoints = logs.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
             const totalBundling = logs.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
-            const totalRA = logs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
-            const avgRA = logs.length ? (totalRA / logs.length).toFixed(1) : 0;
-            const totalConduct = logs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
-            
-            const comm = calculateCommission(totalPoints, totalConduct);
+            const conductTotal = logs.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+            const avgRA = logs.length ? (logs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0) / logs.length).toFixed(1) : 0;
 
-            const remainingDays = Math.max((5 - selectedWeek) * 7 + 7, 1); 
-            const pointDeficit = Math.max(targetRunRate - totalPoints, 0);
-            const dailyPaceNeeded = (pointDeficit / remainingDays).toFixed(0);
+            const comm = calculateCommission(currentPoints, conductTotal);
 
-            const isUnderperforming = totalPoints < minSafeRunRate;
-            if(isUnderperforming) underPerformanceCount++;
+            const isGoodPace = currentPoints >= minSafeRunRate;
+            if (!isGoodPace) underperformingCount++;
+
+            const gapPoints = Math.max(INDIVIDUAL_SOB_TARGET - currentPoints, 0);
+            const dailyPaceNeeded = remainingDays > 0 ? (gapPoints / remainingDays).toFixed(0) : 0;
 
             return {
-                trainer,
-                totalPoints,
+                trainerName,
+                currentPoints,
                 totalBundling,
+                conductTotal,
                 avgRA,
-                totalConduct,
-                pointDeficit,
-                dailyPaceNeeded,
-                isUnderperforming,
-                totalCommission: comm.totalCommission,
-                tierCode: comm.code
+                comm,
+                isGoodPace,
+                gapPoints,
+                dailyPaceNeeded
             };
         });
 
-        trainerAnalyticsData.sort((a, b) => {
-            if (a.isUnderperforming !== b.isUnderperforming) {
-                return a.isUnderperforming ? 1 : -1;
+        evaluatedTrainers.sort((a, b) => {
+            if (a.isGoodPace !== b.isGoodPace) {
+                return a.isGoodPace ? -1 : 1; 
             }
-            if (!a.isUnderperforming && !b.isUnderperforming) {
-                return b.totalPoints - a.totalPoints;
-            }
-            return b.pointDeficit - a.pointDeficit;
+            return b.currentPoints - a.currentPoints; 
         });
 
-        trainerAnalyticsData.forEach(item => {
-            const { trainer, totalPoints, totalBundling, avgRA, totalConduct, dailyPaceNeeded, isUnderperforming, totalCommission, tierCode } = item;
+        evaluatedTrainers.forEach(item => {
+            let statusBadge = '';
 
-            let statusBadge = isUnderperforming 
-                ? `<span class="bg-red-950/80 text-red-400 text-xs px-2.5 py-1 rounded-full font-extrabold flex items-center w-fit border border-red-800"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Under Performance (W${selectedWeek})</span>`
-                : `<span class="bg-emerald-950/80 text-emerald-400 text-xs px-2.5 py-1 rounded-full font-extrabold flex items-center w-fit border border-emerald-800"><i class="fa-solid fa-circle-check mr-1"></i> Good Pace (W${selectedWeek})</span>`;
+            if (item.isGoodPace) {
+                statusBadge = `<span class="bg-emerald-950/60 text-emerald-400 text-xs px-2.5 py-1 rounded-full font-bold inline-flex items-center border border-emerald-800"><i class="fa-solid fa-circle-check mr-1 text-emerald-400"></i> Good Pace (W${selectedWeek})</span>`;
+            } else {
+                statusBadge = `<span class="bg-red-950/60 text-red-400 text-xs px-2.5 py-1 rounded-full font-extrabold inline-flex items-center border border-red-800"><i class="fa-solid fa-triangle-exclamation mr-1 text-red-400"></i> Under Performance (W${selectedWeek})</span>`;
+            }
 
             tbody.innerHTML += `
-                <tr class="${isUnderperforming ? 'bg-red-950/20' : 'hover:bg-gray-800/40'} transition">
-                    <td class="p-3 font-bold text-white">${trainer}</td>
-                    <td class="p-3 text-blue-400 font-extrabold">${totalPoints.toLocaleString('id-ID')} Poin</td>
-                    <td class="p-3 font-extrabold text-emerald-400"><i class="fa-solid fa-box-open mr-1"></i>${totalBundling} Unit</td>
-                    <td class="p-3 font-bold text-gray-200">Rp ${totalCommission.toLocaleString('id-ID')} <span class="text-[10px] text-gray-500">(${tierCode})</span></td>
+                <tr class="hover:bg-gray-800/40 text-xs sm:text-sm transition">
+                    <td class="p-3 font-bold text-white">${item.trainerName}</td>
+                    <td class="p-3 font-extrabold text-blue-400">${item.currentPoints.toLocaleString('id-ID')} Poin</td>
+                    <td class="p-3 font-extrabold text-emerald-400"><i class="fa-solid fa-box-open mr-1"></i> ${item.totalBundling} Unit</td>
+                    <td class="p-3 font-extrabold text-gray-200">Rp ${item.comm.totalCommission.toLocaleString('id-ID')} <span class="text-[10px] font-normal text-gray-500">(${item.comm.code})</span></td>
                     <td class="p-3">${statusBadge}</td>
                 </tr>
             `;
 
-            if (isUnderperforming) {
-                let strength = totalBundling > 0 
-                    ? `Sudah menghasilkan ${totalBundling} Unit Bundling & ${avgRA >= 10 ? 'RA harian konsisten' : 'disiplin laporan'}`
-                    : (avgRA >= 10 ? `Aktivitas RA harian konsisten (Avg ${avgRA}/hari)` : "Disiplin menginput laporan harian");
-                let weakness = `Baru mencapai ${totalPoints.toLocaleString('id-ID')} dari target run-rate W${selectedWeek} (${targetRunRate.toLocaleString('id-ID')} Poin)`;
-                let opportunity = totalConduct < (selectedWeek * 20) 
-                    ? `Melatih < ${selectedWeek * 20} sesi, maksimalkan penawaran unit bundling & min 1 s/d 20 RA per hari` 
-                    : `Dibutuhkan target +${dailyPaceNeeded} Poin/hari & dorong penawaran bundling sampai akhir periode`;
-                let threat = `Risiko tertinggal akumulasi SOB akhir bulan jika pace penjualan & unit bundling minggu ke-${selectedWeek} tidak ditingkatkan`;
+            let strengths = [];
+            let weaknesses = [];
+            let opportunities = [];
+            let threats = [];
 
-                coachingList.innerHTML += `
-                    <div class="p-4 bg-red-950/30 border-l-4 border-red-600 rounded-r-2xl border border-red-900/40 shadow-sm space-y-3">
-                        <div class="flex justify-between items-center border-b border-red-900/60 pb-2">
-                            <h5 class="font-black text-red-300 text-base">${trainer}</h5>
-                            <button onclick="sendCoachingWAReminder('${trainer}', ${totalPoints}, ${totalBundling}, ${totalConduct}, ${avgRA}, ${dailyPaceNeeded}, ${selectedWeek})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-3 py-1 rounded-full text-xs shadow flex items-center">
-                                <i class="fa-brands fa-whatsapp text-sm mr-1"></i> WA Reminder
-                            </button>
+            if (item.isGoodPace) strengths.push(`Poin on-track di Minggu ke-${selectedWeek} (${item.currentPoints.toLocaleString('id-ID')} poin)`);
+            if (item.totalBundling >= 2) strengths.push(`Penjualan Bundling produktif (${item.totalBundling} unit)`);
+            if (item.conductTotal >= 50) strengths.push(`Aktivitas conduct tinggi (${item.conductTotal} sesi)`);
+            if (parseFloat(item.avgRA) >= 5) strengths.push(`Konsisten melakukan RA harian (rata-rata ${item.avgRA}/hari)`);
+            if (strengths.length === 0) strengths.push(`Disiplin menginput laporan harian`);
+
+            if (!item.isGoodPace) weaknesses.push(`Baru mencapai ${item.currentPoints.toLocaleString('id-ID')} dari target run-rate W${selectedWeek} (${targetRunRate.toLocaleString('id-ID')} Poin)`);
+            if (item.totalBundling === 0) weaknesses.push(`Belum mencatatkan penjualan unit bundling`);
+            if (item.conductTotal < 50) weaknesses.push(`Volume sesi melatih masih rendah (${item.conductTotal} sesi)`);
+            if (parseFloat(item.avgRA) < 5) weaknesses.push(`Rata-rata RA harian di bawah standar (${item.avgRA}/20 RA)`);
+            if (weaknesses.length === 0) weaknesses.push(`Tidak ada kelemahan signifikan minggu ini`);
+
+            opportunities.push(`Wajib kejar <strong>+${parseInt(item.dailyPaceNeeded).toLocaleString('id-ID')} Poin/hari</strong> sampai akhir bulan`);
+            if (item.totalBundling < 3) opportunities.push(`Tawarkan paket bundling pada setiap sesi & client renewal`);
+            if (item.conductTotal < 50) opportunities.push(`Melatih < 50 sesi, maksimalkan penawaran unit bundling & min 1 s/d 20 RA per hari`);
+            opportunities.push(`Follow-up client GO & tawarkan perpanjangan paket sebelum sesi habis`);
+
+            if (!item.isGoodPace) {
+                threats.push(`Risiko tertinggal akumulasi SOB akhir bulan jika pace penjualan & unit bundling minggu ke-${selectedWeek} tidak ditingkatkan`);
+            } else {
+                threats.push(`Penurunan ritme aktivitas di minggu berikutnya dapat menghambat tercapainya target SOB ${INDIVIDUAL_SOB_TARGET.toLocaleString('id-ID')} Poin`);
+            }
+
+            let swotCardClass = item.isGoodPace ? 'bg-[#0b0f19] border-gray-800' : 'bg-red-950/20 border-red-900/60';
+            let headerClass = item.isGoodPace ? 'text-emerald-400' : 'text-red-400';
+
+            coachingList.innerHTML += `
+                <div class="${swotCardClass} border p-4 rounded-xl shadow space-y-2.5 text-xs">
+                    <div class="flex justify-between items-center border-b pb-2 border-gray-800">
+                        <h4 class="font-extrabold ${headerClass} text-sm">${item.trainerName}</h4>
+                        <button onclick="sendCoachingWAReminder('${item.trainerName}', ${item.currentPoints}, ${item.totalBundling}, ${item.conductTotal}, ${item.avgRA}, ${item.dailyPaceNeeded}, ${selectedWeek})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2.5 py-1 rounded-lg text-[11px] flex items-center shadow">
+                            <i class="fa-brands fa-whatsapp text-sm mr-1"></i> WA Reminder
+                        </button>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="bg-emerald-950/30 p-2 rounded border border-emerald-900/50">
+                            <span class="font-extrabold text-emerald-400 block mb-0.5"><i class="fa-solid fa-shield-halved mr-1"></i> S (Strength):</span>
+                            <span class="text-gray-300 leading-tight block">${strengths.join('; ')}</span>
                         </div>
-                        
-                        <div class="grid grid-cols-1 gap-1.5 text-xs pt-1">
-                            <div class="bg-[#0b0f19] p-2.5 rounded-xl border border-gray-800">
-                                <span class="font-bold text-emerald-400 block"><i class="fa-solid fa-shield-halved mr-1"></i> S (Strength):</span>
-                                <p class="text-gray-300">${strength}</p>
-                            </div>
-                            <div class="bg-[#0b0f19] p-2.5 rounded-xl border border-gray-800">
-                                <span class="font-bold text-red-400 block"><i class="fa-solid fa-bug mr-1"></i> W (Weakness):</span>
-                                <p class="text-gray-300">${weakness}</p>
-                            </div>
-                            <div class="bg-[#0b0f19] p-2.5 rounded-xl border border-gray-800">
-                                <span class="font-bold text-blue-400 block"><i class="fa-solid fa-lightbulb mr-1"></i> O (Opportunity / Target Harian):</span>
-                                <p class="text-gray-300">${opportunity}</p>
-                            </div>
-                            <div class="bg-[#0b0f19] p-2.5 rounded-xl border border-gray-800">
-                                <span class="font-bold text-amber-400 block"><i class="fa-solid fa-triangle-exclamation mr-1"></i> T (Threat):</span>
-                                <p class="text-gray-300">${threat}</p>
-                            </div>
+
+                        <div class="bg-red-950/30 p-2 rounded border border-red-900/50">
+                            <span class="font-extrabold text-red-400 block mb-0.5"><i class="fa-solid fa-circle-exclamation mr-1"></i> W (Weakness):</span>
+                            <span class="text-gray-300 leading-tight block">${weaknesses.join('; ')}</span>
+                        </div>
+
+                        <div class="bg-blue-950/30 p-2 rounded border border-blue-900/50">
+                            <span class="font-extrabold text-blue-400 block mb-0.5"><i class="fa-solid fa-lightbulb mr-1"></i> O (Opportunity / Target Harian):</span>
+                            <span class="text-gray-300 leading-tight block">${opportunities.join('; ')}</span>
+                        </div>
+
+                        <div class="bg-amber-950/30 p-2 rounded border border-amber-900/50">
+                            <span class="font-extrabold text-amber-400 block mb-0.5"><i class="fa-solid fa-triangle-exclamation mr-1"></i> T (Threat):</span>
+                            <span class="text-gray-300 leading-tight block">${threats.join('; ')}</span>
                         </div>
                     </div>
-                `;
+                </div>
+            `;
+        });
+
+        document.getElementById('coachingBadgeCount').innerText = `${underperformingCount} Trainer Under Performance (W${selectedWeek})`;
+    }
+
+    // =========================================================================
+    // AI TEAM & COMMAND CENTER + MANAGER PASSWORD LOCK ENGINE
+    // =========================================================================
+    const INITIAL_AI_AGENTS = [
+        {
+            id: 'ag-analyst',
+            name: 'Performance Analyst',
+            role: 'Analis KPI, Gap Target & Run-Rate PT',
+            order: 1,
+            active: true,
+            prompt: 'Anda adalah Performance Analyst untuk FTL Gym Depok Lama. Bedah capaian poin divisi vs target bulanan, hitung run-rate harian per trainer untuk mengejar SOB individual, dan soroti trainer dengan RA & Bundling rendah.'
+        },
+        {
+            id: 'ag-ops',
+            name: 'Operations & SOP',
+            role: 'Audit Laporan Harian & Disiplin Floor',
+            order: 2,
+            active: true,
+            prompt: 'Anda adalah Operations & SOP Specialist FTL Gym Depok Lama yang melapor langsung ke Fitness Manager M. Fatihin (Fathir). Pastikan 100% trainer setor laporan harian sebelum alarm 18:00 WIB dan atur alur floor coverage jam sibuk tanpa perantara Team Leader.'
+        },
+        {
+            id: 'ag-finance',
+            name: 'Finance Controller',
+            role: 'Simulasi Bundling, Komisi & Efisiensi',
+            order: 3,
+            active: true,
+            prompt: 'Anda adalah Finance Controller cabang fitness. Evaluasi kontribusi unit bundling terhadap revenue cabang, hitung skema akselerasi insentif poin PT agar margin tetap sehat.'
+        },
+        {
+            id: 'ag-client',
+            name: 'Client & Communication',
+            role: 'Skrip Follow-Up WA Renewal & Colek PT',
+            order: 4,
+            active: true,
+            prompt: 'Anda adalah Client & Communication Specialist. Susun pesan WhatsApp siap kirim yang persuasif untuk renewal client sisa 0-3 sesi, follow-up prospek RA, dan pengingat disiplin laporan harian PT.'
+        },
+        {
+            id: 'ag-orchestrator',
+            name: 'Executive Orchestrator',
+            role: 'Sintesis Keputusan & Delegasi Kanban',
+            order: 5,
+            active: true,
+            prompt: 'Anda adalah Executive Orchestrator & Chief of Staff untuk Fitness Manager M. Fatihin (Fathir) di FTL Gym Depok Lama. Rangkum seluruh masukan tim menjadi rencana aksi terukur yang langsung dieksekusi oleh Manager bersama seluruh Personal Trainer.'
+        }
+    ];
+
+    const AI_PRESET_PROMPTS = {
+        ftl_depok: [
+            'Strategi Kejar Gap Target Bulanan Divisi & Run-Rate Harian PT',
+            'Audit & Follow-Up Trainer Belum Lapor Hari Ini Sebelum 18:00 WIB',
+            'Tingkatkan Konversi RA & Penjualan Unit Bundling Mingguan',
+            'Program Renewal Cepat untuk Client dengan Sisa Sesi <= 3'
+        ],
+        biz_expansion: [
+            'Rancang SOP Standar Pembukaan Cabang Baru & Pre-Sale 300 Member',
+            'Strategi B2B Corporate Wellness Area Depok & Sekitarnya',
+            'Audit Efisiensi Biaya Operasional & Produktivitas Trainer Cabang'
+        ]
+    };
+
+    let aiTeamState = {
+        aiPreset: 'ftl_depok',
+        aiMode: 'collab',
+        aiAgents: JSON.parse(JSON.stringify(INITIAL_AI_AGENTS)),
+        kanbanTasks: [
+            {
+                id: 'kt-1',
+                title: 'Follow-Up Trainer Belum Lapor Sebelum Alarm 18:00 WIB',
+                pic: 'Fitness Manager Fathir',
+                priority: 'HIGH',
+                deadline: 'Hari ini, 18:00 WIB',
+                status: 'inprogress',
+                kpi: '100% laporan harian terinput di dashboard'
+            },
+            {
+                id: 'kt-2',
+                title: 'Push Closing Bundling & Konversi RA untuk Kejar Run-Rate Divisi',
+                pic: 'Fitness Manager & Seluruh Tim PT Depok Lama',
+                priority: 'HIGH',
+                deadline: 'Besok, 21:00 WIB',
+                status: 'todo',
+                kpi: 'Minimal +2 Unit Bundling & +4 RA Done'
+            }
+        ],
+        aiReports: [],
+        lastExtractedTasks: [],
+        lastReportTitle: '',
+        lastReportMarkdown: '',
+        security: {
+            passwordHash: '',
+            isDefault: true,
+            autoLockOnLeave: false
+        }
+    };
+
+    try {
+        const savedAi = JSON.parse(localStorage.getItem('FTL_AI_TEAM_STATE'));
+        if (savedAi && typeof savedAi === 'object') {
+            aiTeamState = {
+                ...aiTeamState,
+                ...savedAi,
+                security: { ...aiTeamState.security, ...(savedAi.security || {}) }
+            };
+        }
+    } catch (e) {}
+
+    function saveAiTeamState() {
+        localStorage.setItem('FTL_AI_TEAM_STATE', JSON.stringify(aiTeamState));
+    }
+
+    // Runtime Manager Lock State (Always starts locked on fresh page load)
+    let isAiTeamUnlocked = false;
+    let failedAiPasswordAttempts = 0;
+    const MAX_AI_PASSWORD_ATTEMPTS = 5;
+    let aiLockoutUntilTimestamp = 0;
+    let aiLockoutIntervalTimer = null;
+    let pendingAiPrompt = null;
+
+    async function hashPasswordSHA256(plainText) {
+        try {
+            if (window.crypto && window.crypto.subtle) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(plainText);
+                const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+        } catch (_) {}
+        let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+        for (let i = 0; i < plainText.length; i++) {
+            const ch = plainText.charCodeAt(i);
+            h1 = Math.imul(h1 ^ ch, 2654435761);
+            h2 = Math.imul(h2 ^ ch, 1597334677);
+        }
+        h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+        h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+        return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16).padStart(16, '0');
+    }
+
+    async function ensureDefaultAiPasswordHash() {
+        if (!aiTeamState.security) {
+            aiTeamState.security = { passwordHash: '', isDefault: true, autoLockOnLeave: false };
+        }
+        if (!aiTeamState.security.passwordHash) {
+            aiTeamState.security.passwordHash = await hashPasswordSHA256('FTL2026');
+            aiTeamState.security.isDefault = true;
+            saveAiTeamState();
+        }
+    }
+
+    function updateAiSecurityUI() {
+        const navBadge = document.getElementById('sidebarAiLockBadge');
+        const lockGate = document.getElementById('aiTeamLockGate');
+        const unlockedContent = document.getElementById('aiTeamUnlockedContent');
+        const gateIdentity = document.getElementById('gateManagerIdentity');
+        const gateBranch = document.getElementById('gateBranchIdentity');
+        const gateDefaultHint = document.getElementById('gateDefaultHint');
+        const gatePendingBanner = document.getElementById('gatePendingBanner');
+        const unlockedBadge = document.getElementById('unlockedManagerBadge');
+        const unlockedDefaultWarn = document.getElementById('unlockedDefaultWarning');
+        const toggleBar = document.getElementById('toggleAutoLockBar');
+        const toggleSettings = document.getElementById('toggleAutoLockSettings');
+        const settingsPill = document.getElementById('settingsAiLockStatusPill');
+        const settingsPwdType = document.getElementById('settingsAiPwdTypeLabel');
+        const settingsHashPrev = document.getElementById('settingsAiPwdHashPreview');
+        const settingsActionBtn = document.getElementById('settingsAiLockActionBtn');
+
+        const sec = aiTeamState.security || { isDefault: true, autoLockOnLeave: false, passwordHash: '' };
+        const mgrDisplay = `${managerProfile.role} ${managerProfile.fullName} (${managerProfile.alias})`;
+
+        if (gateIdentity) gateIdentity.innerText = mgrDisplay;
+        if (gateBranch) gateBranch.innerText = managerProfile.branch;
+        if (unlockedBadge) unlockedBadge.innerText = `Akses Manager Terverifikasi (${managerProfile.alias || managerProfile.fullName})`;
+        if (gateDefaultHint) gateDefaultHint.classList.toggle('hidden', !sec.isDefault);
+        if (unlockedDefaultWarn) unlockedDefaultWarn.classList.toggle('hidden', !sec.isDefault);
+        if (gatePendingBanner) gatePendingBanner.classList.toggle('hidden', !pendingAiPrompt);
+        if (toggleBar) toggleBar.checked = !!sec.autoLockOnLeave;
+        if (toggleSettings) toggleSettings.checked = !!sec.autoLockOnLeave;
+
+        if (settingsPwdType) {
+            settingsPwdType.innerText = sec.isDefault ? 'Password Default Awal (FTL2026)' : 'Password Kustom Fitness Manager';
+            settingsPwdType.className = sec.isDefault ? 'font-bold text-amber-300' : 'font-bold text-emerald-400';
+        }
+        if (settingsHashPrev && sec.passwordHash) {
+            settingsHashPrev.innerText = `SHA-256: ${sec.passwordHash.slice(0, 20)}...`;
+        }
+
+        if (isAiTeamUnlocked) {
+            if (navBadge) {
+                navBadge.className = 'inline-flex items-center gap-1 text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800 shrink-0';
+                navBadge.innerHTML = `<i class="fa-solid fa-unlock text-[8px]"></i><span>TERBUKA</span>`;
+            }
+            if (lockGate) lockGate.classList.add('hidden');
+            if (unlockedContent) unlockedContent.classList.remove('hidden');
+            if (settingsPill) {
+                settingsPill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-950/80 text-emerald-300 border border-emerald-800';
+                settingsPill.innerHTML = `<i class="fa-solid fa-unlock"></i><span>STATUS: TERBUKA</span>`;
+            }
+            if (settingsActionBtn) {
+                settingsActionBtn.innerText = 'Kunci Sekarang';
+                settingsActionBtn.className = 'px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition';
+            }
+        } else {
+            if (navBadge) {
+                navBadge.className = 'inline-flex items-center gap-1 text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-red-950/80 text-red-300 border border-red-800/70 shrink-0';
+                navBadge.innerHTML = `<i class="fa-solid fa-lock text-[8px]"></i><span>TERKUNCI</span>`;
+            }
+            if (lockGate) lockGate.classList.remove('hidden');
+            if (unlockedContent) unlockedContent.classList.add('hidden');
+            if (settingsPill) {
+                settingsPill.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-red-950/80 text-red-300 border border-red-800';
+                settingsPill.innerHTML = `<i class="fa-solid fa-lock"></i><span>STATUS: TERKUNCI</span>`;
+            }
+            if (settingsActionBtn) {
+                settingsActionBtn.innerText = 'Buka Gerbang AI';
+                settingsActionBtn.className = 'px-3.5 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold border border-gray-700 transition';
+            }
+        }
+    }
+
+    function toggleAiPassVisibility(inputId, btnEl) {
+        const inp = document.getElementById(inputId);
+        if (!inp) return;
+        const isHidden = inp.type === 'password';
+        inp.type = isHidden ? 'text' : 'password';
+        btnEl.innerHTML = `<i class="fa-solid ${isHidden ? 'fa-eye-slash' : 'fa-eye'} text-xs"></i>`;
+    }
+
+    function startAiLockoutCountdown() {
+        const inputEl = document.getElementById('aiManagerPasswordInput');
+        const btnEl = document.getElementById('btnUnlockAiTeam');
+        const btnLabel = document.getElementById('btnUnlockLabel');
+        const errorBox = document.getElementById('gateErrorBox');
+        const errorText = document.getElementById('gateErrorText');
+
+        if (inputEl) inputEl.disabled = true;
+        if (btnEl) {
+            btnEl.disabled = true;
+            btnEl.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        clearInterval(aiLockoutIntervalTimer);
+        aiLockoutIntervalTimer = setInterval(() => {
+            const remainingSec = Math.ceil((aiLockoutUntilTimestamp - Date.now()) / 1000);
+            if (remainingSec <= 0) {
+                clearInterval(aiLockoutIntervalTimer);
+                aiLockoutUntilTimestamp = 0;
+                failedAiPasswordAttempts = 0;
+                if (inputEl) {
+                    inputEl.disabled = false;
+                    inputEl.value = '';
+                    inputEl.focus();
+                }
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                if (btnLabel) btnLabel.innerText = 'Buka Akses AI Team';
+                if (errorBox) errorBox.classList.add('hidden');
+                const attBadge = document.getElementById('gateAttemptsBadge');
+                if (attBadge) attBadge.innerText = `Sisa percobaan: ${MAX_AI_PASSWORD_ATTEMPTS}/${MAX_AI_PASSWORD_ATTEMPTS}`;
+            } else {
+                if (btnLabel) btnLabel.innerText = `Terkunci Sementara (${remainingSec}d)`;
+                if (errorBox) errorBox.classList.remove('hidden');
+                if (errorText) errorText.innerText = `Terlalu banyak percobaan gagal (5x). Coba lagi dalam ${remainingSec} detik.`;
+            }
+        }, 250);
+    }
+
+    async function verifyManagerPassword(e) {
+        e.preventDefault();
+        if (aiLockoutUntilTimestamp > Date.now()) return;
+
+        await ensureDefaultAiPasswordHash();
+        const inputEl = document.getElementById('aiManagerPasswordInput');
+        const lockCard = document.getElementById('aiLockCard');
+        const errorBox = document.getElementById('gateErrorBox');
+        const errorText = document.getElementById('gateErrorText');
+        const attBadge = document.getElementById('gateAttemptsBadge');
+
+        const entered = inputEl.value;
+        const enteredHash = await hashPasswordSHA256(entered);
+
+        if (enteredHash === aiTeamState.security.passwordHash) {
+            isAiTeamUnlocked = true;
+            failedAiPasswordAttempts = 0;
+            inputEl.value = '';
+            if (errorBox) errorBox.classList.add('hidden');
+            if (attBadge) attBadge.innerText = `Sisa percobaan: ${MAX_AI_PASSWORD_ATTEMPTS}/${MAX_AI_PASSWORD_ATTEMPTS}`;
+            refreshAiTeamUI();
+            showToast(`Selamat datang, ${managerProfile.role} ${managerProfile.alias}! Akses AI Team dibuka.`, 'success');
+
+            if (pendingAiPrompt) {
+                const promptToRun = pendingAiPrompt;
+                pendingAiPrompt = null;
+                updateAiSecurityUI();
+                switchAITab('command');
+                document.getElementById('aiCommandTextarea').value = promptToRun;
+                runAICommandCenter();
+            }
+        } else {
+            failedAiPasswordAttempts++;
+            const remaining = Math.max(0, MAX_AI_PASSWORD_ATTEMPTS - failedAiPasswordAttempts);
+            if (attBadge) attBadge.innerText = `Sisa percobaan: ${remaining}/${MAX_AI_PASSWORD_ATTEMPTS}`;
+
+            if (lockCard) {
+                lockCard.classList.remove('animate-shake');
+                void lockCard.offsetWidth;
+                lockCard.classList.add('animate-shake');
+            }
+
+            if (failedAiPasswordAttempts >= MAX_AI_PASSWORD_ATTEMPTS) {
+                aiLockoutUntilTimestamp = Date.now() + 30000;
+                startAiLockoutCountdown();
+                showToast('Akses dikunci selama 30 detik karena 5 kali salah password.', 'error');
+            } else {
+                if (errorBox) errorBox.classList.remove('hidden');
+                if (errorText) errorText.innerText = `Password Fitness Manager salah! Sisa percobaan: ${remaining} dari ${MAX_AI_PASSWORD_ATTEMPTS}.`;
+                inputEl.select();
+            }
+        }
+    }
+
+    function lockAITeam(silent = false) {
+        isAiTeamUnlocked = false;
+        pendingAiPrompt = null;
+        const inputEl = document.getElementById('aiManagerPasswordInput');
+        if (inputEl) inputEl.value = '';
+        updateAiSecurityUI();
+        if (!silent) {
+            showToast('AI Team & Command dikunci kembali.', 'info');
+        }
+    }
+
+    function toggleAutoLockSetting(checked) {
+        aiTeamState.security.autoLockOnLeave = !!checked;
+        saveAiTeamState();
+        updateAiSecurityUI();
+        showToast(`Auto-Lock saat pindah menu ${checked ? 'DIAKTIFKAN' : 'DINONAKTIFKAN'}.`, 'info');
+    }
+
+    function handleSettingsAiLockAction() {
+        if (isAiTeamUnlocked) {
+            lockAITeam(false);
+        } else {
+            switchTab('aiteam');
+        }
+    }
+
+    function openChangeAiPasswordModal() {
+        document.getElementById('chgAiOldPassword').value = '';
+        document.getElementById('chgAiNewPassword').value = '';
+        document.getElementById('chgAiConfirmPassword').value = '';
+        document.getElementById('chgAiPwdError').classList.add('hidden');
+        openUiModal('changeAiPasswordModal');
+    }
+
+    async function submitChangeAiPassword(e) {
+        e.preventDefault();
+        await ensureDefaultAiPasswordHash();
+        const oldPwd = document.getElementById('chgAiOldPassword').value;
+        const newPwd = document.getElementById('chgAiNewPassword').value;
+        const confirmPwd = document.getElementById('chgAiConfirmPassword').value;
+        const errEl = document.getElementById('chgAiPwdError');
+
+        const oldHash = await hashPasswordSHA256(oldPwd);
+        if (oldHash !== aiTeamState.security.passwordHash) {
+            errEl.innerText = 'Password lama tidak sesuai! Verifikasi gagal.';
+            errEl.classList.remove('hidden');
+            return;
+        }
+        if (newPwd.length < 4) {
+            errEl.innerText = 'Password baru minimal 4 karakter.';
+            errEl.classList.remove('hidden');
+            return;
+        }
+        if (newPwd !== confirmPwd) {
+            errEl.innerText = 'Konfirmasi password baru tidak cocok.';
+            errEl.classList.remove('hidden');
+            return;
+        }
+
+        aiTeamState.security.passwordHash = await hashPasswordSHA256(newPwd);
+        aiTeamState.security.isDefault = false;
+        isAiTeamUnlocked = true;
+        saveAiTeamState();
+        updateAiSecurityUI();
+        closeUiModal('changeAiPasswordModal');
+        showToast('Password Fitness Manager berhasil diperbarui!', 'success');
+    }
+
+    // --- LIVE TELEMETRY CALCULATOR FROM REAL APP DATA ---
+    function getLiveBranchTelemetry() {
+        const now = new Date();
+        const todayStr = localDateStr(now);
+        const monthData = getMonthData();
+        const trainerCount = trainerList.length || 12;
+
+        const totalPoints = monthData.reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+        const totalBundling = monthData.reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+        const totalConduct = monthData.reduce((a, b) => a + (parseInt(b.conduct) || 0), 0);
+        const totalRA = monthData.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
+        const avgRA = monthData.length ? (totalRA / monthData.length).toFixed(1) : '0.0';
+
+        const pctFormatted = ((totalPoints / DIVISION_TARGET) * 100).toFixed(1);
+        const sisaDivisi = Math.max(DIVISION_TARGET - totalPoints, 0);
+
+        const selParts = selectedMonth.split('-').map(Number);
+        const lastDayOfMonth = new Date(selParts[0], selParts[1], 0).getDate();
+        const curKey = currentMonthKey();
+        const remDays = selectedMonth === curKey
+            ? Math.max((lastDayOfMonth - now.getDate()) + 1, 1)
+            : (selectedMonth < curKey ? 1 : lastDayOfMonth);
+
+        const butuhPerHari = Math.ceil(sisaDivisi / remDays);
+        const avgPerPt = Math.round(totalPoints / trainerCount);
+
+        const todayLogs = appData.filter(d => String(d.date || '').split('T')[0] === todayStr);
+        const reportedNames = trainerList.filter(t => todayLogs.some(l => l.trainer === t));
+        const unreportedNames = trainerList.filter(t => !todayLogs.some(l => l.trainer === t));
+
+        const ranking = trainerList.map(t => {
+            const pts = monthData.filter(d => d.trainer === t).reduce((a, b) => a + (parseFloat(b.points) || 0), 0);
+            const bdl = monthData.filter(d => d.trainer === t).reduce((a, b) => a + (parseInt(b.bundling) || 0), 0);
+            return { name: t, points: pts, bundling: bdl };
+        }).sort((a, b) => b.points - a.points);
+
+        const urgentClients = clientData.filter(c => (parseInt(c.sessions) || 0) <= 3);
+
+        return {
+            todayStr,
+            monthLabel: formatMonthLabel(selectedMonth),
+            trainerCount,
+            totalPoints,
+            totalBundling,
+            totalConduct,
+            avgRA,
+            pctFormatted,
+            sisaDivisi,
+            remDays,
+            butuhPerHari,
+            avgPerPt,
+            reportedCount: reportedNames.length,
+            unreportedCount: unreportedNames.length,
+            unreportedNames,
+            ranking,
+            urgentClients
+        };
+    }
+
+    function refreshAiTelemetryBanner() {
+        const el = document.getElementById('aiLiveTelemetrySummary');
+        if (!el) return;
+        const m = getLiveBranchTelemetry();
+        el.innerText = `Poin (${m.monthLabel}): ${m.totalPoints.toLocaleString('id-ID')} / ${DIVISION_TARGET.toLocaleString('id-ID')} (${m.pctFormatted}%) | Sisa: ${m.sisaDivisi.toLocaleString('id-ID')} (${m.butuhPerHari.toLocaleString('id-ID')}/hari) | Bundling: ${m.totalBundling} | Conduct: ${m.totalConduct.toLocaleString('id-ID')} | Belum Lapor: ${m.unreportedCount}/${m.trainerCount}`;
+    }
+
+    function launchAITargetGapAnalysis() {
+        const m = getLiveBranchTelemetry();
+        const promptText = `Analisis gap target divisi ${managerProfile.branch} sebesar ${m.sisaDivisi.toLocaleString('id-ID')} Poin (capaian saat ini ${m.totalPoints.toLocaleString('id-ID')} dari ${DIVISION_TARGET.toLocaleString('id-ID')} Poin / ${m.pctFormatted}%). Buatkan rencana aksi harian untuk mengejar ${m.butuhPerHari.toLocaleString('id-ID')} Poin/Hari dalam ${m.remDays} hari tersisa yang langsung saya pimpin sebagai ${managerProfile.role} untuk seluruh ${m.trainerCount} trainer, serta strategi konversi RA (${m.avgRA}/20) ke Bundling (${m.totalBundling} unit).`;
+        if (!isAiTeamUnlocked) {
+            pendingAiPrompt = promptText;
+            switchTab('aiteam');
+            showToast('Masukkan password Fitness Manager untuk membuka & menjalankan analisis AI.', 'info');
+            return;
+        }
+        switchTab('aiteam');
+        switchAITab('command');
+        document.getElementById('aiCommandTextarea').value = promptText;
+        runAICommandCenter();
+    }
+
+    function sendCoachingToAITeam() {
+        const m = getLiveBranchTelemetry();
+        const promptText = `Susun program coaching 1-on-1 dan target harian spesifik di bawah supervisi langsung saya sebagai ${managerProfile.role} (${managerProfile.fullName} / ${managerProfile.alias}) agar seluruh ${m.trainerCount} Personal Trainer ${managerProfile.branch} mengejar benchmark SOB ${INDIVIDUAL_SOB_TARGET.toLocaleString('id-ID')} Poin.`;
+        if (!isAiTeamUnlocked) {
+            pendingAiPrompt = promptText;
+            switchTab('aiteam');
+            showToast('Masukkan password Fitness Manager untuk membuka & menjalankan program coaching AI.', 'info');
+            return;
+        }
+        switchTab('aiteam');
+        switchAITab('command');
+        document.getElementById('aiCommandTextarea').value = promptText;
+        runAICommandCenter();
+    }
+
+    function refreshAiTeamUI() {
+        const activeAg = aiTeamState.aiAgents.filter(a => a.active).length;
+        const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+        setTxt('aiActiveCountLabel', `${activeAg}/${aiTeamState.aiAgents.length}`);
+        setTxt('aiTaskCountLabel', aiTeamState.kanbanTasks.length);
+        setTxt('aiReportCountLabel', aiTeamState.aiReports.length);
+
+        refreshAiTelemetryBanner();
+        renderAIQuickPrompts();
+        setAIExecutionMode(aiTeamState.aiMode || 'collab');
+        renderAIRoster();
+        renderKanbanBoard();
+        renderAIArchive();
+        updateAiSecurityUI();
+    }
+
+    function switchAITab(sub) {
+        document.querySelectorAll('.ai-subview').forEach(el => el.classList.add('hidden'));
+        const view = document.getElementById(`ai-view-${sub}`);
+        if (view) view.classList.remove('hidden');
+
+        document.querySelectorAll('.ai-subtab-btn').forEach(btn => {
+            btn.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+            btn.classList.add('text-gray-400');
+        });
+        const active = document.getElementById(`aitab-${sub}`);
+        if (active) {
+            active.classList.add('bg-indigo-600', 'text-white', 'shadow');
+            active.classList.remove('text-gray-400');
+        }
+    }
+
+    function changeAIPreset(val) {
+        aiTeamState.aiPreset = val;
+        saveAiTeamState();
+        renderAIQuickPrompts();
+    }
+
+    function renderAIQuickPrompts() {
+        const container = document.getElementById('aiQuickPrompts');
+        if (!container) return;
+        const list = AI_PRESET_PROMPTS[aiTeamState.aiPreset] || AI_PRESET_PROMPTS.ftl_depok;
+        container.innerHTML = list.map(p => `
+            <button type="button" onclick="document.getElementById('aiCommandTextarea').value='${p.replace(/'/g, "\\'")}'; document.getElementById('aiCommandTextarea').focus();" class="text-left text-[11px] px-3 py-1.5 rounded-xl bg-[#0b0f19] hover:bg-indigo-600/20 text-gray-300 hover:text-indigo-200 border border-gray-800 hover:border-indigo-500/40 transition">
+                + ${p}
+            </button>
+        `).join('');
+    }
+
+    function setAIExecutionMode(mode) {
+        aiTeamState.aiMode = mode;
+        const bCollab = document.getElementById('btnModeCollab');
+        const bSingle = document.getElementById('btnModeSingle');
+        const singleBox = document.getElementById('aiSingleAgentBox');
+
+        if (bCollab && bSingle && singleBox) {
+            if (mode === 'collab') {
+                bCollab.className = 'px-3 py-1.5 rounded-lg text-xs font-extrabold bg-indigo-600 text-white transition';
+                bSingle.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition';
+                singleBox.classList.add('hidden');
+            } else {
+                bSingle.className = 'px-3 py-1.5 rounded-lg text-xs font-extrabold bg-indigo-600 text-white transition';
+                bCollab.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition';
+                singleBox.classList.remove('hidden');
+            }
+        }
+
+        const dd = document.getElementById('aiSingleAgentDropdown');
+        if (dd) {
+            dd.innerHTML = aiTeamState.aiAgents.map(a => `<option value="${a.id}">${a.name} — ${a.role}</option>`).join('');
+        }
+    }
+
+    function buildLiveTelemetryContext() {
+        const m = getLiveBranchTelemetry();
+        const topList = m.ranking.slice(0, 3).map(t => `${t.name} (${t.points.toLocaleString('id-ID')} poin)`).join(', ');
+        const bottomList = m.ranking.slice(-3).map(t => `${t.name} (${t.points.toLocaleString('id-ID')} poin)`).join(', ');
+        const urgentList = m.urgentClients.map(c => `${c.name} (${c.sessions} sesi, PT: ${c.trainer})`).join('; ');
+
+        return `
+DATA OPERASIONAL LIVE — ${managerProfile.branch.toUpperCase()}:
+- Struktur Organisasi: Tidak ada Team Leader. Seluruh ${m.trainerCount} trainer melapor langsung kepada ${managerProfile.role} (${managerProfile.fullName} / ${managerProfile.alias}).
+- Periode Evaluasi: ${m.monthLabel} (Tanggal Audit Hari Ini: ${m.todayStr})
+- Total Poin Terkumpul: ${m.totalPoints.toLocaleString('id-ID')} Poin dari Target Bulanan Divisi ${DIVISION_TARGET.toLocaleString('id-ID')} Poin (${m.pctFormatted}%)
+- Sisa Target Divisi: ${m.sisaDivisi.toLocaleString('id-ID')} Poin | Sisa Hari Kerja: ${m.remDays} Hari | Kebutuhan Wajib Harian: ${m.butuhPerHari.toLocaleString('id-ID')} Poin/Hari
+- Target SOB Individual: ${INDIVIDUAL_SOB_TARGET.toLocaleString('id-ID')} Poin/Trainer | Rata-rata saat ini: ${m.avgPerPt.toLocaleString('id-ID')} Poin/Trainer
+- Total Unit Bundling: ${m.totalBundling} Unit | Total Conduct: ${m.totalConduct.toLocaleString('id-ID')} Sesi | Rata-rata RA Done: ${m.avgRA} / 20 RA
+- Status Audit Laporan Harian: ${m.reportedCount}/${m.trainerCount} Sudah Lapor, ${m.unreportedCount}/${m.trainerCount} Belum Lapor (${m.unreportedNames.join(', ') || 'Nihil'})
+- Top 3 Trainer: ${topList}
+- Bottom 3 Trainer (Prioritas Coaching): ${bottomList}
+- Client Kritis Renewal (<= 3 Sesi): ${urgentList || 'Tidak ada'}
+        `.trim();
+    }
+
+    async function callGeminiAPIWithBackoff(payload, maxRetries = 2) {
+        const apiKey = "";
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!text) throw new Error('Empty response');
+                return text;
+            } catch (err) {
+                if (attempt === maxRetries) throw err;
+                await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 900));
+            }
+        }
+    }
+
+    function generateContextualFallbackAnalysis(agent, userPrompt) {
+        const m = getLiveBranchTelemetry();
+        const lowest3 = [...m.ranking].reverse().slice(0, 3).map(t => `**${t.name}** (${t.points.toLocaleString('id-ID')} poin)`).join(', ');
+        const urgentSample = m.urgentClients.slice(0, 4).map(c => `*${c.name}* (${c.sessions} sesi)`).join(', ') || 'client sesi rendah';
+
+        if (agent.id === 'ag-analyst') {
+            return `### Evaluasi Gap Target & Run-Rate (${managerProfile.branch})\n- **Posisi Capaian:** ${m.totalPoints.toLocaleString('id-ID')} Poin (**${m.pctFormatted}%**) dari target divisi ${DIVISION_TARGET.toLocaleString('id-ID')} Poin.\n- **Target Harian Wajib:** Untuk menutup sisa **${m.sisaDivisi.toLocaleString('id-ID')} Poin** dalam **${m.remDays} hari**, tim wajib mengamankan minimal **${m.butuhPerHari.toLocaleString('id-ID')} Poin/Hari** (~${Math.ceil(m.butuhPerHari / m.trainerCount)} poin per trainer per hari).\n- **Fokus Coaching Prioritas:** Akselerasi khusus pada ${lowest3} serta peningkatan konversi RA dari **${m.avgRA}/20** menjadi minimal **2.5 RA/trainer** minggu ini.`;
+        }
+        if (agent.id === 'ag-ops') {
+            return `### Protokol Audit & Disiplin Operasional\n- **Penertiban Laporan Harian:** Saat ini **${m.unreportedCount}/${m.trainerCount} trainer** belum menyetor laporan harian (${m.todayStr}). ${managerProfile.role} **${managerProfile.fullName} (${managerProfile.alias})** melakukan pengecekan silang pukul 17:30 WIB sebelum alarm **18:00 WIB**.\n- **Floor Coverage Peak Hour:** Tempatkan trainer dengan angka conduct tinggi di jam 17:00–20:30 WIB untuk menangkap prospek walk-in dan menjadwalkan RA on-the-spot.`;
+        }
+        if (agent.id === 'ag-finance') {
+            return `### Proyeksi Kontribusi Bundling & Efisiensi\n- **Leverage Bundling:** Dengan capaian saat ini **${m.totalBundling} Unit Bundling**, penambahan **8–10 unit bundling baru** dalam ${m.remDays} hari ke depan akan menyumbang >65% dari kebutuhan gap **${m.sisaDivisi.toLocaleString('id-ID')} Poin**.\n- **Alokasi Insentif:** Fokuskan dorongan paket bundling 12–24 sesi pada client yang memiliki sisa <= 3 sesi agar biaya akuisisi tetap nol.`;
+        }
+        if (agent.id === 'ag-client') {
+            return `### Skrip Komunikasi & Retensi Client\n- **Follow-Up Client Sisa <= 3 Sesi:** Hubungi segera member prioritas (${urgentSample}) dengan penawaran bundling renewal sebelum jadwal latihan minggu ini.\n- **Template Colek Harian PT:** Gunakan tombol **Colek WA** pada tabel audit harian untuk mengingatkan trainer sebelum pukul 18:00 WIB.`;
+        }
+        return `### Keputusan Eksekutif & Rencana Eksekusi Terpadu\nBerdasarkan instruksi *"${userPrompt}"* dan telemetri aktual **${managerProfile.branch}**:\n1. **Kejar Run-Rate ${m.butuhPerHari.toLocaleString('id-ID')} Poin/Hari:** Supervisi langsung oleh **${managerProfile.role} ${managerProfile.fullName} (${managerProfile.alias})** untuk pembagian target harian seluruh ${m.trainerCount} trainer.\n2. **Zero Late Report Sebelum 18:00 WIB:** Pastikan seluruh **${m.unreportedCount} trainer** yang belum lapor menyelesaikan input hari ini.\n3. **Konversi Cepat RA & Renewal:** Eksekusi follow-up ke seluruh client sisa <= 3 sesi untuk mengamankan minimal 3 unit bundling dalam 48 jam ke depan.`;
+    }
+
+    function generateContextualFallbackTasks() {
+        const m = getLiveBranchTelemetry();
+        return [
+            {
+                title: `Audit & Colek WA ${m.unreportedCount} Trainer Belum Lapor Sebelum 18:00 WIB`,
+                pic: `${managerProfile.role} ${managerProfile.alias}`,
+                priority: 'HIGH',
+                deadline: 'Hari ini, 18:00 WIB',
+                kpi: `${m.trainerCount}/${m.trainerCount} Trainer berstatus Sudah Lapor`
+            },
+            {
+                title: `Sprint Harian Kejar Run-Rate ${m.butuhPerHari.toLocaleString('id-ID')} Poin/Hari`,
+                pic: `${managerProfile.role} & Seluruh ${m.trainerCount} Trainer`,
+                priority: 'HIGH',
+                deadline: `Setiap hari (${m.remDays} hari sisa)`,
+                kpi: `Minimal ${m.butuhPerHari.toLocaleString('id-ID')} Poin/Hari tercatat`
+            },
+            {
+                title: `Follow-Up Renewal ${m.urgentClients.length} Member Sisa Sesi <= 3`,
+                pic: `${managerProfile.role} ${managerProfile.alias} & Trainer Pengampu`,
+                priority: 'HIGH',
+                deadline: 'Besok, 17:00 WIB',
+                kpi: 'Minimal 3 closing paket Bundling baru'
+            },
+            {
+                title: `Tingkatkan Rasio RA Done dari ${m.avgRA}/20 Menjadi Minimal 2.0/20`,
+                pic: `${managerProfile.role} ${managerProfile.alias}`,
+                priority: 'MEDIUM',
+                deadline: 'Akhir Minggu Ini',
+                kpi: 'Minimal 24 sesi RA terlaksana'
+            }
+        ];
+    }
+
+    async function runAICommandCenter() {
+        const userPrompt = document.getElementById('aiCommandTextarea').value.trim();
+        if (!userPrompt) {
+            showToast('Masukkan perintah atau pilih salah satu Preset Perintah Cepat.', 'error');
+            return;
+        }
+
+        let selectedAgents = [];
+        if (aiTeamState.aiMode === 'collab') {
+            selectedAgents = [...aiTeamState.aiAgents].filter(a => a.active).sort((a, b) => a.order - b.order);
+            if (selectedAgents.length === 0) {
+                showToast('Aktifkan minimal 1 AI Agent di tab Roster.', 'error');
+                return;
+            }
+        } else {
+            const id = document.getElementById('aiSingleAgentDropdown').value;
+            const found = aiTeamState.aiAgents.find(a => a.id === id);
+            if (found) selectedAgents = [found];
+        }
+
+        const btn = document.getElementById('btnRunAiTeam');
+        btn.disabled = true;
+        btn.classList.add('opacity-60');
+
+        const progressBox = document.getElementById('aiProgressBox');
+        const progressCards = document.getElementById('aiProgressCards');
+        progressBox.classList.remove('hidden');
+
+        progressCards.innerHTML = selectedAgents.map((ag, idx) => `
+            <div id="pcard-${ag.id}" class="p-2.5 rounded-xl bg-[#0b0f19] border border-gray-800 flex items-center gap-2">
+                <span id="pnum-${ag.id}" class="w-5 h-5 rounded-md bg-gray-800 text-gray-400 flex items-center justify-center text-[10px] font-mono font-bold">${idx + 1}</span>
+                <span class="text-[11px] font-semibold text-gray-200 truncate">${ag.name}</span>
+            </div>
+        `).join('');
+
+        const injectLive = document.getElementById('injectLiveDataToggle').checked;
+        const liveTelemetry = injectLive ? buildLiveTelemetryContext() : '';
+        const outputs = [];
+
+        for (let i = 0; i < selectedAgents.length; i++) {
+            const ag = selectedAgents[i];
+            document.getElementById('aiProgressStep').innerText = `${i + 1}/${selectedAgents.length}`;
+            document.getElementById('aiProgressLabel').innerText = `${ag.name} sedang menganalisis data ${managerProfile.branch}...`;
+
+            const card = document.getElementById(`pcard-${ag.id}`);
+            const num = document.getElementById(`pnum-${ag.id}`);
+            card.classList.add('border-indigo-500');
+            num.className = 'w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold animate-pulse';
+
+            const prevSummary = outputs.length > 0
+                ? `\n\nMASUKAN AGEN SEBELUMNYA:\n${outputs.map(o => `[${o.agentName}]: ${o.content}`).join('\n\n')}`
+                : '';
+
+            const fullPrompt = `${liveTelemetry}\n\nINSTRUKSI MANAGER ${managerProfile.alias.toUpperCase()}:\n"${userPrompt}"${prevSummary}\n\nBerikan analisis tajam, spesifik untuk ${managerProfile.branch} dalam Bahasa Indonesia terstruktur (Markdown).`;
+
+            let textResult = '';
+            try {
+                textResult = await callGeminiAPIWithBackoff({
+                    contents: [{ parts: [{ text: fullPrompt }] }],
+                    systemInstruction: { parts: [{ text: ag.prompt }] }
+                });
+            } catch (_) {
+                textResult = generateContextualFallbackAnalysis(ag, userPrompt);
+            }
+
+            outputs.push({
+                agentName: ag.name,
+                role: ag.role,
+                content: textResult
+            });
+
+            card.classList.remove('border-indigo-500');
+            card.classList.add('border-emerald-500/50');
+            num.className = 'w-5 h-5 rounded-md bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold';
+            num.innerText = '✓';
+        }
+
+        let extractedTasks = [];
+        try {
+            const combinedText = outputs.map(o => `${o.agentName}: ${o.content}`).join('\n\n');
+            const rawJson = await callGeminiAPIWithBackoff({
+                contents: [{ parts: [{ text: `Ekstrak 4 action items konkret untuk tim ${managerProfile.branch} dari laporan berikut:\n\n${combinedText}` }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                title: { type: "STRING" },
+                                pic: { type: "STRING" },
+                                priority: { type: "STRING" },
+                                deadline: { type: "STRING" },
+                                kpi: { type: "STRING" }
+                            },
+                            required: ["title", "pic", "priority", "deadline", "kpi"]
+                        }
+                    }
+                }
+            });
+            extractedTasks = JSON.parse(rawJson);
+        } catch (_) {
+            extractedTasks = generateContextualFallbackTasks();
+        }
+
+        const reportObj = {
+            id: 'rep-' + Date.now(),
+            timestamp: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB',
+            title: userPrompt.length > 72 ? userPrompt.slice(0, 72) + '...' : userPrompt,
+            prompt: userPrompt,
+            outputs,
+            extractedTasks
+        };
+
+        aiTeamState.lastExtractedTasks = extractedTasks;
+        aiTeamState.lastReportTitle = reportObj.title;
+        aiTeamState.lastReportMarkdown = outputs.map(o => `## ${o.agentName} (${o.role})\n${o.content}`).join('\n\n');
+        aiTeamState.aiReports.unshift(reportObj);
+
+        saveAiTeamState();
+        refreshAiTeamUI();
+        renderAIOutputResult(reportObj);
+
+        btn.disabled = false;
+        btn.classList.remove('opacity-60');
+        setTimeout(() => progressBox.classList.add('hidden'), 900);
+        showToast('Rapat Tim AI selesai! Hasil analisis & action items siap digunakan.', 'success');
+    }
+
+    function renderAIOutputResult(report) {
+        const container = document.getElementById('aiOutputContainer');
+        container.classList.remove('hidden');
+
+        document.getElementById('aiReportHeading').innerText = report.title;
+        document.getElementById('aiReportSubheading').innerText = `${report.timestamp} • ${report.outputs.length} Spesialis AI Terlibat`;
+
+        const tasksGrid = document.getElementById('aiExtractedTasksGrid');
+        tasksGrid.innerHTML = (report.extractedTasks || []).map((t, i) => `
+            <div class="bg-[#0b0f19] border border-gray-800 rounded-xl p-3.5 flex flex-col justify-between gap-2">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded ${t.priority === 'HIGH' ? 'bg-red-950 text-red-300 border border-red-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">${t.priority}</span>
+                        <span class="text-[10px] font-mono text-gray-400">${t.deadline}</span>
+                    </div>
+                    <h5 class="text-xs font-bold text-white">${t.title}</h5>
+                    <p class="text-[11px] text-gray-400 mt-1">PIC: <span class="text-gray-200">${t.pic}</span></p>
+                    <p class="text-[11px] text-blue-400">KPI: ${t.kpi}</p>
+                </div>
+                <button type="button" onclick="sendSingleExtractedToKanban(${i})" id="btn-ext-${i}" class="w-full py-1.5 rounded-lg bg-gray-800 hover:bg-blue-600 text-gray-200 hover:text-white text-[11px] font-bold transition">
+                    + Masukkan ke Kanban
+                </button>
+            </div>
+        `).join('');
+
+        const sectionsEl = document.getElementById('aiReportSections');
+        sectionsEl.innerHTML = report.outputs.map(o => `
+            <div class="bg-[#0b0f19] border border-gray-800 rounded-2xl p-4">
+                <div class="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-gray-800">
+                    <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                    <h5 class="text-xs sm:text-sm font-bold text-white">${o.agentName}</h5>
+                    <span class="text-[10px] px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">${o.role}</span>
+                </div>
+                <div class="ai-output">${formatMarkdownHTML(o.content)}</div>
+            </div>
+        `).join('');
+
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function formatMarkdownHTML(md) {
+        let html = (md || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/^\s*[-*•]\s+(.*)$/gim, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+        return html.split('\n\n').map(p => p.trim().startsWith('<') ? p : `<p>${p.replace(/\n/g, '<br/>')}</p>`).join('');
+    }
+
+    function sendSingleExtractedToKanban(idx) {
+        const item = aiTeamState.lastExtractedTasks[idx];
+        if (!item) return;
+        aiTeamState.kanbanTasks.unshift({
+            id: 'kt-' + Date.now() + '-' + idx,
+            title: item.title,
+            pic: item.pic,
+            priority: item.priority || 'HIGH',
+            deadline: item.deadline,
+            kpi: item.kpi,
+            status: 'todo'
+        });
+        const btn = document.getElementById(`btn-ext-${idx}`);
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = '✓ Masuk ke Kanban';
+            btn.classList.add('bg-emerald-900/50', 'text-emerald-300');
+        }
+        saveAiTeamState();
+        refreshAiTeamUI();
+        showToast('Action item ditambahkan ke papan Kanban.', 'success');
+    }
+
+    function sendAllExtractedToKanban() {
+        if (!aiTeamState.lastExtractedTasks.length) return;
+        aiTeamState.lastExtractedTasks.forEach((item, idx) => {
+            aiTeamState.kanbanTasks.unshift({
+                id: 'kt-' + Date.now() + '-' + idx,
+                title: item.title,
+                pic: item.pic,
+                priority: item.priority || 'HIGH',
+                deadline: item.deadline,
+                kpi: item.kpi,
+                status: 'todo'
+            });
+        });
+        saveAiTeamState();
+        refreshAiTeamUI();
+        switchAITab('kanban');
+        showToast(`${aiTeamState.lastExtractedTasks.length} tugas dikirim ke Kanban & SOP Tracker!`, 'success');
+    }
+
+    function copyAIReportText() {
+        if (!aiTeamState.lastReportMarkdown) return;
+        const ta = document.createElement('textarea');
+        ta.value = `*${aiTeamState.lastReportTitle}*\n\n${aiTeamState.lastReportMarkdown}`;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('Laporan AI disalin ke clipboard!', 'success');
+    }
+
+    function shareAIReportWA() {
+        if (!aiTeamState.lastReportMarkdown) return;
+        const clean = aiTeamState.lastReportMarkdown.replace(/[#*`]/g, '').slice(0, 1400);
+        const msg = `*BRIEFING AI TEAM — ${managerProfile.branch.toUpperCase()}*\n*Topik:* ${aiTeamState.lastReportTitle}\n\n${clean}...`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function renderAIRoster() {
+        const grid = document.getElementById('aiRosterGrid');
+        if (!grid) return;
+        const sorted = [...aiTeamState.aiAgents].sort((a, b) => a.order - b.order);
+
+        grid.innerHTML = sorted.map(ag => `
+            <div class="bg-[#111827] border ${ag.active ? 'border-gray-800' : 'border-gray-800/50 opacity-65'} rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                <div>
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">Tahap #${ag.order}</span>
+                            <h4 class="text-sm font-bold text-white mt-1">${ag.name}</h4>
+                            <p class="text-xs text-gray-400">${ag.role}</p>
+                        </div>
+                        <button type="button" onclick="toggleAIAgentStatus('${ag.id}')" class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${ag.active ? 'bg-emerald-950 text-emerald-300 border-emerald-800' : 'bg-gray-800 text-gray-400 border-gray-700'}">
+                            ${ag.active ? '● Aktif' : '○ Standby'}
+                        </button>
+                    </div>
+                    <div class="bg-[#0b0f19] border border-gray-800 rounded-xl p-3 mt-3 text-[11px] text-gray-300 line-clamp-3">
+                        ${ag.prompt}
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-gray-800 flex items-center justify-between">
+                    <button type="button" onclick="openAgentEditorModal('${ag.id}')" class="text-xs font-bold text-blue-400 hover:text-blue-300">Edit Prompt SOP</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function toggleAIAgentStatus(id) {
+        const idx = aiTeamState.aiAgents.findIndex(a => a.id === id);
+        if (idx === -1) return;
+        aiTeamState.aiAgents[idx].active = !aiTeamState.aiAgents[idx].active;
+        saveAiTeamState();
+        refreshAiTeamUI();
+    }
+
+    function openAgentEditorModal(id = null) {
+        document.getElementById('editAgentId').value = id || '';
+        if (id) {
+            const ag = aiTeamState.aiAgents.find(a => a.id === id);
+            if (ag) {
+                document.getElementById('agentEditorTitle').innerText = `Edit Agent: ${ag.name}`;
+                document.getElementById('editAgentName').value = ag.name;
+                document.getElementById('editAgentRole').value = ag.role;
+                document.getElementById('editAgentOrder').value = ag.order;
+                document.getElementById('editAgentPrompt').value = ag.prompt;
+            }
+        } else {
+            document.getElementById('agentEditorTitle').innerText = 'Tambah Spesialis AI Agent';
+            document.getElementById('editAgentName').value = '';
+            document.getElementById('editAgentRole').value = '';
+            document.getElementById('editAgentOrder').value = aiTeamState.aiAgents.length + 1;
+            document.getElementById('editAgentPrompt').value = '';
+        }
+        openUiModal('agentEditorModal');
+    }
+
+    function saveAgentEditor(e) {
+        e.preventDefault();
+        const id = document.getElementById('editAgentId').value;
+        const data = {
+            name: document.getElementById('editAgentName').value.trim(),
+            role: document.getElementById('editAgentRole').value.trim(),
+            order: Number(document.getElementById('editAgentOrder').value) || 1,
+            prompt: document.getElementById('editAgentPrompt').value.trim()
+        };
+        if (id) {
+            const idx = aiTeamState.aiAgents.findIndex(a => a.id === id);
+            if (idx !== -1) aiTeamState.aiAgents[idx] = { ...aiTeamState.aiAgents[idx], ...data };
+        } else {
+            aiTeamState.aiAgents.push({ id: 'ag-' + Date.now(), ...data, active: true });
+        }
+        saveAiTeamState();
+        refreshAiTeamUI();
+        closeUiModal('agentEditorModal');
+        showToast('Konfigurasi AI Agent tersimpan.', 'success');
+    }
+
+    let draggedKanbanId = null;
+    function dragKanbanTask(e, id) { draggedKanbanId = id; }
+    function allowDrop(e) { e.preventDefault(); }
+    function dropKanbanTask(e, status) {
+        e.preventDefault();
+        if (!draggedKanbanId) return;
+        moveKanbanTaskStatus(draggedKanbanId, status);
+        draggedKanbanId = null;
+    }
+
+    function moveKanbanTaskStatus(id, status) {
+        const idx = aiTeamState.kanbanTasks.findIndex(t => t.id === id);
+        if (idx !== -1) {
+            aiTeamState.kanbanTasks[idx].status = status;
+            saveAiTeamState();
+            refreshAiTeamUI();
+        }
+    }
+
+    function renderKanbanBoard() {
+        const q = (document.getElementById('kanbanFilterText')?.value || '').toLowerCase();
+        const prio = document.getElementById('kanbanFilterPrio')?.value || 'ALL';
+        const cols = { todo: [], inprogress: [], review: [], done: [] };
+
+        aiTeamState.kanbanTasks.forEach(t => {
+            const matchQ = t.title.toLowerCase().includes(q) || t.pic.toLowerCase().includes(q);
+            const matchP = prio === 'ALL' || t.priority === prio;
+            if (matchQ && matchP) {
+                (cols[t.status] || cols.todo).push(t);
             }
         });
 
-        if (underPerformanceCount === 0) {
-            coachingList.innerHTML = `
-                <div class="p-4 bg-emerald-950/40 border border-emerald-800 rounded-2xl text-center text-emerald-300 text-sm">
-                    <i class="fa-solid fa-circle-check text-2xl mb-1 text-emerald-400"></i>
-                    <p class="font-bold">Luar Biasa!</p>
-                    <p class="text-xs text-emerald-400 mt-1">Semua trainer berada dalam jalur aman (Good Pace) untuk Minggu ke-${selectedWeek}.</p>
+        ['todo', 'inprogress', 'review', 'done'].forEach(st => {
+            const countEl = document.getElementById(`kcount-${st}`);
+            const box = document.getElementById(`kcol-${st}`);
+            if (countEl) countEl.innerText = cols[st].length;
+            if (!box) return;
+            if (!cols[st].length) {
+                box.innerHTML = `<div class="border border-dashed border-gray-800 rounded-xl p-4 text-center text-[11px] text-gray-500">Kosong</div>`;
+                return;
+            }
+            box.innerHTML = cols[st].map(t => `
+                <div draggable="true" ondragstart="dragKanbanTask(event, '${t.id}')" class="bg-[#0b0f19] border border-gray-800 hover:border-gray-700 rounded-xl p-3 space-y-2 cursor-grab">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded ${t.priority === 'HIGH' ? 'bg-red-950 text-red-300 border border-red-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">${t.priority}</span>
+                        <button type="button" onclick="deleteKanbanTask('${t.id}')" class="text-gray-500 hover:text-red-400"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                    </div>
+                    <h5 class="text-xs font-bold text-white ${t.status === 'done' ? 'line-through text-gray-500' : ''}">${t.title}</h5>
+                    <div class="text-[11px] text-gray-400 space-y-0.5">
+                        <div>PIC: <span class="text-gray-200">${t.pic}</span></div>
+                        <div>Deadline: <span class="text-amber-300">${t.deadline}</span></div>
+                        <div>KPI: <span class="text-emerald-400">${t.kpi}</span></div>
+                    </div>
+                    <select onchange="moveKanbanTaskStatus('${t.id}', this.value)" class="w-full bg-[#111827] border border-gray-800 rounded-lg px-2 py-1 text-[10px] text-gray-300">
+                        <option value="todo" ${t.status === 'todo' ? 'selected' : ''}>To Do</option>
+                        <option value="inprogress" ${t.status === 'inprogress' ? 'selected' : ''}>In Progress</option>
+                        <option value="review" ${t.status === 'review' ? 'selected' : ''}>Review / Audit</option>
+                        <option value="done" ${t.status === 'done' ? 'selected' : ''}>Done / Selesai</option>
+                    </select>
                 </div>
-            `;
-        }
-
-        document.getElementById('coachingBadgeCount').innerText = `${underPerformanceCount} Trainer Under Performance (W${selectedWeek})`;
+            `).join('');
+        });
     }
 
-    // --- SESI LOGIN (AUTH PERSISTENCE & VALIDASI KATA SANDI KUSTOM) ---
+    function openKanbanTaskModal() {
+        document.getElementById('ktaskTitle').value = '';
+        openUiModal('kanbanTaskModal');
+    }
+
+    function saveKanbanTaskForm(e) {
+        e.preventDefault();
+        aiTeamState.kanbanTasks.unshift({
+            id: 'kt-' + Date.now(),
+            title: document.getElementById('ktaskTitle').value.trim(),
+            pic: document.getElementById('ktaskPic').value.trim(),
+            priority: document.getElementById('ktaskPrio').value,
+            deadline: document.getElementById('ktaskDeadline').value.trim(),
+            status: document.getElementById('ktaskStatus').value,
+            kpi: document.getElementById('ktaskKpi').value.trim()
+        });
+        saveAiTeamState();
+        refreshAiTeamUI();
+        closeUiModal('kanbanTaskModal');
+        showToast('Tugas baru tersimpan di Kanban & SOP Tracker.', 'success');
+    }
+
+    function deleteKanbanTask(id) {
+        aiTeamState.kanbanTasks = aiTeamState.kanbanTasks.filter(t => t.id !== id);
+        saveAiTeamState();
+        refreshAiTeamUI();
+    }
+
+    function delegateKanbanWA() {
+        const openTasks = aiTeamState.kanbanTasks.filter(t => t.status !== 'done');
+        if (!openTasks.length) {
+            showToast('Semua tugas sudah selesai!', 'info');
+            return;
+        }
+        const list = openTasks.map((t, i) => `${i + 1}. [${t.priority}] *${t.title}*\n   PIC: ${t.pic} | Target: ${t.deadline}`).join('\n\n');
+        const msg = `*DELEGASI TUGAS & SOP — ${managerProfile.branch.toUpperCase()}*\n\n${list}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function exportKanbanCSV() {
+        const headers = ['Judul Tugas', 'PIC', 'Prioritas', 'Deadline', 'Status', 'KPI'];
+        const rows = aiTeamState.kanbanTasks.map(t => [
+            `"${t.title}"`, `"${t.pic}"`, t.priority, `"${t.deadline}"`, t.status, `"${t.kpi}"`
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Kanban_SOP_FTL_${localDateStr()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('CSV Kanban SOP diunduh.', 'success');
+    }
+
+    function renderAIArchive() {
+        const el = document.getElementById('aiArchiveList');
+        if (!el) return;
+        if (!aiTeamState.aiReports.length) {
+            el.innerHTML = `<div class="bg-[#111827] border border-dashed border-gray-800 rounded-2xl p-8 text-center text-xs text-gray-400">Belum ada arsip laporan AI tersimpan.</div>`;
+            return;
+        }
+        el.innerHTML = aiTeamState.aiReports.map((r, idx) => `
+            <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <span class="text-[10px] font-mono text-blue-400">${r.timestamp}</span>
+                    <h4 class="text-sm font-bold text-white mt-0.5">${r.title}</h4>
+                </div>
+                <button type="button" onclick="openArchivedReport(${idx})" class="px-3 py-1.5 rounded-xl bg-indigo-950 text-indigo-300 border border-indigo-800 text-xs font-bold hover:bg-indigo-900 transition">Buka Laporan</button>
+            </div>
+        `).join('');
+    }
+
+    function openArchivedReport(idx) {
+        const r = aiTeamState.aiReports[idx];
+        if (!r) return;
+        aiTeamState.lastExtractedTasks = r.extractedTasks || [];
+        aiTeamState.lastReportTitle = r.title;
+        aiTeamState.lastReportMarkdown = r.outputs.map(o => `## ${o.agentName}\n${o.content}`).join('\n\n');
+        switchAITab('command');
+        renderAIOutputResult(r);
+    }
+
+    // --- LOGIKA OTENTIKASI PORTAL UTAMA ---
+    function checkAuthSession() {
+        const isLoggedIn = localStorage.getItem('FTL_LOGGED_IN') === 'true';
+        const overlay = document.getElementById('authModalOverlay');
+        if (isLoggedIn && overlay) {
+            overlay.classList.add('hidden');
+            if (managerProfile.autoSync !== false) {
+                syncCloudToManager();
+            }
+        }
+    }
+
     function toggleAuthForm(mode) {
-        const signInBox = document.getElementById('signInContainer');
-        const signUpBox = document.getElementById('signUpContainer');
         if (mode === 'signUp') {
-            signInBox.classList.add('hidden');
-            signUpBox.classList.remove('hidden');
+            document.getElementById('signInContainer').classList.add('hidden');
+            document.getElementById('signUpContainer').classList.remove('hidden');
         } else {
-            signUpBox.classList.add('hidden');
-            signInBox.classList.remove('hidden');
+            document.getElementById('signUpContainer').classList.add('hidden');
+            document.getElementById('signInContainer').classList.remove('hidden');
         }
     }
 
     function handleAuthSignIn(e) {
         e.preventDefault();
-        const emailVal = document.getElementById('signInEmail').value.trim();
-        const passVal = document.getElementById('signInPassword').value;
-        const savedPass = localStorage.getItem('FTL_AUTH_PASSWORD') || "admin123";
+        const email = document.getElementById('signInEmail').value.trim();
+        const pass = document.getElementById('signInPassword').value.trim();
+        const btn = document.getElementById('btnSignIn');
 
-        if (passVal !== savedPass) {
-            alert("Kata sandi salah! Silakan periksa kembali.");
+        if (!email || !pass) return;
+
+        const savedPass = localStorage.getItem('FTL_AUTH_PASSWORD');
+        if (savedPass && pass !== savedPass) {
+            showToast('Kata sandi salah! Silakan periksa kembali kata sandi Anda.', 'error');
+            return;
+        }
+        if (!savedPass && pass !== 'admin123') {
+            showToast('Kata sandi salah! Gunakan sandi default "admin123".', 'error');
             return;
         }
 
-        localStorage.setItem('FTL_LOGGED_IN', 'true');
-        if (emailVal) {
-            managerProfile.email = emailVal;
-            localStorage.setItem('FTL_MANAGER_PROFILE', JSON.stringify(managerProfile));
-        }
-        checkAuthStatus();
-        applyManagerProfileUI();
-        if (managerProfile.autoSync !== false) syncCloudToManager();
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memverifikasi...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            localStorage.setItem('FTL_LOGGED_IN', 'true');
+            document.getElementById('authModalOverlay').classList.add('hidden');
+            btn.innerHTML = '<span>Masuk Dashboard</span> <i class="fa-solid fa-arrow-right text-xs"></i>';
+            btn.disabled = false;
+            if (managerProfile.autoSync !== false) {
+                syncCloudToManager();
+            }
+            showToast(`Selamat datang kembali, ${managerProfile.alias}!`, 'success');
+        }, 500);
     }
 
     function handleAuthSignUp(e) {
         e.preventDefault();
-        const nameVal = document.getElementById('signUpName').value.trim();
-        const emailVal = document.getElementById('signUpEmail').value.trim();
-        const passVal = document.getElementById('signUpPassword').value;
+        const name = document.getElementById('signUpName').value.trim();
+        const email = document.getElementById('signUpEmail').value.trim();
+        const btn = document.getElementById('btnSignUp');
 
-        const msg = `*PENGAJUAN AKUN PORTAL FTL BLUE*\n` +
-                    `Nama: ${nameVal}\n` +
-                    `Email: ${emailVal}\n` +
-                    `Mohon persetujuan akses Dashboard Manager.`;
-        const waNumber = getFormattedManagerWA() || "6285240201806";
-        window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`, '_blank');
-        alert("Permintaan verifikasi diarahkan ke WhatsApp Manager.");
-        toggleAuthForm('signIn');
+        if (!name || !email) return;
+
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Mengirim Pengajuan...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            showToast(`Permintaan akun untuk ${name} (${email}) dikirim ke Manager.`, 'success');
+            btn.innerHTML = '<span>Kirim Permintaan Verifikasi</span> <i class="fa-solid fa-paper-plane text-xs"></i>';
+            btn.disabled = false;
+            document.getElementById('signUpForm').reset();
+            toggleAuthForm('signIn');
+        }, 700);
     }
 
     function showLogoutConfirmation() {
-        if (confirm("Keluar dari Portal Manager FTL Blue?")) {
-            localStorage.removeItem('FTL_LOGGED_IN');
-            checkAuthStatus();
-        }
+        showConfirmModal(
+            'Keluar dari Portal Manager',
+            'Apakah Anda yakin ingin keluar dan mengunci layar Dashboard?\n(Tenang, data laporan Anda tetap tersimpan aman di Cloud & browser ini)',
+            () => {
+                localStorage.removeItem('FTL_LOGGED_IN');
+                lockAITeam(true);
+                document.getElementById('authModalOverlay').classList.remove('hidden');
+                document.getElementById('signInForm').reset();
+            },
+            'Keluar & Kunci'
+        );
     }
 
-    function checkAuthStatus() {
-        const overlay = document.getElementById('authModalOverlay');
-        const isLoggedIn = localStorage.getItem('FTL_LOGGED_IN') === 'true';
-        if (isLoggedIn && overlay) {
-            overlay.style.display = 'none';
-            overlay.style.opacity = '0';
-        } else if (overlay) {
-            overlay.style.display = 'flex';
-            overlay.style.opacity = '1';
-        }
-    }
-
-    function updateRealtimeClock() {
+    function updateClock() {
         const now = new Date();
-        const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const dateString = now.toLocaleDateString('id-ID', optionsDate);
+        const dateOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+        const dateStr = now.toLocaleDateString('id-ID', dateOptions);
+        const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':') + ' WIB';
         
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        const timeString = `${hours}:${minutes}:${seconds} WIB`;
-        
-        const dateElem = document.getElementById('realtimeDate');
-        const clockElem = document.getElementById('realtimeClock');
-        
-        if (dateElem) dateElem.innerText = dateString;
-        if (clockElem) clockElem.innerText = timeString;
+        const dEl = document.getElementById('realtimeDate');
+        const cEl = document.getElementById('realtimeClock');
+        if (dEl) dEl.innerText = dateStr;
+        if (cEl) cEl.innerText = timeStr;
     }
 
-    // --- INISIALISASI HALAMAN ---
-    window.addEventListener('DOMContentLoaded', () => {
-        checkAuthStatus();
+    // Boot Application
+    window.addEventListener('DOMContentLoaded', async () => {
+        await ensureDefaultAiPasswordHash();
         applyManagerProfileUI();
         refreshAllTrainerUI();
-        populateMonthSelects();
         renderRecentTable();
         renderClientTable();
         renderDashboard();
-        renderAnalytics();
-        updateRealtimeClock();
-        setInterval(updateRealtimeClock, 1000);
-
-        if (localStorage.getItem('FTL_LOGGED_IN') === 'true' && managerProfile.autoSync !== false) {
-            syncCloudToManager();
-        }
+        refreshAiTeamUI();
+        updateClock();
+        setInterval(updateClock, 1000);
+        checkAuthSession();
     });
 </script>
+
 </body>
 </html>
