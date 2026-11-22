@@ -1248,8 +1248,8 @@
                     </div>
 
                     <div class="lg:col-span-5 bg-[#111827] p-5 rounded-2xl border border-gray-800 shadow-xl space-y-4">
-                        <div class="flex justify-between items-center">
-                            <h4 class="text-sm font-black text-red-400"><i class="fa-solid fa-bullhorn mr-1.5"></i> Action Plan Coaching</h4>
+                        <div class="flex flex-wrap justify-between items-center gap-2">
+                            <h4 class="text-sm font-black text-red-400"><i class="fa-solid fa-bullhorn mr-1.5"></i> Action Plan Coaching &amp; SWOT</h4>
                             <span id="coachingBadgeCount" class="bg-red-950 text-red-300 border border-red-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full">0 Trainer Under Performance</span>
                         </div>
                         <div id="coachingList" class="space-y-3"></div>
@@ -5466,22 +5466,193 @@
         if (underPerf.length === 0) {
             coachingList.innerHTML = `<div class="p-4 bg-emerald-950/30 border border-emerald-800/50 rounded-xl text-xs text-emerald-400 font-semibold text-center">Semua Trainer berada pada jalur Good Pace W${currentWeek}! 🎉</div>`;
         } else {
-            coachingList.innerHTML = underPerf.map(u => {
+            let coachingSwotStore = {};
+            try {
+                coachingSwotStore = JSON.parse(localStorage.getItem('FTL_COACHING_SWOT_NOTES') || '{}') || {};
+            } catch (e) {
+                coachingSwotStore = {};
+            }
+
+            coachingList.innerHTML = underPerf.map((u, idx) => {
                 const deficitWeek = Math.max(targetRunRate - u.points, 0);
                 const deficitMonth = Math.max(INDIVIDUAL_SOB_TARGET - u.points, 0);
-                let actionMsg = u.points === 0 ? "Belum ada input penjualan poin bulan ini. Wajib coaching intensif 1-on-1 & audit RA harian." : "Lakukan roleplay closing bundling paket PT & intensifkan RA harian untuk mengejar defisit poin.";
+                const actionMsg = u.points === 0
+                    ? "Belum ada input penjualan poin bulan ini. Wajib coaching intensif 1-on-1 & audit RA harian."
+                    : "Lakukan roleplay closing bundling paket PT & intensifkan RA harian untuk mengejar defisit poin.";
+
+                const tLogs = monthData.filter(d => isSameTrainerName(d.trainer, u.name));
+                const totalRA = tLogs.reduce((a, b) => a + (parseInt(b.ra, 10) || 0), 0);
+                const avgRA = tLogs.length > 0 ? (totalRA / tLogs.length).toFixed(1) : '0.0';
+                const lowSessClients = clientData.filter(c => isSameTrainerName(c.trainer, u.name) && (parseInt(c.sessions, 10) || 0) <= 5);
+
+                const autoSwot = {
+                    s: u.conduct >= 30
+                        ? `Konsistensi sesi melatih aktif (${u.conduct} sesi) & kedekatan dengan member.`
+                        : (u.bundling > 0
+                            ? `Sudah mencatat ${u.bundling} unit bundling pada periode ${formatMonthLabel(selectedMonth)}.`
+                            : `Rata-rata RA tercatat ${avgRA}/hari; siap ditingkatkan dengan disiplin harian.`),
+                    w: `Defisit run-rate W${currentWeek} sebesar -${deficitWeek.toLocaleString('id-ID')} poin (kurang ${deficitMonth.toLocaleString('id-ID')} poin ke SOB ${INDIVIDUAL_SOB_TARGET.toLocaleString('id-ID')})${u.bundling === 0 ? ' & belum ada unit bundling' : ''}.`,
+                    o: lowSessClients.length > 0
+                        ? `${lowSessClients.length} client binaan berada pada sisa sesi <= 5 (potensi renewal & bundling cepat).`
+                        : `Peluang follow-up member aktif & penawaran bundling paket PT di jam sibuk.`,
+                    t: `Risiko tidak tercapainya tier komisi optimal & tertinggal dari target SOB akhir bulan.`
+                };
+
+                const savedKey = `${selectedMonth}::${u.name}`;
+                const savedEntry = coachingSwotStore[savedKey] || {};
+                const swotData = {
+                    s: savedEntry.s !== undefined ? savedEntry.s : autoSwot.s,
+                    w: savedEntry.w !== undefined ? savedEntry.w : autoSwot.w,
+                    o: savedEntry.o !== undefined ? savedEntry.o : autoSwot.o,
+                    t: savedEntry.t !== undefined ? savedEntry.t : autoSwot.t,
+                    messages: Array.isArray(savedEntry.messages) ? savedEntry.messages : []
+                };
+
+                const safeTrainerJs = u.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const safeSavedKeyJs = savedKey.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const domId = `coach-card-${idx}`;
+
+                const chatHtml = swotData.messages.length > 0
+                    ? swotData.messages.map(m => `
+                        <div class="bg-[#111827] border border-gray-800 rounded-lg p-2 text-[11px]">
+                            <div class="flex justify-between items-center text-[10px] text-gray-400 mb-0.5">
+                                <span class="font-bold text-blue-400">${m.sender || managerProfile.alias || 'Manager'}</span>
+                                <span>${m.time || ''}</span>
+                            </div>
+                            <p class="text-gray-200 leading-relaxed whitespace-pre-line">${m.text}</p>
+                        </div>
+                    `).join('')
+                    : `<p class="text-[10px] text-gray-500 italic text-center py-2">Belum ada catatan/chat coaching untuk ${u.name}.</p>`;
 
                 return `
-                    <div class="p-3 bg-red-950/30 border border-red-800/50 rounded-xl space-y-1">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-xs text-red-400">${u.name}</span>
+                    <div id="${domId}" class="p-3.5 bg-red-950/25 border border-red-800/50 rounded-xl space-y-2.5">
+                        <div class="flex flex-wrap justify-between items-center gap-2">
+                            <span class="font-bold text-xs text-red-300">${u.name}</span>
                             <span class="text-[10px] font-extrabold text-red-300 bg-red-950/80 px-2 py-0.5 rounded border border-red-800">Defisit W${currentWeek}: -${deficitWeek.toLocaleString('id-ID')} Poin</span>
                         </div>
                         <p class="text-[11px] text-gray-300 leading-relaxed">${actionMsg} (Kurang <strong>${deficitMonth.toLocaleString('id-ID')} poin</strong> ke SOB ${INDIVIDUAL_SOB_TARGET.toLocaleString('id-ID')})</p>
+
+                        <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                            <button type="button" onclick="toggleCoachingPanel('${domId}', 'swot')" class="bg-[#0b0f19] hover:bg-gray-800 text-amber-300 border border-amber-800/60 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition flex items-center gap-1">
+                                <i class="fa-solid fa-grid-2"></i> Analisa SWOT
+                            </button>
+                            <button type="button" onclick="toggleCoachingPanel('${domId}', 'chat')" class="bg-[#0b0f19] hover:bg-gray-800 text-sky-300 border border-sky-800/60 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition flex items-center gap-1">
+                                <i class="fa-solid fa-comments"></i> Chat Coaching (<span id="chat-count-${idx}">${swotData.messages.length}</span>)
+                            </button>
+                        </div>
+
+                        <div id="${domId}-swot" class="hidden bg-[#0b0f19] border border-gray-800 rounded-xl p-3 space-y-2.5 text-[11px]">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div class="bg-emerald-950/25 border border-emerald-800/50 rounded-lg p-2">
+                                    <label class="block text-[10px] font-black uppercase text-emerald-400 mb-1">S — Strengths</label>
+                                    <textarea id="swot-s-${idx}" rows="2" class="w-full bg-[#111827] border border-gray-800 rounded p-1.5 text-[11px] text-gray-200 focus:border-emerald-500 focus:outline-none">${swotData.s}</textarea>
+                                </div>
+                                <div class="bg-red-950/25 border border-red-800/50 rounded-lg p-2">
+                                    <label class="block text-[10px] font-black uppercase text-red-400 mb-1">W — Weaknesses</label>
+                                    <textarea id="swot-w-${idx}" rows="2" class="w-full bg-[#111827] border border-gray-800 rounded p-1.5 text-[11px] text-gray-200 focus:border-red-500 focus:outline-none">${swotData.w}</textarea>
+                                </div>
+                                <div class="bg-blue-950/25 border border-blue-800/50 rounded-lg p-2">
+                                    <label class="block text-[10px] font-black uppercase text-blue-400 mb-1">O — Opportunities</label>
+                                    <textarea id="swot-o-${idx}" rows="2" class="w-full bg-[#111827] border border-gray-800 rounded p-1.5 text-[11px] text-gray-200 focus:border-blue-500 focus:outline-none">${swotData.o}</textarea>
+                                </div>
+                                <div class="bg-amber-950/25 border border-amber-800/50 rounded-lg p-2">
+                                    <label class="block text-[10px] font-black uppercase text-amber-400 mb-1">T — Threats</label>
+                                    <textarea id="swot-t-${idx}" rows="2" class="w-full bg-[#111827] border border-gray-800 rounded p-1.5 text-[11px] text-gray-200 focus:border-amber-500 focus:outline-none">${swotData.t}</textarea>
+                                </div>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="button" onclick="saveTrainerSwotNote('${safeSavedKeyJs}', '${safeTrainerJs}', ${idx})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded-lg text-[10px] transition">
+                                    <i class="fa-solid fa-floppy-disk mr-1"></i> Simpan SWOT
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="${domId}-chat" class="hidden bg-[#0b0f19] border border-gray-800 rounded-xl p-3 space-y-2">
+                            <div id="chat-thread-${idx}" class="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+                                ${chatHtml}
+                            </div>
+                            <div class="flex gap-1.5 pt-1 border-t border-gray-800/80">
+                                <input type="text" id="chat-input-${idx}" placeholder="Tulis pesan / catatan coaching untuk ${u.name}..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendTrainerCoachingChat('${safeSavedKeyJs}', '${safeTrainerJs}', ${idx});}" class="flex-1 bg-[#111827] border border-gray-800 rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:border-sky-500 focus:outline-none">
+                                <button type="button" onclick="sendTrainerCoachingChat('${safeSavedKeyJs}', '${safeTrainerJs}', ${idx})" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] transition shrink-0">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 `;
             }).join('');
         }
+    }
+
+    function toggleCoachingPanel(cardDomId, panelType) {
+        const swotPanel = document.getElementById(`${cardDomId}-swot`);
+        const chatPanel = document.getElementById(`${cardDomId}-chat`);
+        if (panelType === 'swot') {
+            if (swotPanel) swotPanel.classList.toggle('hidden');
+            if (chatPanel) chatPanel.classList.add('hidden');
+        } else if (panelType === 'chat') {
+            if (chatPanel) chatPanel.classList.toggle('hidden');
+            if (swotPanel) swotPanel.classList.add('hidden');
+        }
+    }
+
+    function getCoachingSwotStorage() {
+        try {
+            return JSON.parse(localStorage.getItem('FTL_COACHING_SWOT_NOTES') || '{}') || {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function saveTrainerSwotNote(storageKey, trainerName, idx) {
+        const store = getCoachingSwotStorage();
+        const prev = store[storageKey] || { messages: [] };
+        store[storageKey] = {
+            ...prev,
+            s: document.getElementById(`swot-s-${idx}`)?.value.trim() || '',
+            w: document.getElementById(`swot-w-${idx}`)?.value.trim() || '',
+            o: document.getElementById(`swot-o-${idx}`)?.value.trim() || '',
+            t: document.getElementById(`swot-t-${idx}`)?.value.trim() || '',
+            updatedAt: new Date().toLocaleString('id-ID')
+        };
+        localStorage.setItem('FTL_COACHING_SWOT_NOTES', JSON.stringify(store));
+        showToast(`Analisa SWOT untuk ${trainerName} tersimpan.`, 'success');
+    }
+
+    function sendTrainerCoachingChat(storageKey, trainerName, idx) {
+        const inputEl = document.getElementById(`chat-input-${idx}`);
+        const text = inputEl ? inputEl.value.trim() : '';
+        if (!text) return;
+
+        const store = getCoachingSwotStorage();
+        const prev = store[storageKey] || { s: '', w: '', o: '', t: '', messages: [] };
+        const messages = Array.isArray(prev.messages) ? prev.messages : [];
+        messages.push({
+            sender: managerProfile.alias || managerProfile.fullName || 'Manager',
+            text,
+            time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        });
+
+        store[storageKey] = { ...prev, messages };
+        localStorage.setItem('FTL_COACHING_SWOT_NOTES', JSON.stringify(store));
+        if (inputEl) inputEl.value = '';
+
+        const threadEl = document.getElementById(`chat-thread-${idx}`);
+        const countEl = document.getElementById(`chat-count-${idx}`);
+        if (countEl) countEl.innerText = messages.length;
+        if (threadEl) {
+            threadEl.innerHTML = messages.map(m => `
+                <div class="bg-[#111827] border border-gray-800 rounded-lg p-2 text-[11px]">
+                    <div class="flex justify-between items-center text-[10px] text-gray-400 mb-0.5">
+                        <span class="font-bold text-blue-400">${m.sender}</span>
+                        <span>${m.time}</span>
+                    </div>
+                    <p class="text-gray-200 leading-relaxed whitespace-pre-line">${m.text}</p>
+                </div>
+            `).join('');
+            threadEl.scrollTop = threadEl.scrollHeight;
+        }
+        showToast(`Catatan coaching untuk ${trainerName} terkirim.`, 'info');
     }
 
     // --- PDF EXECUTIVE REPORT ---
