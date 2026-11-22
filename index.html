@@ -1826,6 +1826,18 @@
 </div>
 
 <script>
+    // === KONFIGURASI DEFAULT CLOUD SYNC (PERMANEN) ===
+const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdf7dyKVM5qEkYNZJIma0DqiPdmO0GpqbchiJsYz3jcm1Pc28EFq7cgKH7pRSkRkqx/exec";
+
+function getCloudScriptUrl() {
+  const savedUrl = (localStorage.getItem('ftl_google_script_url') || '').trim();
+  return savedUrl || DEFAULT_GOOGLE_SCRIPT_URL;
+}
+
+// Otomatis isi localStorage jika perangkat baru (HP/Laptop) masih kosong
+if (!localStorage.getItem('ftl_google_script_url')) {
+  localStorage.setItem('ftl_google_script_url', DEFAULT_GOOGLE_SCRIPT_URL);
+}
     let GOOGLE_SCRIPT_URL = localStorage.getItem('FTL_GOOGLE_SCRIPT_URL') || "";
     let lastPastedHtmlMatrix = null;
 
@@ -3666,10 +3678,16 @@
         });
     }
 
-    async function syncCloudToManager() {
-        if (!GOOGLE_SCRIPT_URL) {
-            showToast("Mode Lokal aktif. Isi URL Google Apps Script di Pengaturan jika ingin sync antar Laptop & HP.", "info");
-            return;
+    // Di dalam fungsi syncCloudToManager()
+const scriptUrl = getCloudScriptUrl();
+if (!scriptUrl) {
+  showToast('URL Google Apps Script belum diatur.', 'warning');
+  return;
+}
+
+// Di dalam fungsi postToCloud(payload)
+const scriptUrl = getCloudScriptUrl();
+if (!scriptUrl) return;
         }
         const syncBtnText = document.getElementById('syncBtnText');
         if (syncBtnText) syncBtnText.innerText = "Syncing...";
