@@ -6638,89 +6638,144 @@
         }
     }
 
-    async function syncCloudToManager() {
-        const urlInp = document.getElementById('profCloudUrl');
-        let scriptUrl = (urlInp && urlInp.value.trim()) ? urlInp.value.trim() : getCloudScriptUrl();
-        if (!scriptUrl) {
-            showToast("URL Google Apps Script belum diisi.", "warning");
-            switchTab('settings');
-            return;
-        }
-        scriptUrl = setCloudScriptUrl(scriptUrl);
-
-        const syncText = document.getElementById('syncBtnText');
-        if (syncText) syncText.innerText = "Syncing...";
-
-        try {
-            const res = await fetch(scriptUrl);
-            const rawCloud = await res.json();
-
-            let incomingActivities = [];
-            let incomingClients = [];
-
-            if (Array.isArray(rawCloud)) {
-                incomingActivities = rawCloud;
-            } else if (rawCloud && typeof rawCloud === 'object') {
-                if (Array.isArray(rawCloud.activities)) incomingActivities = rawCloud.activities;
-                else if (Array.isArray(rawCloud.data)) incomingActivities = rawCloud.data;
-                if (Array.isArray(rawCloud.clients)) incomingClients = rawCloud.clients;
-            }
-
-            let addedAct = 0;
-            if (incomingActivities.length > 0) {
-                incomingActivities.forEach(item => {
-                    const norm = normalizeActivityRecord(item);
-                    if (!norm) return;
-                    const exists = appData.some(local =>
-                        (local.id && norm.id && String(local.id) === String(norm.id)) ||
-                        (isSameTrainerName(local.trainer, norm.trainer) && normalizeEntryDateStr(local.date) === norm.date && Number(local.points) === Number(norm.points))
-                    );
-                    if (!exists) {
-                        appData.push(norm);
-                        addedAct++;
-                    }
-                });
-                localStorage.setItem('trainerData', JSON.stringify(appData));
-            }
-
-            let addedCli = 0;
-            let updatedCli = 0;
-            if (incomingClients.length > 0) {
-                incomingClients.forEach(c => {
-                    if (!c || !c.name) return;
-                    const idx = clientData.findIndex(local =>
-                        (c.memberId && local.memberId && String(local.memberId) === String(c.memberId)) ||
-                        (local.name.toLowerCase() === String(c.name).toLowerCase() && isSameTrainerName(local.trainer, c.trainer))
-                    );
-                    if (idx !== -1) {
-                        clientData[idx] = { ...clientData[idx], ...c };
-                        updatedCli++;
-                    } else {
-                        clientData.push({ id: c.id || (Date.now() + Math.random()), ...c });
-                        addedCli++;
-                    }
-                });
-                localStorage.setItem('clientData', JSON.stringify(clientData));
-            }
-
-            normalizeAllStoredActivities();
-            renderRecentTable();
-            renderClientTable();
-            renderDashboard();
-            renderAnalytics();
-
-            if (addedAct > 0 || addedCli > 0 || updatedCli > 0) {
-                showToast(`Sync Cloud berhasil! +${addedAct} aktivitas, +${addedCli} member baru (${updatedCli} diperbarui).`, "success");
-            } else {
-                showToast("Data laptop & HP sudah sinkron dengan Cloud terbaru.", "info");
-            }
-        } catch (err) {
-            console.warn("Cloud fetch warning:", err);
-            showToast("Gagal menarik data dari Cloud. Pastikan URL Web App Apps Script sudah di-deploy (Anyone).", "error");
-        } finally {
-            if (syncText) syncText.innerText = "Sync Cloud";
-        }
+    async function syncCloudToManager(isSilent = false) {
+  const urlInp = document.getElementById('profCloudUrl');
+  let scriptUrl = (urlInp && urlInp.value.trim()) ? urlInp.value.trim() : getCloudScriptUrl();
+  if (!scriptUrl) {
+    if (!isSilent && typeof showToast === 'function') {
+      showToast("URL Google Apps Script belum diisi.", "warning");
+      if (typeof switchTab === 'function') switchTab('settings');
     }
+    return;
+  }
+  if (typeof setCloudScriptUrl === 'function') {
+    scriptUrl = setCloudScriptUrl(scriptUrl);
+  }
+
+  const syncText = document.getElementById('syncBtnText');
+  const prevBtnText = syncText ? syncText.innerText : "Sync Cloud";
+  if (syncText) syncText.innerText = "Syncing...";
+
+  try {
+    const sep = scriptUrl.includes('?') ? '&' : '?';
+
+    // Tarik Laporan Harian (utama) & Sesi Client (?type=clients) secara bersamaan
+    const [dailyRes, clientRes] = await Promise.all([
+      fetch(scriptUrl, { cache: 'no-store' }),
+      fetch(scriptUrl + sep + 'type=clients', { cache: 'no-store' })
+    ]);
+
+    const rawCloud = await dailyRes.json();
+    const rawClients = await clientRes.json();
+
+    let incomingActivities = [];
+    let incomingClients = [];
+
+    if (Array.isArray(rawCloud)) {
+      incomingActivities = rawCloud;
+    } else if (rawCloud && typeof rawCloud === 'object') {
+      if (Array.isArray(rawCloud.activities)) incomingActivities = rawCloud.activities;
+      else if (Array.isArray(rawCloud.trainerData)) incomingActivities = rawCloud.trainerData;
+      else if (Array.isArray(rawCloud.data)) incomingActivities = rawCloud.data;
+      if (Array.isArray(rawCloud.clients)) incomingClients = rawCloud.clients;
+      else if (Array.isArray(rawCloud.clientData)) incomingClients = rawCloud.clientData;
+    }
+
+    if (Array.isArray(rawClients) && rawClients.length > 0) {
+      incomingClients = rawClients;
+    } else if (rawClients && typeof rawClients === 'object') {
+      if (Array.isArray(rawClients.clientData)) incomingClients = rawClients.clientData;
+      else if (Array.isArray(rawClients.clients)) incomingClients = rawClients.clients;
+    }
+
+    // 1. Gabungkan & perbarui data Laporan Harian
+    let addedAct = 0;
+    if (incomingActivities.length > 0 && Array.isArray(appData)) {
+      const existingIds = new Set(appData.map(x => String(x.id)));
+      incomingActivities.forEach(item => {
+        if (!existingIds.has(String(item.id))) {
+          appData.push(item);
+          addedAct++;
+        }
+      });
+      if (typeof saveData === 'function') saveData();
+      else localStorage.setItem('ftl_manager_data', JSON.stringify(appData));
+    }
+
+    // 2. Perbarui data Sesi Client dari tab Sesi_Client
+    if (Array.isArray(incomingClients) && incomingClients.length > 0) {
+      clientData = incomingClients;
+      if (typeof saveClientData === 'function') saveClientData();
+      localStorage.setItem('ftl_client_data', JSON.stringify(clientData));
+    }
+
+    // 3. Render ulang seluruh tampilan Dashboard & Sesi Client
+    if (typeof refreshAllViews === 'function') {
+      refreshAllViews();
+    } else {
+      if (typeof updateDashboard === 'function') updateDashboard();
+      if (typeof renderRecentTable === 'function') renderRecentTable();
+      if (typeof renderDailyAuditTable === 'function') renderDailyAuditTable();
+      if (typeof renderClientTable === 'function') renderClientTable();
+      if (typeof updateClientSummary === 'function') updateClientSummary();
+      if (typeof renderRenewalPipeline === 'function') renderRenewalPipeline();
+    }
+
+    if (!isSilent && typeof showToast === 'function') {
+      const totalClients = Array.isArray(clientData) ? clientData.length : 0;
+      showToast(`Sync berhasil! (${addedAct} laporan baru, ${totalClients} sesi client dimuat)`, "success");
+    }
+  } catch (err) {
+    console.error("Sync Cloud error:", err);
+    if (!isSilent && typeof showToast === 'function') {
+      showToast("Gagal sinkronisasi Cloud: " + err.message, "error");
+    }
+  } finally {
+    if (syncText) syncText.innerText = prevBtnText;
+  }
+}
+
+async function syncClientDataToCloud() {
+  const scriptUrl = typeof getCloudScriptUrl === 'function'
+    ? getCloudScriptUrl()
+    : (localStorage.getItem('ftl_google_script_url') || '').trim();
+
+  if (!scriptUrl || !Array.isArray(clientData)) return;
+
+  try {
+    await fetch(scriptUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'sync_clients',
+        clientData: clientData
+      })
+    });
+  } catch (err) {
+    console.error("Gagal kirim data Sesi Client ke Cloud:", err);
+  }
+}
+
+async function pushAllLocalDataToCloud() {
+  const scriptUrl = typeof getCloudScriptUrl === 'function'
+    ? getCloudScriptUrl()
+    : (localStorage.getItem('ftl_google_script_url') || '').trim();
+
+  if (!scriptUrl) {
+    if (typeof showToast === 'function') showToast("URL Google Apps Script belum diisi.", "warning");
+    return;
+  }
+
+  try {
+    await syncClientDataToCloud();
+    if (typeof showToast === 'function') {
+      showToast(`Berhasil mengirim ${Array.isArray(clientData) ? clientData.length : 0} data Sesi Client ke Cloud!`, "success");
+    }
+  } catch (err) {
+    if (typeof showToast === 'function') showToast("Gagal push ke Cloud: " + err.message, "error");
+  }
+}
 
     // --- REALTIME CLOCK WIB & ALARM 18:00 ---
     let lastAlarmTriggeredDate = '';
