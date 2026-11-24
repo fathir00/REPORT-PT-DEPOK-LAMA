@@ -6855,5 +6855,530 @@ async function pushAllLocalDataToCloud() {
         }, 1000);
     });
 </script>
+    <!-- === MODUL RESPONSIVITAS, KEAMANAN & ANTI-BUG FTL BLUE === -->
+<style>
+  /* 1. Responsivitas Mobile & Tablet */
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (max-width: 768px) {
+    /* Cegah auto-zoom pada iOS/Android saat fokus input */
+    input, select, textarea {
+      font-size: 16px !important;
+      min-height: 42px;
+    }
+
+    /* Area sentuh tombol lebih nyaman di layar sentuh */
+    button, .btn, [role="button"] {
+      min-height: 40px;
+      touch-action: manipulation;
+    }
+
+    /* Tabel mulus digeser horizontal & kolom nama member tetap terlihat */
+    table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+    }
+
+    table thead th:first-child,
+    table tbody td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background-color: #0f172a;
+      box-shadow: 2px 0 6px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  /* Optimasi performa render untuk daftar 500+ member */
+  tbody tr {
+    content-visibility: auto;
+    contain-intrinsic-size: 48px;
+  }
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  const SECRET_STORAGE_KEY = "ftl_cloud_secret_key";
+  const IDLE_LIMIT_MS = 30 * 60 * 1000;
+
+  window.escapeHTML = function (str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  };
+
+  window.getCloudSecretKey = function () {
+    return (localStorage.getItem(SECRET_STORAGE_KEY) || "").trim();
+  };
+
+  window.setCloudSecretKey = function (val) {
+    const clean = String(val || "").trim();
+    localStorage.setItem(SECRET_STORAGE_KEY, clean);
+    return clean;
+  };
+
+  function normalizeIsoDate(val) {
+    if (!val) return "";
+    const s = String(val).trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+    const parts = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (parts) {
+      let p1 = parseInt(parts[1], 10);
+      let p2 = parseInt(parts[2], 10);
+      const yyyy = parts[3];
+      let dd = p1, mm = p2;
+      if (p2 > 12) { mm = p1; dd = p2; }
+      return `${yyyy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
+    }
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+    return s;
+  }
+
+  function getDailyArrayRef() {
+    if (typeof activities !== "undefined" && Array.isArray(activities)) return activities;
+    if (typeof activityData !== "undefined" && Array.isArray(activityData)) return activityData;
+    if (typeof appData !== "undefined" && Array.isArray(appData)) return appData;
+    if (typeof dailyData !== "undefined" && Array.isArray(dailyData)) return dailyData;
+    if (typeof dailyReports !== "undefined" && Array.isArray(dailyReports)) return dailyReports;
+    if (typeof records !== "undefined" && Array.isArray(records)) return records;
+    if (Array.isArray(window.activities)) return window.activities;
+    if (Array.isArray(window.appData)) return window.appData;
+    return null;
+  }
+
+  function findDailyStorageKey() {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || k.includes("client") || k.includes("secret") || k.includes("url") || k.includes("profile")) continue;
+      const v = localStorage.getItem(k) || "";
+      if (v.startsWith("[")) {
+        try {
+          const arr = JSON.parse(v);
+          if (Array.isArray(arr) && (arr.length === 0 || "points" in arr[0] || "poin" in arr[0] || "conduct" in arr[0])) {
+            return k;
+          }
+        } catch (e) {}
+      }
+    }
+    return "ftl_manager_data";
+  }
+
+  function persistDailyData(targetDaily) {
+    if (typeof saveData === "function") saveData();
+    if (typeof saveActivities === "function") saveActivities();
+    if (targetDaily) {
+      localStorage.setItem(findDailyStorageKey(), JSON.stringify(targetDaily));
+    }
+  }
+
+  function rerenderDailyViews() {
+    if (typeof renderRecentTable === "function") renderRecentTable();
+    if (typeof renderDashboard === "function") renderDashboard();
+    if (typeof updateDashboard === "function") updateDashboard();
+    if (typeof renderDailyAuditTable === "function") renderDailyAuditTable();
+  }
+
+  function getClientDataRef() {
+    if (typeof clientData !== "undefined" && Array.isArray(clientData)) return clientData;
+    if (Array.isArray(window.clientData)) return window.clientData;
+    return [];
+  }
+
+  function replaceClientDataRef(newList) {
+    if (typeof clientData !== "undefined" && Array.isArray(clientData)) {
+      clientData.length = 0;
+      newList.forEach(item => clientData.push(item));
+    } else {
+      window.clientData = newList;
+    }
+  }
+
+  // Interceptor Fetch: pastikan setiap POST delete menyertakan apiKey
+  const origFetch = window.fetch.bind(window);
+  window.fetch = function (resource, init) {
+    try {
+      if (init && String(init.method || "").toUpperCase() === "POST" && typeof init.body === "string") {
+        const parsed = JSON.parse(init.body);
+        if (parsed && parsed.action === "delete") {
+          parsed.apiKey = window.getCloudSecretKey();
+          init = Object.assign({}, init, {
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(parsed)
+          });
+        }
+      }
+    } catch (e) {}
+    return origFetch(resource, init);
+  };
+
+  // Tangkap Klik Tombol Hapus Merah pada Tabel Pusat Data Terinput
+  document.addEventListener("click", async function (e) {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+
+    const row = btn.closest("tr");
+    const cell = btn.closest("td");
+    if (!row || !cell) return;
+
+    const cells = row.querySelectorAll("td");
+    if (cells.length < 4) return;
+
+    // Pastikan baris ini adalah baris Laporan Harian (memiliki kolom tanggal YYYY-MM-DD)
+    let rowDate = "";
+    let dateCellIdx = -1;
+    for (let i = 0; i < Math.min(3, cells.length); i++) {
+      const txt = cells[i].innerText.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(txt)) {
+        rowDate = txt;
+        dateCellIdx = i;
+        break;
+      }
+    }
+    if (!rowDate) return;
+
+    // Pastikan tombol berada di kolom aksi terakhir dan BUKAN tombol WhatsApp hijau
+    if (cell !== cells[cells.length - 1]) return;
+    const btnMeta = [
+      btn.getAttribute("onclick") || "",
+      btn.getAttribute("title") || "",
+      btn.getAttribute("aria-label") || "",
+      btn.className || ""
+    ].join(" ");
+    if (/whatsapp|kirim|wa\b/i.test(btnMeta)) return;
+
+    const cellButtons = Array.from(cell.querySelectorAll("button"));
+    if (cellButtons.length >= 2 && btn === cellButtons[0]) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const trainerName = (cells[dateCellIdx + 1]?.innerText || "").trim();
+    const pointsText = (cells[dateCellIdx + 2]?.innerText || "0").replace(/[^\d.\-]/g, "");
+    const rowPoints = parseFloat(pointsText) || 0;
+
+    const onclickAttr = btn.getAttribute("onclick") || "";
+    const idMatch = onclickAttr.match(/\(\s*['"]?([^'")\s]+)['"]?\s*\)/);
+    const clickedId = btn.dataset.id || (idMatch ? idMatch[1] : "");
+
+    if (!confirm(`Hapus laporan "${trainerName}" tanggal ${rowDate} (${rowPoints} Poin) secara permanen?`)) {
+      return;
+    }
+
+    // 1. Hapus dari memori array aktif & localStorage
+    const targetDaily = getDailyArrayRef();
+    let deletedItem = null;
+
+    if (targetDaily) {
+      let idx = -1;
+      if (clickedId) {
+        idx = targetDaily.findIndex(x => String(x.id) === String(clickedId));
+      }
+      if (idx === -1) {
+        idx = targetDaily.findIndex(x =>
+          normalizeIsoDate(x.date || x.tanggal) === rowDate &&
+          String(x.trainer || x.nama || "").trim() === trainerName &&
+          Math.abs((Number(x.points ?? x.poin ?? 0) || 0) - rowPoints) < 0.01
+        );
+      }
+
+      if (idx !== -1) {
+        deletedItem = targetDaily.splice(idx, 1)[0];
+        persistDailyData(targetDaily);
+      }
+    }
+
+    // Hapus langsung dari cadangan localStorage jika variabel tidak terekspos global
+    const storageKey = findDailyStorageKey();
+    try {
+      const storedArr = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      if (Array.isArray(storedArr) && storedArr.length > 0) {
+        let sIdx = clickedId ? storedArr.findIndex(x => String(x.id) === String(clickedId)) : -1;
+        if (sIdx === -1) {
+          sIdx = storedArr.findIndex(x =>
+            normalizeIsoDate(x.date || x.tanggal) === rowDate &&
+            String(x.trainer || x.nama || "").trim() === trainerName &&
+            Math.abs((Number(x.points ?? x.poin ?? 0) || 0) - rowPoints) < 0.01
+          );
+        }
+        if (sIdx !== -1) {
+          if (!deletedItem) deletedItem = storedArr[sIdx];
+          storedArr.splice(sIdx, 1);
+          localStorage.setItem(storageKey, JSON.stringify(storedArr));
+        }
+      }
+    } catch (err) {}
+
+    // Hapus baris dari tampilan tabel seketika & perbarui tampilan
+    row.remove();
+    rerenderDailyViews();
+
+    // 2. Kirim perintah hapus ke Google Sheets dengan Kunci Keamanan
+    const scriptUrl = (typeof getCloudScriptUrl === "function"
+      ? getCloudScriptUrl()
+      : (localStorage.getItem("ftl_google_script_url") || "")).trim();
+    const apiKey = window.getCloudSecretKey();
+
+    if (scriptUrl) {
+      try {
+        await origFetch(scriptUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action: "delete",
+            apiKey: apiKey,
+            id: deletedItem ? String(deletedItem.id || clickedId) : clickedId,
+            date: rowDate,
+            trainer: trainerName,
+            points: rowPoints
+          })
+        });
+      } catch (err) {
+        console.error("[FTL Delete Cloud]", err);
+      }
+    }
+
+    if (typeof showToast === "function") {
+      showToast(`Laporan ${trainerName} (${rowDate}) berhasil dihapus dari sistem & Cloud.`, "success");
+    }
+  }, true);
+
+  window.addEventListener("error", function (e) {
+    console.warn("[FTL Guard] Error tertangani:", e.message);
+  });
+
+  window.addEventListener("unhandledrejection", function (e) {
+    console.warn("[FTL Guard] Promise error tertangani:", e.reason);
+    e.preventDefault();
+  });
+
+  function injectSecuritySettingUI() {
+    const cloudUrlInput = document.getElementById("profCloudUrl");
+    if (!cloudUrlInput || document.getElementById("profCloudSecretKey")) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.style.marginTop = "12px";
+    wrapper.innerHTML = `
+      <label for="profCloudSecretKey" style="display:block;font-size:12px;font-weight:600;color:#93c5fd;margin-bottom:6px;">
+        <i class="fa-solid fa-shield-halved"></i> Kunci Keamanan Cloud (MANAGER_SECRET)
+      </label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="password" id="profCloudSecretKey" placeholder="Masukkan kunci keamanan"
+          value="${window.escapeHTML(window.getCloudSecretKey())}"
+          style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(59,130,246,0.4);background:#0f172a;color:#f8fafc;">
+        <button type="button" id="toggleSecretVisBtn"
+          style="padding:10px 12px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);background:#1e293b;color:#cbd5e1;cursor:pointer;">
+          Lihat
+        </button>
+        <button type="button" id="saveSecretKeyBtn"
+          style="padding:10px 14px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-weight:600;cursor:pointer;">
+          Simpan Kunci
+        </button>
+      </div>
+      <small style="display:block;color:#94a3b8;margin-top:4px;font-size:11px;">
+        Wajib sama dengan <code>MANAGER_SECRET</code> di Google Apps Script.
+      </small>
+    `;
+
+    cloudUrlInput.parentElement.appendChild(wrapper);
+
+    document.getElementById("toggleSecretVisBtn").addEventListener("click", function () {
+      const inp = document.getElementById("profCloudSecretKey");
+      inp.type = inp.type === "password" ? "text" : "password";
+      this.textContent = inp.type === "password" ? "Lihat" : "Sembunyi";
+    });
+
+    document.getElementById("saveSecretKeyBtn").addEventListener("click", function () {
+      const val = document.getElementById("profCloudSecretKey").value;
+      window.setCloudSecretKey(val);
+      if (typeof showToast === "function") {
+        showToast("Kunci Keamanan Cloud berhasil disimpan.", "success");
+      } else {
+        alert("Kunci Keamanan Cloud berhasil disimpan.");
+      }
+    });
+  }
+
+  let clientSyncTimer = null;
+
+  window.syncClientDataToCloud = function () {
+    clearTimeout(clientSyncTimer);
+    clientSyncTimer = setTimeout(async function () {
+      const scriptUrl = (typeof getCloudScriptUrl === "function"
+        ? getCloudScriptUrl()
+        : (localStorage.getItem("ftl_google_script_url") || "")).trim();
+      const apiKey = window.getCloudSecretKey();
+      const currentClients = getClientDataRef();
+
+      if (!scriptUrl || !Array.isArray(currentClients) || currentClients.length === 0) return;
+
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          await origFetch(scriptUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({
+              action: "sync_clients",
+              apiKey: apiKey,
+              clientData: currentClients
+            })
+          });
+          break;
+        } catch (err) {
+          if (attempt === 2) console.error("[FTL Sync] Gagal:", err);
+          await new Promise(r => setTimeout(r, 1500));
+        }
+      }
+    }, 1500);
+  };
+
+  window.syncCloudToManager = async function (isSilent = false) {
+    const urlInp = document.getElementById("profCloudUrl");
+    let scriptUrl = (urlInp && urlInp.value.trim()) ? urlInp.value.trim()
+      : (typeof getCloudScriptUrl === "function" ? getCloudScriptUrl() : (localStorage.getItem("ftl_google_script_url") || "").trim());
+
+    if (!scriptUrl) {
+      if (!isSilent && typeof showToast === "function") {
+        showToast("URL Google Apps Script belum diisi.", "warning");
+      }
+      return;
+    }
+
+    const apiKey = window.getCloudSecretKey();
+    if (!apiKey) {
+      if (!isSilent && typeof showToast === "function") {
+        showToast("Isi Kunci Keamanan Cloud di Pengaturan & Profil terlebih dahulu.", "warning");
+        if (typeof switchTab === "function") switchTab("settings");
+      }
+      return;
+    }
+
+    const syncText = document.getElementById("syncBtnText");
+    const prevBtnText = syncText ? syncText.innerText : "Sync Cloud";
+    if (syncText) syncText.innerText = "Syncing...";
+
+    try {
+      const sep = scriptUrl.includes("?") ? "&" : "?";
+      const encodedKey = encodeURIComponent(apiKey);
+
+      const [dailyRes, clientRes] = await Promise.all([
+        origFetch(`${scriptUrl}${sep}key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" }),
+        origFetch(`${scriptUrl}${sep}type=clients&key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" })
+      ]);
+
+      const rawCloud = await dailyRes.json();
+      const rawClients = await clientRes.json();
+
+      if ((rawCloud && rawCloud.result === "unauthorized") || (rawClients && rawClients.result === "unauthorized")) {
+        throw new Error("Kunci Keamanan Cloud salah! Periksa di menu Pengaturan & Profil.");
+      }
+
+      const incomingActivities = Array.isArray(rawCloud)
+        ? rawCloud
+        : (Array.isArray(rawCloud.trainerData) ? rawCloud.trainerData : (Array.isArray(rawCloud.activities) ? rawCloud.activities : []));
+
+      const incomingClients = Array.isArray(rawClients)
+        ? rawClients
+        : (Array.isArray(rawClients.clientData) ? rawClients.clientData : []);
+
+      let addedAct = 0;
+      const targetDaily = getDailyArrayRef();
+      if (incomingActivities.length > 0 && targetDaily) {
+        const existingMap = new Map(targetDaily.map(x => [String(x.id), x]));
+
+        incomingActivities.forEach((item, idx) => {
+          const cleanDate = normalizeIsoDate(item.date || item.tanggal);
+          const trainerName = String(item.trainer || item.nama || "").trim();
+          const rawId = String(item.id || "").trim();
+          const itemId = rawId || String(Date.now() + idx);
+
+          const normalizedEntry = Object.assign({}, item, {
+            id: !isNaN(Number(itemId)) ? Number(itemId) : itemId,
+            date: cleanDate,
+            tanggal: cleanDate,
+            trainer: trainerName,
+            nama: trainerName,
+            points: Number(item.points ?? item.poin ?? 0) || 0,
+            poin: Number(item.poin ?? item.points ?? 0) || 0,
+            bundling: Number(item.bundling) || 0,
+            conduct: Number(item.conduct) || 0,
+            ra: Number(item.ra) || 0,
+            tasks: item.tasks || { maint: false, followupGO: false }
+          });
+
+          if (!existingMap.has(itemId)) {
+            targetDaily.push(normalizedEntry);
+            existingMap.set(itemId, normalizedEntry);
+            addedAct++;
+          } else {
+            Object.assign(existingMap.get(itemId), normalizedEntry);
+          }
+        });
+
+        persistDailyData(targetDaily);
+      }
+
+      if (incomingClients.length > 0) {
+        replaceClientDataRef(incomingClients);
+        if (typeof saveClientData === "function") saveClientData();
+        localStorage.setItem("ftl_client_data", JSON.stringify(getClientDataRef()));
+      }
+
+      rerenderDailyViews();
+      if (typeof renderClientTable === "function") renderClientTable();
+      if (typeof updateClientSummary === "function") updateClientSummary();
+      if (typeof renderRenewalPipeline === "function") renderRenewalPipeline();
+
+      if (!isSilent && typeof showToast === "function") {
+        const totalClients = getClientDataRef().length;
+        showToast(`Sync berhasil! (${incomingActivities.length} total laporan, ${addedAct} baru, ${totalClients} client)`, "success");
+      }
+    } catch (err) {
+      console.error("[FTL Secure Sync]", err);
+      if (!isSilent && typeof showToast === "function") {
+        showToast(err.message || "Gagal sinkronisasi Cloud.", "error");
+      }
+    } finally {
+      if (syncText) syncText.innerText = prevBtnText;
+    }
+  };
+
+  let idleTimer = null;
+  function resetIdleTimer() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () {
+      const loginOverlay = document.getElementById("loginScreen") || document.getElementById("authModal");
+      if (loginOverlay && loginOverlay.style.display === "none") {
+        sessionStorage.clear();
+        location.reload();
+      }
+    }, IDLE_LIMIT_MS);
+  }
+
+  ["click", "keydown", "touchstart", "scroll"].forEach(evt => {
+    window.addEventListener(evt, resetIdleTimer, { passive: true });
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    injectSecuritySettingUI();
+    resetIdleTimer();
+  });
+})();
+</script>
 </body>
 </html>
