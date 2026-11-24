@@ -6902,6 +6902,7 @@ async function pushAllLocalDataToCloud() {
 </style>
 
 <script>
+<script>
 (function () {
   "use strict";
 
@@ -6927,7 +6928,6 @@ async function pushAllLocalDataToCloud() {
     return clean;
   };
 
-  // Normalisasi semua format tanggal ke YYYY-MM-DD
   function normalizeIsoDate(val) {
     if (!val) return "";
     const s = String(val).trim();
@@ -6948,7 +6948,6 @@ async function pushAllLocalDataToCloud() {
     return s;
   }
 
-  // Deteksi otomatis array laporan harian (activities / appData / dailyReports)
   function getDailyArrayRef() {
     if (typeof activities !== "undefined" && Array.isArray(activities)) return activities;
     if (typeof appData !== "undefined" && Array.isArray(appData)) return appData;
@@ -6976,6 +6975,19 @@ async function pushAllLocalDataToCloud() {
     return "ftl_manager_data";
   }
 
+  function persistDailyData(targetDaily) {
+    if (typeof saveData === "function") saveData();
+    if (typeof saveActivities === "function") saveActivities();
+    localStorage.setItem(findDailyStorageKey(), JSON.stringify(targetDaily));
+  }
+
+  function rerenderDailyViews() {
+    if (typeof renderRecentTable === "function") renderRecentTable();
+    if (typeof renderDashboard === "function") renderDashboard();
+    if (typeof updateDashboard === "function") updateDashboard();
+    if (typeof renderDailyAuditTable === "function") renderDailyAuditTable();
+  }
+
   function getClientDataRef() {
     if (typeof clientData !== "undefined" && Array.isArray(clientData)) return clientData;
     if (Array.isArray(window.clientData)) return window.clientData;
@@ -6990,6 +7002,125 @@ async function pushAllLocalDataToCloud() {
       window.clientData = newList;
     }
   }
+
+  // Interceptor Fetch: pastikan setiap perintah POST delete menyertakan apiKey & no-cors
+  const origFetch = window.fetch.bind(window);
+  window.fetch = function (resource, init) {
+    try {
+      if (init && String(init.method || "").toUpperCase() === "POST" && typeof init.body === "string") {
+        const parsed = JSON.parse(init.body);
+        if (parsed && parsed.action === "delete") {
+          parsed.apiKey = window.getCloudSecretKey();
+          init = Object.assign({}, init, {
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(parsed)
+          });
+        }
+      }
+    } catch (e) {}
+    return origFetch(resource, init);
+  };
+
+  // Penanganan Klik Tombol Hapus (Ikon Sampah Merah) pada Pusat Data Terinput
+  document.addEventListener("click", async function (e) {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+
+    const row = btn.closest("tr");
+    if (!row) return;
+
+    const onclickAttr = btn.getAttribute("onclick") || "";
+    const hasTrashIcon = Boolean(btn.querySelector(".fa-trash, .fa-trash-can, .fa-trash-alt"));
+    if (!hasTrashIcon && !/delete/i.test(onclickAttr)) return;
+
+    // Abaikan jika ini tabel Sesi Client
+    if (/client/i.test(onclickAttr) || row.closest("#clientTableBody, #clientTable")) return;
+
+    const cells = row.querySelectorAll("td");
+    if (cells.length < 4) return;
+
+    // Cek apakah baris ini baris laporan harian (memiliki format tanggal YYYY-MM-DD)
+    let rowDate = "";
+    let dateCellIdx = -1;
+    for (let i = 0; i < Math.min(3, cells.length); i++) {
+      const txt = cells[i].innerText.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(txt)) {
+        rowDate = txt;
+        dateCellIdx = i;
+        break;
+      }
+    }
+    if (!rowDate) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const trainerName = (cells[dateCellIdx + 1]?.innerText || "").trim();
+    const pointsText = (cells[dateCellIdx + 2]?.innerText || "0").replace(/[^\d.\-]/g, "");
+    const rowPoints = parseFloat(pointsText) || 0;
+
+    // Ambil ID dari atribut onclick jika ada (contoh: deleteActivity(1763971856123))
+    const idMatch = onclickAttr.match(/\(\s*['"]?([^'")\s]+)['"]?\s*\)/);
+    const clickedId = idMatch ? idMatch[1] : "";
+
+    if (!confirm(`Hapus laporan harian "${trainerName}" tanggal ${rowDate} (${rowPoints} Poin) dari sistem & Google Sheets?`)) {
+      return;
+    }
+
+    const targetDaily = getDailyArrayRef();
+    let deletedItem = null;
+
+    if (targetDaily) {
+      let idx = -1;
+      if (clickedId) {
+        idx = targetDaily.findIndex(x => String(x.id) === String(clickedId));
+      }
+      if (idx === -1) {
+        idx = targetDaily.findIndex(x =>
+          normalizeIsoDate(x.date || x.tanggal) === rowDate &&
+          String(x.trainer || x.nama || "").trim() === trainerName &&
+          Math.abs((Number(x.points ?? x.poin ?? 0) || 0) - rowPoints) < 0.01
+        );
+      }
+
+      if (idx !== -1) {
+        deletedItem = targetDaily.splice(idx, 1)[0];
+        persistDailyData(targetDaily);
+        rerenderDailyViews();
+      }
+    }
+
+    // Kirim perintah hapus ke Google Sheets dengan Kunci Keamanan
+    const scriptUrl = (typeof getCloudScriptUrl === "function"
+      ? getCloudScriptUrl()
+      : (localStorage.getItem("ftl_google_script_url") || "")).trim();
+    const apiKey = window.getCloudSecretKey();
+
+    if (scriptUrl) {
+      try {
+        await origFetch(scriptUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action: "delete",
+            apiKey: apiKey,
+            id: deletedItem ? String(deletedItem.id || clickedId) : clickedId,
+            date: rowDate,
+            trainer: trainerName,
+            points: rowPoints
+          })
+        });
+      } catch (err) {
+        console.error("[FTL Delete Cloud]", err);
+      }
+    }
+
+    if (typeof showToast === "function") {
+      showToast(`Laporan ${trainerName} (${rowDate}) berhasil dihapus.`, "success");
+    }
+  }, true);
 
   window.addEventListener("error", function (e) {
     console.warn("[FTL Guard] Error tertangani:", e.message);
@@ -7062,7 +7193,7 @@ async function pushAllLocalDataToCloud() {
 
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
-          await fetch(scriptUrl, {
+          await origFetch(scriptUrl, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "text/plain" },
@@ -7111,8 +7242,8 @@ async function pushAllLocalDataToCloud() {
       const encodedKey = encodeURIComponent(apiKey);
 
       const [dailyRes, clientRes] = await Promise.all([
-        fetch(`${scriptUrl}${sep}key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" }),
-        fetch(`${scriptUrl}${sep}type=clients&key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" })
+        origFetch(`${scriptUrl}${sep}key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" }),
+        origFetch(`${scriptUrl}${sep}type=clients&key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" })
       ]);
 
       const rawCloud = await dailyRes.json();
@@ -7130,19 +7261,19 @@ async function pushAllLocalDataToCloud() {
         ? rawClients
         : (Array.isArray(rawClients.clientData) ? rawClients.clientData : []);
 
-      // 1. Masukkan data Laporan Harian ke variabel utama (activities / appData)
       let addedAct = 0;
       const targetDaily = getDailyArrayRef();
       if (incomingActivities.length > 0 && targetDaily) {
         const existingMap = new Map(targetDaily.map(x => [String(x.id), x]));
 
-        incomingActivities.forEach(item => {
+        incomingActivities.forEach((item, idx) => {
           const cleanDate = normalizeIsoDate(item.date || item.tanggal);
           const trainerName = String(item.trainer || item.nama || "").trim();
-          const itemId = String(item.id || `${cleanDate}_${trainerName}`);
+          const rawId = String(item.id || "").trim();
+          const itemId = rawId || String(Date.now() + idx);
 
           const normalizedEntry = Object.assign({}, item, {
-            id: itemId,
+            id: !isNaN(Number(itemId)) ? Number(itemId) : itemId,
             date: cleanDate,
             tanggal: cleanDate,
             trainer: trainerName,
@@ -7164,23 +7295,16 @@ async function pushAllLocalDataToCloud() {
           }
         });
 
-        if (typeof saveData === "function") saveData();
-        if (typeof saveActivities === "function") saveActivities();
-        localStorage.setItem(findDailyStorageKey(), JSON.stringify(targetDaily));
+        persistDailyData(targetDaily);
       }
 
-      // 2. Perbarui data Sesi Client
       if (incomingClients.length > 0) {
         replaceClientDataRef(incomingClients);
         if (typeof saveClientData === "function") saveClientData();
         localStorage.setItem("ftl_client_data", JSON.stringify(getClientDataRef()));
       }
 
-      // 3. Render ulang seluruh tampilan Dashboard & Tabel Laporan Harian
-      if (typeof renderDashboard === "function") renderDashboard();
-      if (typeof updateDashboard === "function") updateDashboard();
-      if (typeof renderRecentTable === "function") renderRecentTable();
-      if (typeof renderDailyAuditTable === "function") renderDailyAuditTable();
+      rerenderDailyViews();
       if (typeof renderClientTable === "function") renderClientTable();
       if (typeof updateClientSummary === "function") updateClientSummary();
       if (typeof renderRenewalPipeline === "function") renderRenewalPipeline();
