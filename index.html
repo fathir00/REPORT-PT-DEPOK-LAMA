@@ -6902,7 +6902,6 @@ async function pushAllLocalDataToCloud() {
 </style>
 
 <script>
-<script>
 (function () {
   "use strict";
 
@@ -6928,7 +6927,7 @@ async function pushAllLocalDataToCloud() {
     return clean;
   };
 
-  // Normalisasi semua variasi format tanggal ke YYYY-MM-DD
+  // Normalisasi semua format tanggal ke YYYY-MM-DD
   function normalizeIsoDate(val) {
     if (!val) return "";
     const s = String(val).trim();
@@ -6949,11 +6948,32 @@ async function pushAllLocalDataToCloud() {
     return s;
   }
 
-  // Akses langsung variabel global appData & clientData (mendukung let/const/window)
-  function getAppDataRef() {
+  // Deteksi otomatis array laporan harian (activities / appData / dailyReports)
+  function getDailyArrayRef() {
+    if (typeof activities !== "undefined" && Array.isArray(activities)) return activities;
     if (typeof appData !== "undefined" && Array.isArray(appData)) return appData;
+    if (typeof dailyReports !== "undefined" && Array.isArray(dailyReports)) return dailyReports;
+    if (typeof reports !== "undefined" && Array.isArray(reports)) return reports;
+    if (Array.isArray(window.activities)) return window.activities;
     if (Array.isArray(window.appData)) return window.appData;
     return null;
+  }
+
+  function findDailyStorageKey() {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || k.includes("client") || k.includes("secret") || k.includes("url") || k.includes("profile")) continue;
+      const v = localStorage.getItem(k) || "";
+      if (v.startsWith("[")) {
+        try {
+          const arr = JSON.parse(v);
+          if (Array.isArray(arr) && (arr.length === 0 || "points" in arr[0] || "poin" in arr[0] || "conduct" in arr[0])) {
+            return k;
+          }
+        } catch (e) {}
+      }
+    }
+    return "ftl_manager_data";
   }
 
   function getClientDataRef() {
@@ -6991,7 +7011,7 @@ async function pushAllLocalDataToCloud() {
         <i class="fa-solid fa-shield-halved"></i> Kunci Keamanan Cloud (MANAGER_SECRET)
       </label>
       <div style="display:flex;gap:8px;align-items:center;">
-        <input type="password" id="profCloudSecretKey" placeholder="Masukkan kunci keamanan (contoh: FTL-DEPOK-2026-AMAN)"
+        <input type="password" id="profCloudSecretKey" placeholder="Masukkan kunci keamanan"
           value="${window.escapeHTML(window.getCloudSecretKey())}"
           style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(59,130,246,0.4);background:#0f172a;color:#f8fafc;">
         <button type="button" id="toggleSecretVisBtn"
@@ -7004,7 +7024,7 @@ async function pushAllLocalDataToCloud() {
         </button>
       </div>
       <small style="display:block;color:#94a3b8;margin-top:4px;font-size:11px;">
-        Wajib sama dengan <code>MANAGER_SECRET</code> di Google Apps Script agar data Sesi Client terlindungi dari akses luar.
+        Wajib sama dengan <code>MANAGER_SECRET</code> di Google Apps Script.
       </small>
     `;
 
@@ -7020,7 +7040,7 @@ async function pushAllLocalDataToCloud() {
       const val = document.getElementById("profCloudSecretKey").value;
       window.setCloudSecretKey(val);
       if (typeof showToast === "function") {
-        showToast("Kunci Keamanan Cloud berhasil disimpan di perangkat ini.", "success");
+        showToast("Kunci Keamanan Cloud berhasil disimpan.", "success");
       } else {
         alert("Kunci Keamanan Cloud berhasil disimpan.");
       }
@@ -7054,7 +7074,7 @@ async function pushAllLocalDataToCloud() {
           });
           break;
         } catch (err) {
-          if (attempt === 2) console.error("[FTL Sync] Gagal setelah 2x percobaan:", err);
+          if (attempt === 2) console.error("[FTL Sync] Gagal:", err);
           await new Promise(r => setTimeout(r, 1500));
         }
       }
@@ -7110,11 +7130,11 @@ async function pushAllLocalDataToCloud() {
         ? rawClients
         : (Array.isArray(rawClients.clientData) ? rawClients.clientData : []);
 
-      // 1. Gabungkan & normalisasi data Laporan Harian
+      // 1. Masukkan data Laporan Harian ke variabel utama (activities / appData)
       let addedAct = 0;
-      const targetAppData = getAppDataRef();
-      if (incomingActivities.length > 0 && targetAppData) {
-        const existingMap = new Map(targetAppData.map(x => [String(x.id), x]));
+      const targetDaily = getDailyArrayRef();
+      if (incomingActivities.length > 0 && targetDaily) {
+        const existingMap = new Map(targetDaily.map(x => [String(x.id), x]));
 
         incomingActivities.forEach(item => {
           const cleanDate = normalizeIsoDate(item.date || item.tanggal);
@@ -7136,7 +7156,7 @@ async function pushAllLocalDataToCloud() {
           });
 
           if (!existingMap.has(itemId)) {
-            targetAppData.push(normalizedEntry);
+            targetDaily.push(normalizedEntry);
             existingMap.set(itemId, normalizedEntry);
             addedAct++;
           } else {
@@ -7145,7 +7165,8 @@ async function pushAllLocalDataToCloud() {
         });
 
         if (typeof saveData === "function") saveData();
-        else localStorage.setItem("ftl_manager_data", JSON.stringify(targetAppData));
+        if (typeof saveActivities === "function") saveActivities();
+        localStorage.setItem(findDailyStorageKey(), JSON.stringify(targetDaily));
       }
 
       // 2. Perbarui data Sesi Client
@@ -7166,7 +7187,7 @@ async function pushAllLocalDataToCloud() {
 
       if (!isSilent && typeof showToast === "function") {
         const totalClients = getClientDataRef().length;
-        showToast(`Sync berhasil! (${addedAct} laporan baru, ${totalClients} sesi client)`, "success");
+        showToast(`Sync berhasil! (${incomingActivities.length} total laporan, ${addedAct} baru, ${totalClients} client)`, "success");
       }
     } catch (err) {
       console.error("[FTL Secure Sync]", err);
