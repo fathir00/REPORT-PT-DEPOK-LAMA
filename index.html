@@ -6902,7 +6902,6 @@ async function pushAllLocalDataToCloud() {
 </style>
 
 <script>
-<script>
 (function () {
   "use strict";
 
@@ -6950,9 +6949,11 @@ async function pushAllLocalDataToCloud() {
 
   function getDailyArrayRef() {
     if (typeof activities !== "undefined" && Array.isArray(activities)) return activities;
+    if (typeof activityData !== "undefined" && Array.isArray(activityData)) return activityData;
     if (typeof appData !== "undefined" && Array.isArray(appData)) return appData;
+    if (typeof dailyData !== "undefined" && Array.isArray(dailyData)) return dailyData;
     if (typeof dailyReports !== "undefined" && Array.isArray(dailyReports)) return dailyReports;
-    if (typeof reports !== "undefined" && Array.isArray(reports)) return reports;
+    if (typeof records !== "undefined" && Array.isArray(records)) return records;
     if (Array.isArray(window.activities)) return window.activities;
     if (Array.isArray(window.appData)) return window.appData;
     return null;
@@ -6978,7 +6979,9 @@ async function pushAllLocalDataToCloud() {
   function persistDailyData(targetDaily) {
     if (typeof saveData === "function") saveData();
     if (typeof saveActivities === "function") saveActivities();
-    localStorage.setItem(findDailyStorageKey(), JSON.stringify(targetDaily));
+    if (targetDaily) {
+      localStorage.setItem(findDailyStorageKey(), JSON.stringify(targetDaily));
+    }
   }
 
   function rerenderDailyViews() {
@@ -7003,7 +7006,7 @@ async function pushAllLocalDataToCloud() {
     }
   }
 
-  // Interceptor Fetch: pastikan setiap perintah POST delete menyertakan apiKey & no-cors
+  // Interceptor Fetch: pastikan setiap POST delete menyertakan apiKey
   const origFetch = window.fetch.bind(window);
   window.fetch = function (resource, init) {
     try {
@@ -7022,25 +7025,19 @@ async function pushAllLocalDataToCloud() {
     return origFetch(resource, init);
   };
 
-  // Penanganan Klik Tombol Hapus (Ikon Sampah Merah) pada Pusat Data Terinput
+  // Tangkap Klik Tombol Hapus Merah pada Tabel Pusat Data Terinput
   document.addEventListener("click", async function (e) {
     const btn = e.target.closest("button");
     if (!btn) return;
 
     const row = btn.closest("tr");
-    if (!row) return;
-
-    const onclickAttr = btn.getAttribute("onclick") || "";
-    const hasTrashIcon = Boolean(btn.querySelector(".fa-trash, .fa-trash-can, .fa-trash-alt"));
-    if (!hasTrashIcon && !/delete/i.test(onclickAttr)) return;
-
-    // Abaikan jika ini tabel Sesi Client
-    if (/client/i.test(onclickAttr) || row.closest("#clientTableBody, #clientTable")) return;
+    const cell = btn.closest("td");
+    if (!row || !cell) return;
 
     const cells = row.querySelectorAll("td");
     if (cells.length < 4) return;
 
-    // Cek apakah baris ini baris laporan harian (memiliki format tanggal YYYY-MM-DD)
+    // Pastikan baris ini adalah baris Laporan Harian (memiliki kolom tanggal YYYY-MM-DD)
     let rowDate = "";
     let dateCellIdx = -1;
     for (let i = 0; i < Math.min(3, cells.length); i++) {
@@ -7053,6 +7050,19 @@ async function pushAllLocalDataToCloud() {
     }
     if (!rowDate) return;
 
+    // Pastikan tombol berada di kolom aksi terakhir dan BUKAN tombol WhatsApp hijau
+    if (cell !== cells[cells.length - 1]) return;
+    const btnMeta = [
+      btn.getAttribute("onclick") || "",
+      btn.getAttribute("title") || "",
+      btn.getAttribute("aria-label") || "",
+      btn.className || ""
+    ].join(" ");
+    if (/whatsapp|kirim|wa\b/i.test(btnMeta)) return;
+
+    const cellButtons = Array.from(cell.querySelectorAll("button"));
+    if (cellButtons.length >= 2 && btn === cellButtons[0]) return;
+
     e.preventDefault();
     e.stopPropagation();
 
@@ -7060,14 +7070,15 @@ async function pushAllLocalDataToCloud() {
     const pointsText = (cells[dateCellIdx + 2]?.innerText || "0").replace(/[^\d.\-]/g, "");
     const rowPoints = parseFloat(pointsText) || 0;
 
-    // Ambil ID dari atribut onclick jika ada (contoh: deleteActivity(1763971856123))
+    const onclickAttr = btn.getAttribute("onclick") || "";
     const idMatch = onclickAttr.match(/\(\s*['"]?([^'")\s]+)['"]?\s*\)/);
-    const clickedId = idMatch ? idMatch[1] : "";
+    const clickedId = btn.dataset.id || (idMatch ? idMatch[1] : "");
 
-    if (!confirm(`Hapus laporan harian "${trainerName}" tanggal ${rowDate} (${rowPoints} Poin) dari sistem & Google Sheets?`)) {
+    if (!confirm(`Hapus laporan "${trainerName}" tanggal ${rowDate} (${rowPoints} Poin) secara permanen?`)) {
       return;
     }
 
+    // 1. Hapus dari memori array aktif & localStorage
     const targetDaily = getDailyArrayRef();
     let deletedItem = null;
 
@@ -7087,11 +7098,35 @@ async function pushAllLocalDataToCloud() {
       if (idx !== -1) {
         deletedItem = targetDaily.splice(idx, 1)[0];
         persistDailyData(targetDaily);
-        rerenderDailyViews();
       }
     }
 
-    // Kirim perintah hapus ke Google Sheets dengan Kunci Keamanan
+    // Hapus langsung dari cadangan localStorage jika variabel tidak terekspos global
+    const storageKey = findDailyStorageKey();
+    try {
+      const storedArr = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      if (Array.isArray(storedArr) && storedArr.length > 0) {
+        let sIdx = clickedId ? storedArr.findIndex(x => String(x.id) === String(clickedId)) : -1;
+        if (sIdx === -1) {
+          sIdx = storedArr.findIndex(x =>
+            normalizeIsoDate(x.date || x.tanggal) === rowDate &&
+            String(x.trainer || x.nama || "").trim() === trainerName &&
+            Math.abs((Number(x.points ?? x.poin ?? 0) || 0) - rowPoints) < 0.01
+          );
+        }
+        if (sIdx !== -1) {
+          if (!deletedItem) deletedItem = storedArr[sIdx];
+          storedArr.splice(sIdx, 1);
+          localStorage.setItem(storageKey, JSON.stringify(storedArr));
+        }
+      }
+    } catch (err) {}
+
+    // Hapus baris dari tampilan tabel seketika & perbarui tampilan
+    row.remove();
+    rerenderDailyViews();
+
+    // 2. Kirim perintah hapus ke Google Sheets dengan Kunci Keamanan
     const scriptUrl = (typeof getCloudScriptUrl === "function"
       ? getCloudScriptUrl()
       : (localStorage.getItem("ftl_google_script_url") || "")).trim();
@@ -7118,7 +7153,7 @@ async function pushAllLocalDataToCloud() {
     }
 
     if (typeof showToast === "function") {
-      showToast(`Laporan ${trainerName} (${rowDate}) berhasil dihapus.`, "success");
+      showToast(`Laporan ${trainerName} (${rowDate}) berhasil dihapus dari sistem & Cloud.`, "success");
     }
   }, true);
 
