@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Trainer & Dashboard Performa - FTL Blue</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
@@ -63,7 +61,7 @@
                 </select>
             </div>
             <div id="statusSyncBadge" class="text-right text-[11px] text-gray-500 font-semibold">
-                <span class="inline-flex items-center text-emerald-600 font-bold"><i class="fa-solid fa-cloud-check mr-1"></i> Cloud Connected</span>
+                <span class="inline-flex items-center text-blue-600 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Menghubungkan Cloud...</span>
             </div>
         </div>
 
@@ -209,24 +207,37 @@
     </main>
 
     <script>
+        // PASTIKAN URL INI SAMA PERSIS DENGAN URL WEB APP APPS SCRIPT ANDA
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdf7dyKVM5qEkYNZJIma0DqiPdmO0GpqbchiJsYz3jcm1Pc28EFq7cgKH7pRSkRkqx/exec";
+
         function setTodayReportDate() {
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
-            
-            const formattedDate = `${year}-${month}-${day}`;
             const inputDateElem = document.getElementById('inputDate');
-            if (inputDateElem) {
-                inputDateElem.value = formattedDate;
-            }
+            if (inputDateElem) inputDateElem.value = `${year}-${month}-${day}`;
         }
 
         setTodayReportDate();
         let cachedCloudData = [];
 
-        // FUNGSI SKEMA KOMISI TERBARU SESUAI TABEL
+        function normalizeDateYMD(val) {
+            if (!val) return "";
+            const s = String(val).trim();
+            if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+            const parts = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+            if (parts) {
+                let p1 = parseInt(parts[1], 10);
+                let p2 = parseInt(parts[2], 10);
+                const yyyy = parts[3];
+                let dd = p1, mm = p2;
+                if (p2 > 12) { mm = p1; dd = p2; }
+                return `${yyyy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+            }
+            return s;
+        }
+
         function calculateSmartCoachCommission(points, conduct) {
             let feePerSession = 0;
             let code = "FC";
@@ -235,65 +246,27 @@
                 code = "AC";
                 feePerSession = 95000;
             } else if (points >= 3500) {
-                if (conduct >= 100) {
-                    code = "ZC1";
-                    feePerSession = 92000;
-                } else {
-                    code = "ZC0";
-                    feePerSession = 60000;
-                }
+                if (conduct >= 100) { code = "ZC1"; feePerSession = 92000; }
+                else { code = "ZC0"; feePerSession = 60000; }
             } else if (points >= 2700) {
-                if (conduct >= 100) {
-                    code = "YC1";
-                    feePerSession = 88000;
-                } else {
-                    code = "YC0";
-                    feePerSession = 55000;
-                }
+                if (conduct >= 100) { code = "YC1"; feePerSession = 88000; }
+                else { code = "YC0"; feePerSession = 55000; }
             } else if (points >= 2300) {
-                if (conduct > 110) {
-                    code = "XC2";
-                    feePerSession = 82000;
-                } else if (conduct >= 70) {
-                    code = "XC1";
-                    feePerSession = 50000;
-                } else {
-                    code = "XC0";
-                    feePerSession = 35000;
-                }
+                if (conduct > 110) { code = "XC2"; feePerSession = 82000; }
+                else if (conduct >= 70) { code = "XC1"; feePerSession = 50000; }
+                else { code = "XC0"; feePerSession = 35000; }
             } else if (points >= 2000) {
-                if (conduct > 110) {
-                    code = "WC2";
-                    feePerSession = 75000;
-                } else if (conduct >= 70) {
-                    code = "WC1";
-                    feePerSession = 45000;
-                } else {
-                    code = "WC0";
-                    feePerSession = 0;
-                }
+                if (conduct > 110) { code = "WC2"; feePerSession = 75000; }
+                else if (conduct >= 70) { code = "WC1"; feePerSession = 45000; }
+                else { code = "WC0"; feePerSession = 0; }
             } else if (points >= 1600) {
-                if (conduct > 110) {
-                    code = "VC2";
-                    feePerSession = 50000;
-                } else if (conduct >= 70) {
-                    code = "VC1";
-                    feePerSession = 35000;
-                } else {
-                    code = "VC0";
-                    feePerSession = 0;
-                }
+                if (conduct > 110) { code = "VC2"; feePerSession = 50000; }
+                else if (conduct >= 70) { code = "VC1"; feePerSession = 35000; }
+                else { code = "VC0"; feePerSession = 0; }
             } else if (points >= 700) {
-                if (conduct > 110) {
-                    code = "NC2";
-                    feePerSession = 35000;
-                } else if (conduct >= 70) {
-                    code = "NC1";
-                    feePerSession = 20000;
-                } else {
-                    code = "NC0";
-                    feePerSession = 0;
-                }
+                if (conduct > 110) { code = "NC2"; feePerSession = 35000; }
+                else if (conduct >= 70) { code = "NC1"; feePerSession = 20000; }
+                else { code = "NC0"; feePerSession = 0; }
             } else {
                 code = "FC";
                 feePerSession = 0;
@@ -307,26 +280,51 @@
         }
 
         async function syncTrainerData() {
+            const badge = document.getElementById('statusSyncBadge');
+            if (badge) {
+                badge.innerHTML = `<span class="inline-flex items-center text-blue-600 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyinkronkan data...</span>`;
+            }
+
             try {
-                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                const res = await fetch(`${GOOGLE_SCRIPT_URL}?type=trainer_stats&t=${Date.now()}`, {
                     method: 'GET',
-                    redirect: 'follow'
+                    redirect: 'follow',
+                    cache: 'no-store'
                 });
-                cachedCloudData = await res.json();
+                const json = await res.json();
+
+                if (Array.isArray(json)) {
+                    cachedCloudData = json;
+                    if (badge) {
+                        badge.innerHTML = `<span class="inline-flex items-center text-emerald-600 font-bold"><i class="fa-solid fa-cloud-check mr-1"></i> Cloud Connected (${cachedCloudData.length} laporan)</span>`;
+                    }
+                } else {
+                    cachedCloudData = [];
+                    if (badge) {
+                        badge.innerHTML = `<span class="inline-flex items-center text-amber-600 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Cek URL / Versi Deploy Apps Script</span>`;
+                    }
+                }
+
                 const currentSelected = document.getElementById('selectTrainerHeader').value;
-                if(currentSelected) {
+                if (currentSelected) {
                     renderTrainerDashboard(currentSelected);
                 }
-            } catch(e) {
+            } catch (e) {
                 console.error("Gagal menyinkronkan data cloud:", e);
+                cachedCloudData = [];
+                if (badge) {
+                    badge.innerHTML = `<span class="inline-flex items-center text-red-600 font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i> Gagal terhubung ke Cloud</span>`;
+                }
             }
         }
 
         function onTrainerChange(selectedTrainer) {
             document.getElementById('inputTrainerDisplay').value = selectedTrainer;
             if (selectedTrainer) {
+                localStorage.setItem('ftl_last_trainer', selectedTrainer);
                 renderTrainerDashboard(selectedTrainer);
             } else {
+                localStorage.removeItem('ftl_last_trainer');
                 resetDashboardDisplay();
             }
         }
@@ -334,29 +332,33 @@
         function resetDashboardDisplay() {
             document.getElementById('summaryTrainerName').innerText = "Silakan Pilih Nama Trainer di Atas";
             document.getElementById('summaryCurrentTierBadge').innerText = "FC (Flat Rate)";
-            document.getElementById('summaryTotalPoints').innerText = `0 Poin`;
-            document.getElementById('summaryTotalBundling').innerText = `0 Unit`;
-            document.getElementById('summaryTotalConduct').innerText = `0 Sesi`;
-            document.getElementById('summaryAvgRA').innerText = `0 / 20 RA`;
-            document.getElementById('summaryTotalCommission').innerText = `Rp 0`;
-            document.getElementById('summaryPointCommDetail').innerText = `0 Poin × Rp 1.000`;
-            document.getElementById('summaryPointCommAmount').innerText = `Rp 0`;
-            document.getElementById('summaryFeeBracketInfo').innerText = `Tier: FC (Rp 0/Sesi)`;
-            document.getElementById('summaryConductCommAmount').innerText = `Rp 0`;
-            document.getElementById('summaryBracketNextGoal').innerText = `Kejar > 700 Poin untuk buka Tier Fee!`;
+            document.getElementById('summaryTotalPoints').innerText = "0 Poin";
+            document.getElementById('summaryTotalBundling').innerText = "0 Unit";
+            document.getElementById('summaryTotalConduct').innerText = "0 Sesi";
+            document.getElementById('summaryAvgRA').innerText = "0 / 20 RA";
+            document.getElementById('summaryTotalCommission').innerText = "Rp 0";
+            document.getElementById('summaryPointCommDetail').innerText = "0 Poin × Rp 1.000";
+            document.getElementById('summaryPointCommAmount').innerText = "Rp 0";
+            document.getElementById('summaryFeeBracketInfo').innerText = "Tier: FC (Rp 0/Sesi)";
+            document.getElementById('summaryConductCommAmount').innerText = "Rp 0";
+            document.getElementById('summaryBracketNextGoal').innerText = "Kejar > 700 Poin untuk buka Tier Fee!";
         }
 
         function renderTrainerDashboard(selectedTrainer) {
             const now = new Date();
             const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth() + 1; // 1 - 12
+            const currentMonth = now.getMonth() + 1;
+            const targetName = String(selectedTrainer || "").trim().toLowerCase();
+            const safeList = Array.isArray(cachedCloudData) ? cachedCloudData : [];
 
-            // FILTER KHUSUS NAMA TRAINER DAN BULAN BERJALAN
-            const trainerLogs = cachedCloudData.filter(d => {
-                if (d.trainer !== selectedTrainer) return false;
-                if (!d.date) return false;
+            const trainerLogs = safeList.filter(d => {
+                const rowName = String(d.trainer || d.nama || "").trim().toLowerCase();
+                if (rowName !== targetName) return false;
 
-                const parts = d.date.split('-');
+                const cleanDate = normalizeDateYMD(d.date || d.tanggal);
+                if (!cleanDate) return false;
+
+                const parts = cleanDate.split('-');
                 if (parts.length < 3) return false;
 
                 const itemYear = parseInt(parts[0], 10);
@@ -371,10 +373,8 @@
             const totalRA = trainerLogs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
             const avgRA = trainerLogs.length ? (totalRA / trainerLogs.length).toFixed(1) : 0;
 
-            // Perhitungan Estimasi Komisi Sesuai Tabel Baru
             const comm = calculateSmartCoachCommission(totalPoints, totalConduct);
 
-            // Menentukan Target Pace berikutnya berdasarkan Smart Target
             let nextGoalText = "";
             if (totalPoints < 700) {
                 nextGoalText = "Kejar +" + (700 - totalPoints).toLocaleString('id-ID') + " Poin lagi untuk capai Tier NC!";
@@ -394,7 +394,6 @@
                 nextGoalText = "Selamat! Anda di Tier Tertinggi (Tier AC)! 🔥";
             }
 
-            // UPDATE ELEMEN TAMPILAN HTML
             document.getElementById('summaryTrainerName').innerText = selectedTrainer;
             document.getElementById('summaryCurrentTierBadge').innerText = comm.code + " (Rp " + comm.feePerSession.toLocaleString('id-ID') + "/Sesi)";
             document.getElementById('summaryTotalPoints').innerText = totalPoints.toLocaleString('id-ID') + " Poin";
@@ -498,6 +497,14 @@
             
             await syncTrainerData();
         });
+
+        const savedTrainer = localStorage.getItem('ftl_last_trainer');
+        if (savedTrainer) {
+            const sel = document.getElementById('selectTrainerHeader');
+            sel.value = savedTrainer;
+            document.getElementById('inputTrainerDisplay').value = savedTrainer;
+            renderTrainerDashboard(savedTrainer);
+        }
 
         syncTrainerData();
 
