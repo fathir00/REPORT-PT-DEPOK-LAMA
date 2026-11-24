@@ -6902,6 +6902,7 @@ async function pushAllLocalDataToCloud() {
 </style>
 
 <script>
+<script>
 (function () {
   "use strict";
 
@@ -6927,6 +6928,7 @@ async function pushAllLocalDataToCloud() {
     return clean;
   };
 
+  // Normalisasi semua variasi format tanggal ke YYYY-MM-DD
   function normalizeIsoDate(val) {
     if (!val) return "";
     const s = String(val).trim();
@@ -6947,48 +6949,11 @@ async function pushAllLocalDataToCloud() {
     return s;
   }
 
-  function getDailyArrayRef() {
-    if (typeof activities !== "undefined" && Array.isArray(activities)) return activities;
-    if (typeof activityData !== "undefined" && Array.isArray(activityData)) return activityData;
+  // Akses langsung variabel global appData & clientData (mendukung let/const/window)
+  function getAppDataRef() {
     if (typeof appData !== "undefined" && Array.isArray(appData)) return appData;
-    if (typeof dailyData !== "undefined" && Array.isArray(dailyData)) return dailyData;
-    if (typeof dailyReports !== "undefined" && Array.isArray(dailyReports)) return dailyReports;
-    if (typeof records !== "undefined" && Array.isArray(records)) return records;
-    if (Array.isArray(window.activities)) return window.activities;
     if (Array.isArray(window.appData)) return window.appData;
     return null;
-  }
-
-  function findDailyStorageKey() {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k || k.includes("client") || k.includes("secret") || k.includes("url") || k.includes("profile")) continue;
-      const v = localStorage.getItem(k) || "";
-      if (v.startsWith("[")) {
-        try {
-          const arr = JSON.parse(v);
-          if (Array.isArray(arr) && (arr.length === 0 || "points" in arr[0] || "poin" in arr[0] || "conduct" in arr[0])) {
-            return k;
-          }
-        } catch (e) {}
-      }
-    }
-    return "ftl_manager_data";
-  }
-
-  function persistDailyData(targetDaily) {
-    if (typeof saveData === "function") saveData();
-    if (typeof saveActivities === "function") saveActivities();
-    if (targetDaily) {
-      localStorage.setItem(findDailyStorageKey(), JSON.stringify(targetDaily));
-    }
-  }
-
-  function rerenderDailyViews() {
-    if (typeof renderRecentTable === "function") renderRecentTable();
-    if (typeof renderDashboard === "function") renderDashboard();
-    if (typeof updateDashboard === "function") updateDashboard();
-    if (typeof renderDailyAuditTable === "function") renderDailyAuditTable();
   }
 
   function getClientDataRef() {
@@ -7005,157 +6970,6 @@ async function pushAllLocalDataToCloud() {
       window.clientData = newList;
     }
   }
-
-  // Interceptor Fetch: pastikan setiap POST delete menyertakan apiKey
-  const origFetch = window.fetch.bind(window);
-  window.fetch = function (resource, init) {
-    try {
-      if (init && String(init.method || "").toUpperCase() === "POST" && typeof init.body === "string") {
-        const parsed = JSON.parse(init.body);
-        if (parsed && parsed.action === "delete") {
-          parsed.apiKey = window.getCloudSecretKey();
-          init = Object.assign({}, init, {
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify(parsed)
-          });
-        }
-      }
-    } catch (e) {}
-    return origFetch(resource, init);
-  };
-
-  // Tangkap Klik Tombol Hapus Merah pada Tabel Pusat Data Terinput
-  document.addEventListener("click", async function (e) {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-
-    const row = btn.closest("tr");
-    const cell = btn.closest("td");
-    if (!row || !cell) return;
-
-    const cells = row.querySelectorAll("td");
-    if (cells.length < 4) return;
-
-    // Pastikan baris ini adalah baris Laporan Harian (memiliki kolom tanggal YYYY-MM-DD)
-    let rowDate = "";
-    let dateCellIdx = -1;
-    for (let i = 0; i < Math.min(3, cells.length); i++) {
-      const txt = cells[i].innerText.trim();
-      if (/^\d{4}-\d{2}-\d{2}$/.test(txt)) {
-        rowDate = txt;
-        dateCellIdx = i;
-        break;
-      }
-    }
-    if (!rowDate) return;
-
-    // Pastikan tombol berada di kolom aksi terakhir dan BUKAN tombol WhatsApp hijau
-    if (cell !== cells[cells.length - 1]) return;
-    const btnMeta = [
-      btn.getAttribute("onclick") || "",
-      btn.getAttribute("title") || "",
-      btn.getAttribute("aria-label") || "",
-      btn.className || ""
-    ].join(" ");
-    if (/whatsapp|kirim|wa\b/i.test(btnMeta)) return;
-
-    const cellButtons = Array.from(cell.querySelectorAll("button"));
-    if (cellButtons.length >= 2 && btn === cellButtons[0]) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const trainerName = (cells[dateCellIdx + 1]?.innerText || "").trim();
-    const pointsText = (cells[dateCellIdx + 2]?.innerText || "0").replace(/[^\d.\-]/g, "");
-    const rowPoints = parseFloat(pointsText) || 0;
-
-    const onclickAttr = btn.getAttribute("onclick") || "";
-    const idMatch = onclickAttr.match(/\(\s*['"]?([^'")\s]+)['"]?\s*\)/);
-    const clickedId = btn.dataset.id || (idMatch ? idMatch[1] : "");
-
-    if (!confirm(`Hapus laporan "${trainerName}" tanggal ${rowDate} (${rowPoints} Poin) secara permanen?`)) {
-      return;
-    }
-
-    // 1. Hapus dari memori array aktif & localStorage
-    const targetDaily = getDailyArrayRef();
-    let deletedItem = null;
-
-    if (targetDaily) {
-      let idx = -1;
-      if (clickedId) {
-        idx = targetDaily.findIndex(x => String(x.id) === String(clickedId));
-      }
-      if (idx === -1) {
-        idx = targetDaily.findIndex(x =>
-          normalizeIsoDate(x.date || x.tanggal) === rowDate &&
-          String(x.trainer || x.nama || "").trim() === trainerName &&
-          Math.abs((Number(x.points ?? x.poin ?? 0) || 0) - rowPoints) < 0.01
-        );
-      }
-
-      if (idx !== -1) {
-        deletedItem = targetDaily.splice(idx, 1)[0];
-        persistDailyData(targetDaily);
-      }
-    }
-
-    // Hapus langsung dari cadangan localStorage jika variabel tidak terekspos global
-    const storageKey = findDailyStorageKey();
-    try {
-      const storedArr = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      if (Array.isArray(storedArr) && storedArr.length > 0) {
-        let sIdx = clickedId ? storedArr.findIndex(x => String(x.id) === String(clickedId)) : -1;
-        if (sIdx === -1) {
-          sIdx = storedArr.findIndex(x =>
-            normalizeIsoDate(x.date || x.tanggal) === rowDate &&
-            String(x.trainer || x.nama || "").trim() === trainerName &&
-            Math.abs((Number(x.points ?? x.poin ?? 0) || 0) - rowPoints) < 0.01
-          );
-        }
-        if (sIdx !== -1) {
-          if (!deletedItem) deletedItem = storedArr[sIdx];
-          storedArr.splice(sIdx, 1);
-          localStorage.setItem(storageKey, JSON.stringify(storedArr));
-        }
-      }
-    } catch (err) {}
-
-    // Hapus baris dari tampilan tabel seketika & perbarui tampilan
-    row.remove();
-    rerenderDailyViews();
-
-    // 2. Kirim perintah hapus ke Google Sheets dengan Kunci Keamanan
-    const scriptUrl = (typeof getCloudScriptUrl === "function"
-      ? getCloudScriptUrl()
-      : (localStorage.getItem("ftl_google_script_url") || "")).trim();
-    const apiKey = window.getCloudSecretKey();
-
-    if (scriptUrl) {
-      try {
-        await origFetch(scriptUrl, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({
-            action: "delete",
-            apiKey: apiKey,
-            id: deletedItem ? String(deletedItem.id || clickedId) : clickedId,
-            date: rowDate,
-            trainer: trainerName,
-            points: rowPoints
-          })
-        });
-      } catch (err) {
-        console.error("[FTL Delete Cloud]", err);
-      }
-    }
-
-    if (typeof showToast === "function") {
-      showToast(`Laporan ${trainerName} (${rowDate}) berhasil dihapus dari sistem & Cloud.`, "success");
-    }
-  }, true);
 
   window.addEventListener("error", function (e) {
     console.warn("[FTL Guard] Error tertangani:", e.message);
@@ -7177,7 +6991,7 @@ async function pushAllLocalDataToCloud() {
         <i class="fa-solid fa-shield-halved"></i> Kunci Keamanan Cloud (MANAGER_SECRET)
       </label>
       <div style="display:flex;gap:8px;align-items:center;">
-        <input type="password" id="profCloudSecretKey" placeholder="Masukkan kunci keamanan"
+        <input type="password" id="profCloudSecretKey" placeholder="Masukkan kunci keamanan (contoh: FTL-DEPOK-2026-AMAN)"
           value="${window.escapeHTML(window.getCloudSecretKey())}"
           style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(59,130,246,0.4);background:#0f172a;color:#f8fafc;">
         <button type="button" id="toggleSecretVisBtn"
@@ -7190,7 +7004,7 @@ async function pushAllLocalDataToCloud() {
         </button>
       </div>
       <small style="display:block;color:#94a3b8;margin-top:4px;font-size:11px;">
-        Wajib sama dengan <code>MANAGER_SECRET</code> di Google Apps Script.
+        Wajib sama dengan <code>MANAGER_SECRET</code> di Google Apps Script agar data Sesi Client terlindungi dari akses luar.
       </small>
     `;
 
@@ -7206,7 +7020,7 @@ async function pushAllLocalDataToCloud() {
       const val = document.getElementById("profCloudSecretKey").value;
       window.setCloudSecretKey(val);
       if (typeof showToast === "function") {
-        showToast("Kunci Keamanan Cloud berhasil disimpan.", "success");
+        showToast("Kunci Keamanan Cloud berhasil disimpan di perangkat ini.", "success");
       } else {
         alert("Kunci Keamanan Cloud berhasil disimpan.");
       }
@@ -7228,7 +7042,7 @@ async function pushAllLocalDataToCloud() {
 
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
-          await origFetch(scriptUrl, {
+          await fetch(scriptUrl, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "text/plain" },
@@ -7240,7 +7054,7 @@ async function pushAllLocalDataToCloud() {
           });
           break;
         } catch (err) {
-          if (attempt === 2) console.error("[FTL Sync] Gagal:", err);
+          if (attempt === 2) console.error("[FTL Sync] Gagal setelah 2x percobaan:", err);
           await new Promise(r => setTimeout(r, 1500));
         }
       }
@@ -7277,8 +7091,8 @@ async function pushAllLocalDataToCloud() {
       const encodedKey = encodeURIComponent(apiKey);
 
       const [dailyRes, clientRes] = await Promise.all([
-        origFetch(`${scriptUrl}${sep}key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" }),
-        origFetch(`${scriptUrl}${sep}type=clients&key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" })
+        fetch(`${scriptUrl}${sep}key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" }),
+        fetch(`${scriptUrl}${sep}type=clients&key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" })
       ]);
 
       const rawCloud = await dailyRes.json();
@@ -7296,19 +7110,19 @@ async function pushAllLocalDataToCloud() {
         ? rawClients
         : (Array.isArray(rawClients.clientData) ? rawClients.clientData : []);
 
+      // 1. Gabungkan & normalisasi data Laporan Harian
       let addedAct = 0;
-      const targetDaily = getDailyArrayRef();
-      if (incomingActivities.length > 0 && targetDaily) {
-        const existingMap = new Map(targetDaily.map(x => [String(x.id), x]));
+      const targetAppData = getAppDataRef();
+      if (incomingActivities.length > 0 && targetAppData) {
+        const existingMap = new Map(targetAppData.map(x => [String(x.id), x]));
 
-        incomingActivities.forEach((item, idx) => {
+        incomingActivities.forEach(item => {
           const cleanDate = normalizeIsoDate(item.date || item.tanggal);
           const trainerName = String(item.trainer || item.nama || "").trim();
-          const rawId = String(item.id || "").trim();
-          const itemId = rawId || String(Date.now() + idx);
+          const itemId = String(item.id || `${cleanDate}_${trainerName}`);
 
           const normalizedEntry = Object.assign({}, item, {
-            id: !isNaN(Number(itemId)) ? Number(itemId) : itemId,
+            id: itemId,
             date: cleanDate,
             tanggal: cleanDate,
             trainer: trainerName,
@@ -7322,7 +7136,7 @@ async function pushAllLocalDataToCloud() {
           });
 
           if (!existingMap.has(itemId)) {
-            targetDaily.push(normalizedEntry);
+            targetAppData.push(normalizedEntry);
             existingMap.set(itemId, normalizedEntry);
             addedAct++;
           } else {
@@ -7330,23 +7144,29 @@ async function pushAllLocalDataToCloud() {
           }
         });
 
-        persistDailyData(targetDaily);
+        if (typeof saveData === "function") saveData();
+        else localStorage.setItem("ftl_manager_data", JSON.stringify(targetAppData));
       }
 
+      // 2. Perbarui data Sesi Client
       if (incomingClients.length > 0) {
         replaceClientDataRef(incomingClients);
         if (typeof saveClientData === "function") saveClientData();
         localStorage.setItem("ftl_client_data", JSON.stringify(getClientDataRef()));
       }
 
-      rerenderDailyViews();
+      // 3. Render ulang seluruh tampilan Dashboard & Tabel Laporan Harian
+      if (typeof renderDashboard === "function") renderDashboard();
+      if (typeof updateDashboard === "function") updateDashboard();
+      if (typeof renderRecentTable === "function") renderRecentTable();
+      if (typeof renderDailyAuditTable === "function") renderDailyAuditTable();
       if (typeof renderClientTable === "function") renderClientTable();
       if (typeof updateClientSummary === "function") updateClientSummary();
       if (typeof renderRenewalPipeline === "function") renderRenewalPipeline();
 
       if (!isSilent && typeof showToast === "function") {
         const totalClients = getClientDataRef().length;
-        showToast(`Sync berhasil! (${incomingActivities.length} total laporan, ${addedAct} baru, ${totalClients} client)`, "success");
+        showToast(`Sync berhasil! (${addedAct} laporan baru, ${totalClients} sesi client)`, "success");
       }
     } catch (err) {
       console.error("[FTL Secure Sync]", err);
