@@ -226,22 +226,6 @@
         setTodayReportDate();
         let cachedCloudData = [];
 
-        function normalizeDateYMD(val) {
-            if (!val) return "";
-            const s = String(val).trim();
-            if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-            const parts = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-            if (parts) {
-                let p1 = parseInt(parts[1], 10);
-                let p2 = parseInt(parts[2], 10);
-                const yyyy = parts[3];
-                let dd = p1, mm = p2;
-                if (p2 > 12) { mm = p1; dd = p2; }
-                return `${yyyy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
-            }
-            return s;
-        }
-
         // FUNGSI SKEMA KOMISI TERBARU SESUAI TABEL
         function calculateSmartCoachCommission(points, conduct) {
             let feePerSession = 0;
@@ -323,51 +307,26 @@
         }
 
         async function syncTrainerData() {
-            const badge = document.getElementById('statusSyncBadge');
-            if (badge) {
-                badge.innerHTML = `<span class="inline-flex items-center text-blue-600 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Menyinkronkan data...</span>`;
-            }
-
             try {
-                const res = await fetch(`${GOOGLE_SCRIPT_URL}?type=trainer_stats&t=${Date.now()}`, {
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'GET',
-                    redirect: 'follow',
-                    cache: 'no-store'
+                    redirect: 'follow'
                 });
-                const json = await res.json();
-
-                if (Array.isArray(json)) {
-                    cachedCloudData = json;
-                    if (badge) {
-                        badge.innerHTML = `<span class="inline-flex items-center text-emerald-600 font-bold"><i class="fa-solid fa-cloud-check mr-1"></i> Cloud Connected (${cachedCloudData.length} laporan)</span>`;
-                    }
-                } else {
-                    cachedCloudData = [];
-                    if (badge) {
-                        badge.innerHTML = `<span class="inline-flex items-center text-amber-600 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Menunggu update Apps Script</span>`;
-                    }
-                }
-
+                cachedCloudData = await res.json();
                 const currentSelected = document.getElementById('selectTrainerHeader').value;
-                if (currentSelected) {
+                if(currentSelected) {
                     renderTrainerDashboard(currentSelected);
                 }
-            } catch (e) {
+            } catch(e) {
                 console.error("Gagal menyinkronkan data cloud:", e);
-                cachedCloudData = [];
-                if (badge) {
-                    badge.innerHTML = `<span class="inline-flex items-center text-red-600 font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i> Gagal terhubung ke Cloud</span>`;
-                }
             }
         }
 
         function onTrainerChange(selectedTrainer) {
             document.getElementById('inputTrainerDisplay').value = selectedTrainer;
             if (selectedTrainer) {
-                localStorage.setItem('ftl_last_trainer', selectedTrainer);
                 renderTrainerDashboard(selectedTrainer);
             } else {
-                localStorage.removeItem('ftl_last_trainer');
                 resetDashboardDisplay();
             }
         }
@@ -390,20 +349,14 @@
         function renderTrainerDashboard(selectedTrainer) {
             const now = new Date();
             const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth() + 1;
-            const targetName = String(selectedTrainer || "").trim().toLowerCase();
-
-            const safeList = Array.isArray(cachedCloudData) ? cachedCloudData : [];
+            const currentMonth = now.getMonth() + 1; // 1 - 12
 
             // FILTER KHUSUS NAMA TRAINER DAN BULAN BERJALAN
-            const trainerLogs = safeList.filter(d => {
-                const rowName = String(d.trainer || d.nama || "").trim().toLowerCase();
-                if (rowName !== targetName) return false;
+            const trainerLogs = cachedCloudData.filter(d => {
+                if (d.trainer !== selectedTrainer) return false;
+                if (!d.date) return false;
 
-                const cleanDate = normalizeDateYMD(d.date || d.tanggal);
-                if (!cleanDate) return false;
-
-                const parts = cleanDate.split('-');
+                const parts = d.date.split('-');
                 if (parts.length < 3) return false;
 
                 const itemYear = parseInt(parts[0], 10);
@@ -418,8 +371,10 @@
             const totalRA = trainerLogs.reduce((a, b) => a + (parseInt(b.ra) || 0), 0);
             const avgRA = trainerLogs.length ? (totalRA / trainerLogs.length).toFixed(1) : 0;
 
+            // Perhitungan Estimasi Komisi Sesuai Tabel Baru
             const comm = calculateSmartCoachCommission(totalPoints, totalConduct);
 
+            // Menentukan Target Pace berikutnya berdasarkan Smart Target
             let nextGoalText = "";
             if (totalPoints < 700) {
                 nextGoalText = "Kejar +" + (700 - totalPoints).toLocaleString('id-ID') + " Poin lagi untuk capai Tier NC!";
@@ -543,14 +498,6 @@
             
             await syncTrainerData();
         });
-
-        const savedTrainer = localStorage.getItem('ftl_last_trainer');
-        if (savedTrainer) {
-            const sel = document.getElementById('selectTrainerHeader');
-            sel.value = savedTrainer;
-            document.getElementById('inputTrainerDisplay').value = savedTrainer;
-            renderTrainerDashboard(savedTrainer);
-        }
 
         syncTrainerData();
 
