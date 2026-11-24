@@ -6902,13 +6902,14 @@ async function pushAllLocalDataToCloud() {
 </style>
 
 <script>
-<script>
 (function () {
   "use strict";
 
   const SECRET_STORAGE_KEY = "ftl_cloud_secret_key";
-  const IDLE_LIMIT_MS = 30 * 60 * 1000;
+  const LOGIN_ATTEMPT_KEY = "ftl_login_guard";
+  const IDLE_LIMIT_MS = 30 * 60 * 1000; // Auto-lock 30 menit tidak aktif
 
+  // 1. Helper Sanitasi XSS & Penyimpanan Aman
   window.escapeHTML = function (str) {
     return String(str || "")
       .replace(/&/g, "&amp;")
@@ -6928,49 +6929,7 @@ async function pushAllLocalDataToCloud() {
     return clean;
   };
 
-  // Normalisasi semua variasi format tanggal ke YYYY-MM-DD
-  function normalizeIsoDate(val) {
-    if (!val) return "";
-    const s = String(val).trim();
-    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-    const parts = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-    if (parts) {
-      let p1 = parseInt(parts[1], 10);
-      let p2 = parseInt(parts[2], 10);
-      const yyyy = parts[3];
-      let dd = p1, mm = p2;
-      if (p2 > 12) { mm = p1; dd = p2; }
-      return `${yyyy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
-    }
-    const d = new Date(s);
-    if (!isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    }
-    return s;
-  }
-
-  // Akses langsung variabel global appData & clientData (mendukung let/const/window)
-  function getAppDataRef() {
-    if (typeof appData !== "undefined" && Array.isArray(appData)) return appData;
-    if (Array.isArray(window.appData)) return window.appData;
-    return null;
-  }
-
-  function getClientDataRef() {
-    if (typeof clientData !== "undefined" && Array.isArray(clientData)) return clientData;
-    if (Array.isArray(window.clientData)) return window.clientData;
-    return [];
-  }
-
-  function replaceClientDataRef(newList) {
-    if (typeof clientData !== "undefined" && Array.isArray(clientData)) {
-      clientData.length = 0;
-      newList.forEach(item => clientData.push(item));
-    } else {
-      window.clientData = newList;
-    }
-  }
-
+  // 2. Tangkap Error Global agar Aplikasi Tidak Pernah Freeze
   window.addEventListener("error", function (e) {
     console.warn("[FTL Guard] Error tertangani:", e.message);
   });
@@ -6980,6 +6939,7 @@ async function pushAllLocalDataToCloud() {
     e.preventDefault();
   });
 
+  // 3. Suntikkan Kolom Kunci Keamanan Cloud di Menu Pengaturan & Profil
   function injectSecuritySettingUI() {
     const cloudUrlInput = document.getElementById("profCloudUrl");
     if (!cloudUrlInput || document.getElementById("profCloudSecretKey")) return;
@@ -7027,18 +6987,19 @@ async function pushAllLocalDataToCloud() {
     });
   }
 
+  // 4. Pembungkus Sinkronisasi Aman (Dengan Kunci Rahasia, Debounce & Auto-Retry)
   let clientSyncTimer = null;
 
   window.syncClientDataToCloud = function () {
     clearTimeout(clientSyncTimer);
+    // Tunggu 1.5 detik setelah perubahan terakhir agar klik cepat (+1/-1) digabung 1x kirim
     clientSyncTimer = setTimeout(async function () {
       const scriptUrl = (typeof getCloudScriptUrl === "function"
         ? getCloudScriptUrl()
         : (localStorage.getItem("ftl_google_script_url") || "")).trim();
       const apiKey = window.getCloudSecretKey();
-      const currentClients = getClientDataRef();
 
-      if (!scriptUrl || !Array.isArray(currentClients) || currentClients.length === 0) return;
+      if (!scriptUrl || !Array.isArray(window.clientData) || window.clientData.length === 0) return;
 
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
@@ -7049,7 +7010,7 @@ async function pushAllLocalDataToCloud() {
             body: JSON.stringify({
               action: "sync_clients",
               apiKey: apiKey,
-              clientData: currentClients
+              clientData: window.clientData
             })
           });
           break;
@@ -7091,8 +7052,8 @@ async function pushAllLocalDataToCloud() {
       const encodedKey = encodeURIComponent(apiKey);
 
       const [dailyRes, clientRes] = await Promise.all([
-        fetch(`${scriptUrl}${sep}key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" }),
-        fetch(`${scriptUrl}${sep}type=clients&key=${encodedKey}&t=${Date.now()}`, { cache: "no-store" })
+        fetch(`${scriptUrl}${sep}key=${encodedKey}`, { cache: "no-store" }),
+        fetch(`${scriptUrl}${sep}type=clients&key=${encodedKey}`, { cache: "no-store" })
       ]);
 
       const rawCloud = await dailyRes.json();
@@ -7110,63 +7071,39 @@ async function pushAllLocalDataToCloud() {
         ? rawClients
         : (Array.isArray(rawClients.clientData) ? rawClients.clientData : []);
 
-      // 1. Gabungkan & normalisasi data Laporan Harian
       let addedAct = 0;
-      const targetAppData = getAppDataRef();
-      if (incomingActivities.length > 0 && targetAppData) {
-        const existingMap = new Map(targetAppData.map(x => [String(x.id), x]));
-
+      if (incomingActivities.length > 0 && Array.isArray(window.appData)) {
+        const existingIds = new Set(window.appData.map(x => String(x.id)));
         incomingActivities.forEach(item => {
-          const cleanDate = normalizeIsoDate(item.date || item.tanggal);
-          const trainerName = String(item.trainer || item.nama || "").trim();
-          const itemId = String(item.id || `${cleanDate}_${trainerName}`);
-
-          const normalizedEntry = Object.assign({}, item, {
-            id: itemId,
-            date: cleanDate,
-            tanggal: cleanDate,
-            trainer: trainerName,
-            nama: trainerName,
-            points: Number(item.points ?? item.poin ?? 0) || 0,
-            poin: Number(item.poin ?? item.points ?? 0) || 0,
-            bundling: Number(item.bundling) || 0,
-            conduct: Number(item.conduct) || 0,
-            ra: Number(item.ra) || 0,
-            tasks: item.tasks || { maint: false, followupGO: false }
-          });
-
-          if (!existingMap.has(itemId)) {
-            targetAppData.push(normalizedEntry);
-            existingMap.set(itemId, normalizedEntry);
+          if (!existingIds.has(String(item.id))) {
+            window.appData.push(item);
             addedAct++;
-          } else {
-            Object.assign(existingMap.get(itemId), normalizedEntry);
           }
         });
-
         if (typeof saveData === "function") saveData();
-        else localStorage.setItem("ftl_manager_data", JSON.stringify(targetAppData));
+        else localStorage.setItem("ftl_manager_data", JSON.stringify(window.appData));
       }
 
-      // 2. Perbarui data Sesi Client
       if (incomingClients.length > 0) {
-        replaceClientDataRef(incomingClients);
+        window.clientData = incomingClients;
         if (typeof saveClientData === "function") saveClientData();
-        localStorage.setItem("ftl_client_data", JSON.stringify(getClientDataRef()));
+        localStorage.setItem("ftl_client_data", JSON.stringify(window.clientData));
       }
 
-      // 3. Render ulang seluruh tampilan Dashboard & Tabel Laporan Harian
-      if (typeof renderDashboard === "function") renderDashboard();
-      if (typeof updateDashboard === "function") updateDashboard();
-      if (typeof renderRecentTable === "function") renderRecentTable();
-      if (typeof renderDailyAuditTable === "function") renderDailyAuditTable();
-      if (typeof renderClientTable === "function") renderClientTable();
-      if (typeof updateClientSummary === "function") updateClientSummary();
-      if (typeof renderRenewalPipeline === "function") renderRenewalPipeline();
+      if (typeof refreshAllViews === "function") {
+        refreshAllViews();
+      } else {
+        if (typeof updateDashboard === "function") updateDashboard();
+        if (typeof renderRecentTable === "function") renderRecentTable();
+        if (typeof renderDailyAuditTable === "function") renderDailyAuditTable();
+        if (typeof renderClientTable === "function") renderClientTable();
+        if (typeof updateClientSummary === "function") updateClientSummary();
+        if (typeof renderRenewalPipeline === "function") renderRenewalPipeline();
+      }
 
       if (!isSilent && typeof showToast === "function") {
-        const totalClients = getClientDataRef().length;
-        showToast(`Sync berhasil! (${addedAct} laporan baru, ${totalClients} sesi client)`, "success");
+        const totalClients = Array.isArray(window.clientData) ? window.clientData.length : 0;
+        showToast(`Sync aman berhasil! (${addedAct} laporan baru, ${totalClients} sesi client)`, "success");
       }
     } catch (err) {
       console.error("[FTL Secure Sync]", err);
@@ -7178,6 +7115,7 @@ async function pushAllLocalDataToCloud() {
     }
   };
 
+  // 5. Auto-Lock Sesi Jika Ditinggal Tidak Aktif (30 Menit)
   let idleTimer = null;
   function resetIdleTimer() {
     clearTimeout(idleTimer);
